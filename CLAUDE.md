@@ -11,16 +11,16 @@ WBSync は工数（人日）ベースでスケジュールを自動生成するW
 
 ```powershell
 # Windowsターゲットでビルド
-dotnet build app/WBSync/WBSync.csproj -f net10.0-windows10.0.19041.0
+dotnet build src/WBSync/WBSync.csproj -f net10.0-windows10.0.19041.0
 
 # デバッグ実行
-dotnet run --project app/WBSync/WBSync.csproj -f net10.0-windows10.0.19041.0
+dotnet run --project src/WBSync/WBSync.csproj -f net10.0-windows10.0.19041.0
 
 # EF Core マイグレーション追加
-dotnet ef migrations add <MigrationName> --project app/WBSync
+dotnet ef migrations add <MigrationName> --project src/WBSync
 
 # マイグレーション適用（手動）
-dotnet ef database update --project app/WBSync
+dotnet ef database update --project src/WBSync
 ```
 
 > アプリ起動時に `MigrateAsync()` を呼んでマイグレーションを自動適用する設計。
@@ -38,7 +38,7 @@ dotnet ef database update --project app/WBSync
 ## ディレクトリ構成（予定）
 
 ```
-app/WBSync/
+src/WBSync/
 ├── Components/       # Razor コンポーネント（画面・共通部品）
 ├── Models/           # EF Core エンティティクラス
 ├── Repositories/     # リポジトリパターンのデータアクセス層
