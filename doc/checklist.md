@@ -9,11 +9,11 @@
 - [x] 1-4 [共通Blazorコンポーネント](task/task1-4.md)
 
 ## 大タスク2：データアクセス層
-- [ ] 2-1 [projectsリポジトリ](task/task2-1.md)
-- [ ] 2-2 [assigneesリポジトリ](task/task2-2.md)
-- [ ] 2-3 [tasksリポジトリ](task/task2-3.md)
-- [ ] 2-4 [global_holidaysリポジトリ](task/task2-4.md)
-- [ ] 2-5 [assignee_holidaysリポジトリ](task/task2-5.md)
+- [x] 2-1 [projectsリポジトリ](task/task2-1.md)
+- [x] 2-2 [assigneesリポジトリ](task/task2-2.md)
+- [x] 2-3 [tasksリポジトリ](task/task2-3.md)
+- [x] 2-4 [global_holidaysリポジトリ](task/task2-4.md)
+- [x] 2-5 [assignee_holidaysリポジトリ](task/task2-5.md)
 
 ## 大タスク3：プロジェクト管理機能
 - [ ] 3-1 [プロジェクト一覧画面（S01）](task/task3-1.md)
