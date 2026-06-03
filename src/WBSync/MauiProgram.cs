@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using WBSync.Data;
+using WBSync.Repositories;
 
 namespace WBSync
 {
@@ -22,7 +23,13 @@ namespace WBSync
             Directory.CreateDirectory(dbDir);
             var dbPath = Path.Combine(dbDir, "wbsync.db");
             builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlite($"Data Source={dbPath}"));
+                options.UseSqlite($"Data Source={dbPath};Foreign Keys=True"));
+
+            builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
+            builder.Services.AddScoped<IAssigneeRepository, AssigneeRepository>();
+            builder.Services.AddScoped<ITaskRepository, TaskRepository>();
+            builder.Services.AddScoped<IGlobalHolidayRepository, GlobalHolidayRepository>();
+            builder.Services.AddScoped<IAssigneeHolidayRepository, AssigneeHolidayRepository>();
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();

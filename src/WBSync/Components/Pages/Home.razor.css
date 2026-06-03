@@ -39,3 +39,30 @@ section h3 {
     font-size: 13px;
     color: #6b7280;
 }
+
+.db-input {
+    padding: 6px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 14px;
+    min-width: 200px;
+}
+
+.db-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    font-size: 13px;
+}
+
+.db-table th, .db-table td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.db-table th {
+    background: #f3f4f6;
+    font-weight: 600;
+    color: #374151;
+}
