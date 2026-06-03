@@ -4,8 +4,8 @@
 
 ## 大タスク1：開発環境・プロジェクト基盤構築
 - [x] 1-1 [MAUIプロジェクト初期化](task/task1-1.md)
-- [ ] 1-2 [EF Core + SQLite設定](task/task1-2.md)
-- [ ] 1-3 [DBマイグレーション機構](task/task1-3.md)
+- [x] 1-2 [EF Core + SQLite設定](task/task1-2.md)
+- [x] 1-3 [DBマイグレーション機構](task/task1-3.md)
 - [ ] 1-4 [共通Blazorコンポーネント](task/task1-4.md)
 
 ## 大タスク2：データアクセス層
