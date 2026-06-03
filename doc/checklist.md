@@ -6,7 +6,7 @@
 - [x] 1-1 [MAUIプロジェクト初期化](task/task1-1.md)
 - [x] 1-2 [EF Core + SQLite設定](task/task1-2.md)
 - [x] 1-3 [DBマイグレーション機構](task/task1-3.md)
-- [ ] 1-4 [共通Blazorコンポーネント](task/task1-4.md)
+- [x] 1-4 [共通Blazorコンポーネント](task/task1-4.md)
 
 ## 大タスク2：データアクセス層
 - [ ] 2-1 [projectsリポジトリ](task/task2-1.md)

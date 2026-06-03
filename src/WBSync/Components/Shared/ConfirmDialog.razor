@@ -1,0 +1,23 @@
+<Modal IsOpen="IsOpen" Title="@Title" OnClose="HandleCancel">
+    <ChildContent>
+        <p class="confirm-message">@Message</p>
+    </ChildContent>
+    <Footer>
+        <Button Variant="secondary" OnClick="HandleCancel">@CancelText</Button>
+        <Button Variant="@ConfirmVariant" OnClick="HandleConfirm">@ConfirmText</Button>
+    </Footer>
+</Modal>
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public string Title { get; set; } = "確認";
+    [Parameter] public string Message { get; set; } = string.Empty;
+    [Parameter] public string ConfirmText { get; set; } = "確認";
+    [Parameter] public string CancelText { get; set; } = "キャンセル";
+    [Parameter] public string ConfirmVariant { get; set; } = "danger";
+    [Parameter] public EventCallback OnConfirm { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private async Task HandleConfirm() => await OnConfirm.InvokeAsync();
+    private async Task HandleCancel() => await OnCancel.InvokeAsync();
+}

@@ -1,5 +1,111 @@
-﻿@page "/"
+@page "/"
 
-<h1>Hello, world!</h1>
+<div class="demo">
+    <h2>共通コンポーネント確認</h2>
 
-Welcome to your new app.
+    <!-- Button -->
+    <section>
+        <h3>Button</h3>
+        <div class="row">
+            <Button Variant="primary" OnClick="LogPrimary">Primary</Button>
+            <Button Variant="secondary" OnClick="LogSecondary">Secondary</Button>
+            <Button Variant="danger" OnClick="LogDanger">Danger</Button>
+            <Button Variant="primary" Disabled="true">Disabled</Button>
+        </div>
+        <p class="log">@_log</p>
+    </section>
+
+    <!-- Badge -->
+    <section>
+        <h3>Badge</h3>
+        <div class="row">
+            <Badge Status="未着手" />
+            <Badge Status="進行中" />
+            <Badge Status="完了" />
+            <Badge Status="保留" />
+        </div>
+    </section>
+
+    <!-- DatePicker -->
+    <section>
+        <h3>DatePicker</h3>
+        <div class="row">
+            <DatePicker Value="_date" ValueChanged="d => _date = d" />
+            <span>選択中: @(_date?.ToString("yyyy/MM/dd") ?? "未選択")</span>
+        </div>
+    </section>
+
+    <!-- Dropdown -->
+    <section>
+        <h3>Dropdown</h3>
+        <div class="row">
+            <Dropdown TValue="string"
+                      Items="_statuses"
+                      DisplayText="s => s"
+                      Value="_selectedStatus"
+                      ValueChanged="v => _selectedStatus = v"
+                      AllowEmpty="true" />
+            <span>選択中: @(_selectedStatus ?? "未選択")</span>
+        </div>
+    </section>
+
+    <!-- Modal -->
+    <section>
+        <h3>Modal</h3>
+        <Button Variant="primary" OnClick="OpenModal">モーダルを開く</Button>
+        <Modal IsOpen="_modalOpen" Title="モーダルタイトル" OnClose="CloseModal">
+            <ChildContent>
+                <p>ここがモーダルの本文エリアです。</p>
+                <p>背景クリックまたは × で閉じます。</p>
+            </ChildContent>
+            <Footer>
+                <Button Variant="secondary" OnClick="CloseModal">キャンセル</Button>
+                <Button Variant="primary" OnClick="CloseModal">保存</Button>
+            </Footer>
+        </Modal>
+    </section>
+
+    <!-- ConfirmDialog -->
+    <section>
+        <h3>ConfirmDialog</h3>
+        <Button Variant="danger" OnClick="OpenConfirm">削除ダイアログを開く</Button>
+        <p class="log">@_confirmResult</p>
+        <ConfirmDialog IsOpen="_confirmOpen"
+                       Title="タスクを削除しますか？"
+                       Message="「タスクA」およびその配下のタスクをすべて削除します。この操作は元に戻せません。"
+                       ConfirmText="削除"
+                       OnConfirm="HandleConfirm"
+                       OnCancel="HandleCancel" />
+    </section>
+</div>
+
+@code {
+    private string _log = string.Empty;
+    private DateOnly? _date = DateOnly.FromDateTime(DateTime.Today);
+    private string? _selectedStatus;
+    private bool _modalOpen;
+    private bool _confirmOpen;
+    private string _confirmResult = string.Empty;
+
+    private readonly List<string> _statuses = ["未着手", "進行中", "完了", "保留"];
+
+    private void Log(string msg) => _log = msg;
+    private void LogPrimary() => Log("primary clicked");
+    private void LogSecondary() => Log("secondary clicked");
+    private void LogDanger() => Log("danger clicked");
+    private void OpenModal() => _modalOpen = true;
+    private void CloseModal() => _modalOpen = false;
+    private void OpenConfirm() => _confirmOpen = true;
+
+    private void HandleConfirm()
+    {
+        _confirmOpen = false;
+        _confirmResult = "→ 削除を確認しました";
+    }
+
+    private void HandleCancel()
+    {
+        _confirmOpen = false;
+        _confirmResult = "→ キャンセルしました";
+    }
+}

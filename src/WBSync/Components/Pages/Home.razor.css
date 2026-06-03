@@ -1,0 +1,41 @@
+.demo {
+    padding: 24px;
+    font-family: sans-serif;
+    max-width: 720px;
+}
+
+.demo h2 {
+    font-size: 20px;
+    margin-bottom: 24px;
+    color: #111827;
+}
+
+section {
+    margin-bottom: 32px;
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+section h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 12px;
+}
+
+.row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.log {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #6b7280;
+}

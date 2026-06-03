@@ -1,0 +1,28 @@
+.badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.badge-not-started {
+    background-color: #e5e7eb;
+    color: #6b7280;
+}
+
+.badge-in-progress {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+}
+
+.badge-done {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.badge-on-hold {
+    background-color: #ffedd5;
+    color: #c2410c;
+}

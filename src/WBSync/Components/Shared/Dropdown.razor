@@ -1,0 +1,31 @@
+@typeparam TValue
+
+<select class="dropdown" value="@SelectedIndex" @onchange="HandleChange">
+    @if (AllowEmpty)
+    {
+        <option value="-1">@EmptyLabel</option>
+    }
+    @for (int i = 0; i < Items.Count; i++)
+    {
+        <option value="@i">@DisplayText(Items[i])</option>
+    }
+</select>
+
+@code {
+    [Parameter, EditorRequired] public IList<TValue> Items { get; set; } = [];
+    [Parameter, EditorRequired] public Func<TValue, string> DisplayText { get; set; } = _ => string.Empty;
+    [Parameter] public TValue? Value { get; set; }
+    [Parameter] public EventCallback<TValue?> ValueChanged { get; set; }
+    [Parameter] public bool AllowEmpty { get; set; }
+    [Parameter] public string EmptyLabel { get; set; } = "（未選択）";
+
+    private int SelectedIndex => Value is null ? -1 : Items.IndexOf(Value);
+
+    private async Task HandleChange(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var idx) && idx >= 0 && idx < Items.Count)
+            await ValueChanged.InvokeAsync(Items[idx]);
+        else
+            await ValueChanged.InvokeAsync(default);
+    }
+}

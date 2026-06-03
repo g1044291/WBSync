@@ -1,0 +1,13 @@
+<span class="badge badge-@StatusClass">@Status</span>
+
+@code {
+    [Parameter, EditorRequired] public string Status { get; set; } = string.Empty;
+
+    private string StatusClass => Status switch
+    {
+        "進行中" => "in-progress",
+        "完了"   => "done",
+        "保留"   => "on-hold",
+        _        => "not-started",
+    };
+}
