@@ -1,21 +1,26 @@
-@page "/"
+@page "/dev"
 @inject NavigationManager Nav
 
 <div class="home">
     <h1>WBSync 開発メニュー</h1>
     <div class="menu">
+        <button class="menu-item" @onclick="GoToTop">
+            <span class="menu-title">← プロジェクト一覧</span>
+            <span class="menu-desc">S01 に戻る</span>
+        </button>
         <button class="menu-item" @onclick="GoToUiDemo">
             <span class="menu-title">UIコンポーネント確認</span>
             <span class="menu-desc">Button / Badge / DatePicker / Dropdown / Modal / ConfirmDialog</span>
         </button>
         <button class="menu-item" @onclick="GoToDbDemo">
             <span class="menu-title">DB動作確認</span>
-            <span class="menu-desc">ProjectRepository を使ったデータ永続化テスト</span>
+            <span class="menu-desc">全リポジトリの CRUD テスト</span>
         </button>
     </div>
 </div>
 
 @code {
+    private void GoToTop() => Nav.NavigateTo("/");
     private void GoToUiDemo() => Nav.NavigateTo("/ui-demo");
     private void GoToDbDemo() => Nav.NavigateTo("/db-demo");
 }

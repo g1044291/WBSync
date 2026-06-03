@@ -1,0 +1,85 @@
+.page-project-list {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    font-family: sans-serif;
+    background: #f9fafb;
+}
+
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    height: 56px;
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0;
+}
+
+.app-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+    letter-spacing: 0.02em;
+}
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.page-main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    max-width: 720px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.empty-message {
+    color: #6b7280;
+    font-size: 14px;
+    text-align: center;
+    margin-top: 48px;
+}
+
+.project-list {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.project-row {
+    padding: 16px 20px;
+    text-align: left;
+    font-size: 15px;
+    font-weight: 500;
+    color: #111827;
+    background: none;
+    border: none;
+    border-bottom: 1px solid #e5e7eb;
+    cursor: pointer;
+    transition: background-color 0.1s;
+}
+
+.project-row:last-child {
+    border-bottom: none;
+}
+
+.project-row:hover {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.debug-footer {
+    padding: 12px 24px;
+    border-top: 1px dashed #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+}

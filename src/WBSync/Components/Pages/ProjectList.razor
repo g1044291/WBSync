@@ -1,0 +1,58 @@
+@page "/"
+@inject IProjectRepository ProjectRepo
+@inject NavigationManager Nav
+
+<div class="page-project-list">
+    <header class="page-header">
+        <span class="app-title">WBSync</span>
+        <div class="header-actions">
+            <Button Variant="secondary" OnClick="GoToHolidays">休日設定</Button>
+            <Button Variant="primary" OnClick="OpenCreateModal">新規登録</Button>
+        </div>
+    </header>
+
+    <main class="page-main">
+        @if (_projects.Count == 0)
+        {
+            <p class="empty-message">プロジェクトが登録されていません。「新規登録」からプロジェクトを作成してください。</p>
+        }
+        else
+        {
+            <div class="project-list">
+                @foreach (var p in _projects)
+                {
+                    <button class="project-row" @onclick="() => GoToGantt(p.Id)">
+                        @p.Name
+                    </button>
+                }
+            </div>
+        }
+    </main>
+
+    @if (_isDebug)
+    {
+        <footer class="debug-footer">
+            <Button Variant="secondary" OnClick="GoToDev">開発メニュー</Button>
+        </footer>
+    }
+</div>
+
+@code {
+    private List<Project> _projects = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _projects = await ProjectRepo.GetAllAsync();
+    }
+
+#if DEBUG
+    private const bool _isDebug = true;
+#else
+    private const bool _isDebug = false;
+#endif
+
+    private void GoToGantt(int projectId) => Nav.NavigateTo($"/gantt/{projectId}");
+    private void GoToHolidays() => Nav.NavigateTo("/holidays");
+    private void OpenCreateModal() { /* task3-3 で実装 */ }
+    private void GoToDev() => Nav.NavigateTo("/dev");
+}
