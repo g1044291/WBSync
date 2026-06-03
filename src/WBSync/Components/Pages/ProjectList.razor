@@ -2,6 +2,11 @@
 @inject IProjectRepository ProjectRepo
 @inject NavigationManager Nav
 
+<ProjectCreateModal IsOpen="_createModalOpen"
+                    ProjectRepo="ProjectRepo"
+                    OnClose="CloseCreateModal"
+                    OnCreated="HandleProjectCreated" />
+
 <div class="page-project-list">
     <header class="page-header">
         <span class="app-title">WBSync</span>
@@ -51,8 +56,16 @@
     private const bool _isDebug = false;
 #endif
 
+    private bool _createModalOpen;
+
     private void GoToGantt(int projectId) => Nav.NavigateTo($"/gantt/{projectId}");
     private void GoToHolidays() => Nav.NavigateTo("/holidays");
-    private void OpenCreateModal() { /* task3-3 で実装 */ }
+    private void OpenCreateModal() => _createModalOpen = true;
+    private void CloseCreateModal() => _createModalOpen = false;
+    private async Task HandleProjectCreated(Project _)
+    {
+        _createModalOpen = false;
+        _projects = await ProjectRepo.GetAllAsync();
+    }
     private void GoToDev() => Nav.NavigateTo("/dev");
 }

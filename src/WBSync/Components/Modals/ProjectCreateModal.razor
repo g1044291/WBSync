@@ -1,0 +1,78 @@
+<Modal IsOpen="IsOpen" Title="プロジェクトを作成" OnClose="HandleClose">
+    <ChildContent>
+        <div class="form-group">
+            <label class="form-label">プロジェクト名 <span class="required">*</span></label>
+            <input class="form-input" type="text" placeholder="プロジェクト名を入力"
+                   @bind="_name" @bind:event="oninput" />
+        </div>
+        <div class="form-group">
+            <label class="form-label">開始日 <span class="required">*</span></label>
+            <DatePicker Value="_startDate" ValueChanged="d => _startDate = d" />
+        </div>
+        @if (_error is not null)
+        {
+            <p class="form-error">@_error</p>
+        }
+    </ChildContent>
+    <Footer>
+        <Button Variant="secondary" OnClick="HandleClose">キャンセル</Button>
+        <Button Variant="primary" OnClick="HandleSubmit" Disabled="_saving">作成</Button>
+    </Footer>
+</Modal>
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<Project> OnCreated { get; set; }
+    [Parameter, EditorRequired] public IProjectRepository ProjectRepo { get; set; } = null!;
+
+    private string _name = string.Empty;
+    private DateOnly? _startDate = DateOnly.FromDateTime(DateTime.Today);
+    private string? _error;
+    private bool _saving;
+
+    private async Task HandleClose()
+    {
+        Reset();
+        await OnClose.InvokeAsync();
+    }
+
+    private async Task HandleSubmit()
+    {
+        _error = null;
+
+        if (string.IsNullOrWhiteSpace(_name))
+        {
+            _error = "プロジェクト名を入力してください";
+            return;
+        }
+        if (_startDate is null)
+        {
+            _error = "開始日を入力してください";
+            return;
+        }
+
+        _saving = true;
+        try
+        {
+            var project = await ProjectRepo.CreateAsync(new Project
+            {
+                Name = _name.Trim(),
+                StartDate = _startDate.Value.ToString("yyyy-MM-dd")
+            });
+            Reset();
+            await OnCreated.InvokeAsync(project);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private void Reset()
+    {
+        _name = string.Empty;
+        _startDate = DateOnly.FromDateTime(DateTime.Today);
+        _error = null;
+    }
+}
