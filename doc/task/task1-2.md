@@ -2,8 +2,9 @@
 
 ## 作業詳細
 - `Microsoft.EntityFrameworkCore.Sqlite` の導入
-- db_design.md を基に各エンティティクラスを定義（Project, Assignee, Task, GlobalHoliday, AssigneeHoliday）
-- `AppDbContext` の作成（DbSet・リレーション・制約の設定）
+- db_design.md を基に各エンティティクラスを `Models/` に定義
+  - `Project`, `Assignee`, `WbsTask`（`Task` は `System.Threading.Tasks.Task` と衝突するため）, `GlobalHoliday`, `AssigneeHoliday`
+- `Data/AppDbContext.cs` に `AppDbContext` を作成（DbSet・リレーション・制約の設定）
 - DBファイルのパスをアプリのユーザーデータフォルダ（`FileSystem.AppDataDirectory`）に設定
 - `MauiProgram.cs` で DbContext を DI コンテナに登録（`AddDbContext`）
 

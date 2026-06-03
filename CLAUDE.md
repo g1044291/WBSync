@@ -39,13 +39,18 @@ dotnet ef database update --project src/WBSync
 
 ```
 src/WBSync/
-├── Components/       # Razor コンポーネント（画面・共通部品）
-├── Models/           # EF Core エンティティクラス
-├── Repositories/     # リポジトリパターンのデータアクセス層
-├── Services/         # ビジネスロジック（スケジュール計算等）
+├── Components/        # Razor コンポーネント（画面・共通部品）
+├── Data/              # AppDbContext
+├── Models/            # EF Core エンティティクラス
+├── Repositories/      # リポジトリパターンのデータアクセス層
+├── Services/          # ビジネスロジック（スケジュール計算等）
 ├── Platforms/Windows/ # Windows固有エントリーポイント
-└── MauiProgram.cs    # DIコンテナ設定・アプリ起動
+└── MauiProgram.cs     # DIコンテナ設定・アプリ起動
 ```
+
+**名前空間**: フォルダに対応した階層（`WBSync.Models`, `WBSync.Data`, `WBSync.Repositories`, `WBSync.Services`）。
+
+**エンティティのクラス名**: `System.Threading.Tasks.Task` との衝突を避けるため、タスクエンティティは `WbsTask` とする。
 
 ## アーキテクチャ
 
