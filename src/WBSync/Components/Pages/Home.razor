@@ -1,186 +1,21 @@
 @page "/"
-@inject IProjectRepository ProjectRepo
+@inject NavigationManager Nav
 
-<div class="demo">
-    <h2>共通コンポーネント確認</h2>
-
-    <!-- Button -->
-    <section>
-        <h3>Button</h3>
-        <div class="row">
-            <Button Variant="primary" OnClick="LogPrimary">Primary</Button>
-            <Button Variant="secondary" OnClick="LogSecondary">Secondary</Button>
-            <Button Variant="danger" OnClick="LogDanger">Danger</Button>
-            <Button Variant="primary" Disabled="true">Disabled</Button>
-        </div>
-        <p class="log">@_log</p>
-    </section>
-
-    <!-- Badge -->
-    <section>
-        <h3>Badge</h3>
-        <div class="row">
-            <Badge Status="未着手" />
-            <Badge Status="進行中" />
-            <Badge Status="完了" />
-            <Badge Status="保留" />
-        </div>
-    </section>
-
-    <!-- DatePicker -->
-    <section>
-        <h3>DatePicker</h3>
-        <div class="row">
-            <DatePicker Value="_date" ValueChanged="d => _date = d" />
-            <span>選択中: @(_date?.ToString("yyyy/MM/dd") ?? "未選択")</span>
-        </div>
-    </section>
-
-    <!-- Dropdown -->
-    <section>
-        <h3>Dropdown</h3>
-        <div class="row">
-            <Dropdown TValue="string"
-                      Items="_statuses"
-                      DisplayText="s => s"
-                      Value="_selectedStatus"
-                      ValueChanged="v => _selectedStatus = v"
-                      AllowEmpty="true" />
-            <span>選択中: @(_selectedStatus ?? "未選択")</span>
-        </div>
-    </section>
-
-    <!-- Modal -->
-    <section>
-        <h3>Modal</h3>
-        <Button Variant="primary" OnClick="OpenModal">モーダルを開く</Button>
-        <Modal IsOpen="_modalOpen" Title="モーダルタイトル" OnClose="CloseModal">
-            <ChildContent>
-                <p>ここがモーダルの本文エリアです。</p>
-                <p>背景クリックまたは × で閉じます。</p>
-            </ChildContent>
-            <Footer>
-                <Button Variant="secondary" OnClick="CloseModal">キャンセル</Button>
-                <Button Variant="primary" OnClick="CloseModal">保存</Button>
-            </Footer>
-        </Modal>
-    </section>
-
-    <!-- ConfirmDialog -->
-    <section>
-        <h3>ConfirmDialog</h3>
-        <Button Variant="danger" OnClick="OpenConfirm">削除ダイアログを開く</Button>
-        <p class="log">@_confirmResult</p>
-        <ConfirmDialog IsOpen="_confirmOpen"
-                       Title="タスクを削除しますか？"
-                       Message="「タスクA」およびその配下のタスクをすべて削除します。この操作は元に戻せません。"
-                       ConfirmText="削除"
-                       OnConfirm="HandleConfirm"
-                       OnCancel="HandleCancel" />
-    </section>
-
-    <!-- DB動作確認 -->
-    <section>
-        <h3>DB動作確認（Project）</h3>
-        <div class="row">
-            <input class="db-input" placeholder="プロジェクト名" @bind="_newProjectName" />
-            <DatePicker Value="_newProjectDate" ValueChanged="d => _newProjectDate = d" />
-            <Button Variant="primary" OnClick="CreateProject" Disabled="_saving">作成</Button>
-        </div>
-        @if (_dbError is not null)
-        {
-            <p class="log" style="color:#ef4444">@_dbError</p>
-        }
-        <table class="db-table">
-            <thead>
-                <tr><th>ID</th><th>プロジェクト名</th><th>開始日</th><th>作成日時</th></tr>
-            </thead>
-            <tbody>
-                @foreach (var p in _projects)
-                {
-                    <tr>
-                        <td>@p.Id</td>
-                        <td>@p.Name</td>
-                        <td>@p.StartDate</td>
-                        <td>@p.CreatedAt</td>
-                    </tr>
-                }
-                @if (_projects.Count == 0)
-                {
-                    <tr><td colspan="4" style="text-align:center;color:#9ca3af">データなし</td></tr>
-                }
-            </tbody>
-        </table>
-    </section>
+<div class="home">
+    <h1>WBSync 開発メニュー</h1>
+    <div class="menu">
+        <button class="menu-item" @onclick="GoToUiDemo">
+            <span class="menu-title">UIコンポーネント確認</span>
+            <span class="menu-desc">Button / Badge / DatePicker / Dropdown / Modal / ConfirmDialog</span>
+        </button>
+        <button class="menu-item" @onclick="GoToDbDemo">
+            <span class="menu-title">DB動作確認</span>
+            <span class="menu-desc">ProjectRepository を使ったデータ永続化テスト</span>
+        </button>
+    </div>
 </div>
 
 @code {
-    // コンポーネントデモ
-    private string _log = string.Empty;
-    private DateOnly? _date = DateOnly.FromDateTime(DateTime.Today);
-    private string? _selectedStatus;
-    private bool _modalOpen;
-    private bool _confirmOpen;
-    private string _confirmResult = string.Empty;
-
-    private readonly List<string> _statuses = ["未着手", "進行中", "完了", "保留"];
-
-    private void Log(string msg) => _log = msg;
-    private void LogPrimary() => Log("primary clicked");
-    private void LogSecondary() => Log("secondary clicked");
-    private void LogDanger() => Log("danger clicked");
-    private void OpenModal() => _modalOpen = true;
-    private void CloseModal() => _modalOpen = false;
-    private void OpenConfirm() => _confirmOpen = true;
-
-    private void HandleConfirm()
-    {
-        _confirmOpen = false;
-        _confirmResult = "→ 削除を確認しました";
-    }
-
-    private void HandleCancel()
-    {
-        _confirmOpen = false;
-        _confirmResult = "→ キャンセルしました";
-    }
-
-    // DB動作確認
-    private List<Project> _projects = [];
-    private string _newProjectName = string.Empty;
-    private DateOnly? _newProjectDate = DateOnly.FromDateTime(DateTime.Today);
-    private bool _saving;
-    private string? _dbError;
-
-    protected override async Task OnInitializedAsync()
-    {
-        _projects = await ProjectRepo.GetAllAsync();
-    }
-
-    private async Task CreateProject()
-    {
-        _dbError = null;
-        if (string.IsNullOrWhiteSpace(_newProjectName) || _newProjectDate is null)
-        {
-            _dbError = "プロジェクト名と開始日を入力してください";
-            return;
-        }
-        _saving = true;
-        try
-        {
-            var project = new Project
-            {
-                Name = _newProjectName.Trim(),
-                StartDate = _newProjectDate.Value.ToString("yyyy-MM-dd")
-            };
-            await ProjectRepo.CreateAsync(project);
-            _newProjectName = string.Empty;
-            _projects = await ProjectRepo.GetAllAsync();
-        }
-        finally
-        {
-            _saving = false;
-        }
-    }
-
+    private void GoToUiDemo() => Nav.NavigateTo("/ui-demo");
+    private void GoToDbDemo() => Nav.NavigateTo("/db-demo");
 }

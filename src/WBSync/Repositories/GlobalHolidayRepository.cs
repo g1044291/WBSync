@@ -12,8 +12,16 @@ public class GlobalHolidayRepository(AppDbContext db) : IGlobalHolidayRepository
     public async Task<GlobalHoliday> CreateAsync(GlobalHoliday holiday)
     {
         db.GlobalHolidays.Add(holiday);
-        await db.SaveChangesAsync();
-        return holiday;
+        try
+        {
+            await db.SaveChangesAsync();
+            return holiday;
+        }
+        catch
+        {
+            db.Entry(holiday).State = EntityState.Detached;
+            throw;
+        }
     }
 
     public async Task DeleteAsync(int id)

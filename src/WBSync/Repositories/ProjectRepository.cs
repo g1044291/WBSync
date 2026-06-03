@@ -15,8 +15,16 @@ public class ProjectRepository(AppDbContext db) : IProjectRepository
         project.CreatedAt = now;
         project.UpdatedAt = now;
         db.Projects.Add(project);
-        await db.SaveChangesAsync();
-        return project;
+        try
+        {
+            await db.SaveChangesAsync();
+            return project;
+        }
+        catch
+        {
+            db.Entry(project).State = EntityState.Detached;
+            throw;
+        }
     }
 
     private static string Now() => DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");

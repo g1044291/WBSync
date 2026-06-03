@@ -1,15 +1,25 @@
-<input type="date" class="datepicker" value="@ValueString" @onchange="HandleChange" disabled="@Disabled" />
+<input type="date" class="datepicker" value="@_internalStr" @onchange="HandleChange" disabled="@Disabled" />
 
 @code {
     [Parameter] public DateOnly? Value { get; set; }
     [Parameter] public EventCallback<DateOnly?> ValueChanged { get; set; }
     [Parameter] public bool Disabled { get; set; }
 
-    private string ValueString => Value?.ToString("yyyy-MM-dd") ?? string.Empty;
+    private string _internalStr = string.Empty;
+
+    // 親の Value が実際に変わったときだけ内部ステートを更新し、
+    // 親の再レンダリングでユーザーの入力中の値を上書きしないようにする。
+    protected override void OnParametersSet()
+    {
+        var incoming = Value?.ToString("yyyy-MM-dd") ?? string.Empty;
+        if (_internalStr != incoming)
+            _internalStr = incoming;
+    }
 
     private async Task HandleChange(ChangeEventArgs e)
     {
-        if (DateOnly.TryParse(e.Value?.ToString(), out var parsed))
+        _internalStr = e.Value?.ToString() ?? string.Empty;
+        if (DateOnly.TryParse(_internalStr, out var parsed))
             await ValueChanged.InvokeAsync(parsed);
         else
             await ValueChanged.InvokeAsync(null);

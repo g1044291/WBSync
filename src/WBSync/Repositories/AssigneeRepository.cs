@@ -7,7 +7,7 @@ namespace WBSync.Repositories;
 public class AssigneeRepository(AppDbContext db) : IAssigneeRepository
 {
     public Task<List<Assignee>> GetByProjectAsync(int projectId)
-        => db.Assignees.Where(a => a.ProjectId == projectId).OrderBy(a => a.SortOrder).ToListAsync();
+        => db.Assignees.AsNoTracking().Where(a => a.ProjectId == projectId).OrderBy(a => a.SortOrder).ToListAsync();
 
     public async Task<Assignee> CreateAsync(Assignee assignee)
     {
@@ -15,13 +15,25 @@ public class AssigneeRepository(AppDbContext db) : IAssigneeRepository
         assignee.CreatedAt = now;
         assignee.UpdatedAt = now;
         db.Assignees.Add(assignee);
-        await db.SaveChangesAsync();
-        return assignee;
+        try
+        {
+            await db.SaveChangesAsync();
+            return assignee;
+        }
+        catch
+        {
+            db.Entry(assignee).State = EntityState.Detached;
+            throw;
+        }
     }
 
     public async Task<Assignee> UpdateAsync(Assignee assignee)
     {
         assignee.UpdatedAt = Now();
+        var tracked = db.ChangeTracker.Entries<Assignee>()
+            .FirstOrDefault(e => e.Entity.Id == assignee.Id);
+        if (tracked != null)
+            tracked.State = EntityState.Detached;
         db.Assignees.Update(assignee);
         await db.SaveChangesAsync();
         return assignee;

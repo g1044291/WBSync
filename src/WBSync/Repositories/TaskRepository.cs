@@ -8,6 +8,7 @@ public class TaskRepository(AppDbContext db) : ITaskRepository
 {
     public Task<List<WbsTask>> GetByProjectAsync(int projectId)
         => db.Tasks
+             .AsNoTracking()
              .Where(t => t.ProjectId == projectId)
              .OrderBy(t => t.SortOrder)
              .ToListAsync();
@@ -18,13 +19,25 @@ public class TaskRepository(AppDbContext db) : ITaskRepository
         task.CreatedAt = now;
         task.UpdatedAt = now;
         db.Tasks.Add(task);
-        await db.SaveChangesAsync();
-        return task;
+        try
+        {
+            await db.SaveChangesAsync();
+            return task;
+        }
+        catch
+        {
+            db.Entry(task).State = EntityState.Detached;
+            throw;
+        }
     }
 
     public async Task<WbsTask> UpdateAsync(WbsTask task)
     {
         task.UpdatedAt = Now();
+        var tracked = db.ChangeTracker.Entries<WbsTask>()
+            .FirstOrDefault(e => e.Entity.Id == task.Id);
+        if (tracked != null)
+            tracked.State = EntityState.Detached;
         db.Tasks.Update(task);
         await db.SaveChangesAsync();
         return task;

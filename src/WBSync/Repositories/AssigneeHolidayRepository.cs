@@ -12,8 +12,16 @@ public class AssigneeHolidayRepository(AppDbContext db) : IAssigneeHolidayReposi
     public async Task<AssigneeHoliday> CreateAsync(AssigneeHoliday holiday)
     {
         db.AssigneeHolidays.Add(holiday);
-        await db.SaveChangesAsync();
-        return holiday;
+        try
+        {
+            await db.SaveChangesAsync();
+            return holiday;
+        }
+        catch
+        {
+            db.Entry(holiday).State = EntityState.Detached;
+            throw;
+        }
     }
 
     public async Task DeleteAsync(int id)
