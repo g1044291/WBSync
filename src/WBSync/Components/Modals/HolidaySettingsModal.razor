@@ -1,0 +1,123 @@
+<Modal IsOpen="IsOpen" Title="休日設定" OnClose="HandleClose">
+    <ChildContent>
+        <p class="fixed-note">※ 土曜・日曜は固定休日です</p>
+
+        <div class="section-header">
+            <span class="section-title">祝日・特別休日</span>
+            @if (!_isAdding)
+            {
+                <Button Variant="primary" OnClick="StartAdding">＋ 追加</Button>
+            }
+        </div>
+
+        @if (_isAdding)
+        {
+            <div class="add-form">
+                <div class="add-form-fields">
+                    <DatePicker Value="_newDate" ValueChanged="d => _newDate = d" />
+                    <input class="name-input" type="text" placeholder="休日名（例：元日）" @bind="_newName" />
+                </div>
+                <div class="add-form-actions">
+                    <Button Variant="secondary" OnClick="CancelAdding">取消</Button>
+                    <Button Variant="primary" OnClick="AddHoliday" Disabled="_saving">保存</Button>
+                </div>
+            </div>
+            @if (_error is not null)
+            {
+                <p class="error-message">@_error</p>
+            }
+        }
+
+        <div class="holiday-list">
+            @foreach (var h in _holidays)
+            {
+                <div class="holiday-row">
+                    <span class="holiday-date">@FormatDate(h.Date)</span>
+                    <span class="holiday-name">@h.Name</span>
+                    <Button Variant="danger" OnClick="() => DeleteHoliday(h.Id)">削除</Button>
+                </div>
+            }
+            @if (!_holidays.Any())
+            {
+                <p class="empty-message">登録された休日はありません</p>
+            }
+        </div>
+    </ChildContent>
+</Modal>
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter, EditorRequired] public IGlobalHolidayRepository HolidayRepo { get; set; } = null!;
+
+    private List<GlobalHoliday> _holidays = [];
+    private bool _isAdding;
+    private DateOnly? _newDate;
+    private string _newName = string.Empty;
+    private bool _saving;
+    private string? _error;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsOpen && !_holidays.Any())
+            _holidays = await HolidayRepo.GetAllAsync();
+    }
+
+    private async Task HandleClose()
+    {
+        _isAdding = false;
+        _error = null;
+        await OnClose.InvokeAsync();
+    }
+
+    private void StartAdding()
+    {
+        _newDate = null;
+        _newName = string.Empty;
+        _error = null;
+        _isAdding = true;
+    }
+
+    private void CancelAdding()
+    {
+        _isAdding = false;
+        _error = null;
+    }
+
+    private async Task AddHoliday()
+    {
+        _error = null;
+        if (_newDate is null) { _error = "日付を入力してください"; return; }
+
+        _saving = true;
+        try
+        {
+            await HolidayRepo.CreateAsync(new GlobalHoliday
+            {
+                Date = _newDate.Value.ToString("yyyy-MM-dd"),
+                Name = string.IsNullOrWhiteSpace(_newName) ? null : _newName.Trim()
+            });
+            _isAdding = false;
+            _holidays = await HolidayRepo.GetAllAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.InnerException?.Message.Contains("UNIQUE") == true
+                ? "同じ日付がすでに登録されています"
+                : $"エラー: {ex.InnerException?.Message ?? ex.Message}";
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task DeleteHoliday(int holidayId)
+    {
+        await HolidayRepo.DeleteAsync(holidayId);
+        _holidays = await HolidayRepo.GetAllAsync();
+    }
+
+    private static string FormatDate(string date)
+        => DateOnly.TryParse(date, out var d) ? d.ToString("yyyy/MM/dd") : date;
+}

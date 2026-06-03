@@ -1,5 +1,6 @@
 @page "/"
 @inject IProjectRepository ProjectRepo
+@inject IGlobalHolidayRepository HolidayRepo
 @inject NavigationManager Nav
 
 <ProjectCreateModal IsOpen="_createModalOpen"
@@ -7,11 +8,15 @@
                     OnClose="CloseCreateModal"
                     OnCreated="HandleProjectCreated" />
 
+<HolidaySettingsModal IsOpen="_holidayModalOpen"
+                      HolidayRepo="HolidayRepo"
+                      OnClose="CloseHolidayModal" />
+
 <div class="page-project-list">
     <header class="page-header">
         <span class="app-title">WBSync</span>
         <div class="header-actions">
-            <Button Variant="secondary" OnClick="GoToHolidays">休日設定</Button>
+            <Button Variant="secondary" OnClick="OpenHolidayModal">休日設定</Button>
             <Button Variant="primary" OnClick="OpenCreateModal">新規登録</Button>
         </div>
     </header>
@@ -57,11 +62,13 @@
 #endif
 
     private bool _createModalOpen;
+    private bool _holidayModalOpen;
 
     private void GoToGantt(int projectId) => Nav.NavigateTo($"/gantt/{projectId}");
-    private void GoToHolidays() => Nav.NavigateTo("/holidays");
     private void OpenCreateModal() => _createModalOpen = true;
     private void CloseCreateModal() => _createModalOpen = false;
+    private void OpenHolidayModal() => _holidayModalOpen = true;
+    private void CloseHolidayModal() => _holidayModalOpen = false;
     private async Task HandleProjectCreated(Project _)
     {
         _createModalOpen = false;
