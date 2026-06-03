@@ -1,0 +1,184 @@
+@page "/assignees/{ProjectId:int}/{AssigneeId:int}"
+@inject IAssigneeRepository AssigneeRepo
+@inject IAssigneeHolidayRepository HolidayRepo
+@inject NavigationManager Nav
+
+<Modal IsOpen="_addHolidayOpen" Title="個人休日を追加" OnClose="CloseAddHoliday">
+    <ChildContent>
+        <div class="form-group">
+            <label class="form-label">日付 <span class="required">*</span></label>
+            <DatePicker Value="_newHolidayDate" ValueChanged="d => _newHolidayDate = d" />
+        </div>
+        <div class="form-group">
+            <label class="form-label">メモ</label>
+            <input class="form-input" type="text" placeholder="例：有給休暇" @bind="_newHolidayMemo" />
+        </div>
+        @if (_holidayError is not null)
+        {
+            <p class="form-error">@_holidayError</p>
+        }
+    </ChildContent>
+    <Footer>
+        <Button Variant="secondary" OnClick="CloseAddHoliday">キャンセル</Button>
+        <Button Variant="primary" OnClick="AddHoliday" Disabled="_saving">保存</Button>
+    </Footer>
+</Modal>
+
+<div class="assignee-detail-page">
+    <header class="page-header">
+        <button class="back-btn" @onclick="GoBack">← 戻る</button>
+        <span class="page-title">担当者詳細</span>
+    </header>
+
+    @if (_assignee is not null)
+    {
+        <main class="page-main">
+            <section class="name-section">
+                <label class="field-label">担当者名</label>
+                <div class="name-row">
+                    <input class="name-input" type="text" @bind="_editName" />
+                    <Button Variant="primary" OnClick="SaveName" Disabled="_nameSaving">保存</Button>
+                </div>
+                @if (_nameError is not null)
+                {
+                    <p class="form-error">@_nameError</p>
+                }
+                @if (_nameSaved)
+                {
+                    <p class="save-success">保存しました</p>
+                }
+            </section>
+
+            <section class="holiday-section">
+                <div class="section-header">
+                    <span class="section-title">個人休日</span>
+                    <Button Variant="primary" OnClick="OpenAddHoliday">＋ 追加</Button>
+                </div>
+                <div class="holiday-list">
+                    @foreach (var h in _holidays)
+                    {
+                        <div class="holiday-row">
+                            <span class="holiday-date">@FormatDate(h.Date)</span>
+                            <span class="holiday-memo">@h.Memo</span>
+                            <Button Variant="danger" OnClick="() => DeleteHoliday(h.Id)">削除</Button>
+                        </div>
+                    }
+                    @if (!_holidays.Any())
+                    {
+                        <p class="empty-message">個人休日が登録されていません</p>
+                    }
+                </div>
+            </section>
+        </main>
+    }
+</div>
+
+@code {
+    [Parameter] public int ProjectId { get; set; }
+    [Parameter] public int AssigneeId { get; set; }
+
+    private Assignee? _assignee;
+    private string _editName = string.Empty;
+    private bool _nameSaving;
+    private string? _nameError;
+    private bool _nameSaved;
+
+    private List<AssigneeHoliday> _holidays = [];
+    private bool _addHolidayOpen;
+    private DateOnly? _newHolidayDate;
+    private string _newHolidayMemo = string.Empty;
+    private bool _saving;
+    private string? _holidayError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var assignees = await AssigneeRepo.GetByProjectAsync(ProjectId);
+        _assignee = assignees.FirstOrDefault(a => a.Id == AssigneeId);
+        if (_assignee is null)
+        {
+            Nav.NavigateTo($"/assignees/{ProjectId}");
+            return;
+        }
+        _editName = _assignee.Name;
+        _holidays = await HolidayRepo.GetByAssigneeAsync(AssigneeId);
+    }
+
+    private async Task SaveName()
+    {
+        _nameError = null;
+        _nameSaved = false;
+        if (string.IsNullOrWhiteSpace(_editName))
+        {
+            _nameError = "担当者名を入力してください";
+            return;
+        }
+        _nameSaving = true;
+        try
+        {
+            _assignee!.Name = _editName.Trim();
+            await AssigneeRepo.UpdateAsync(_assignee);
+            _nameSaved = true;
+        }
+        finally
+        {
+            _nameSaving = false;
+        }
+    }
+
+    private void OpenAddHoliday()
+    {
+        _newHolidayDate = null;
+        _newHolidayMemo = string.Empty;
+        _holidayError = null;
+        _addHolidayOpen = true;
+    }
+
+    private void CloseAddHoliday()
+    {
+        _addHolidayOpen = false;
+        _holidayError = null;
+    }
+
+    private async Task AddHoliday()
+    {
+        _holidayError = null;
+        if (_newHolidayDate is null)
+        {
+            _holidayError = "日付を入力してください";
+            return;
+        }
+        _saving = true;
+        try
+        {
+            await HolidayRepo.CreateAsync(new AssigneeHoliday
+            {
+                AssigneeId = AssigneeId,
+                Date = _newHolidayDate.Value.ToString("yyyy-MM-dd"),
+                Memo = string.IsNullOrWhiteSpace(_newHolidayMemo) ? null : _newHolidayMemo.Trim()
+            });
+            _addHolidayOpen = false;
+            _holidays = await HolidayRepo.GetByAssigneeAsync(AssigneeId);
+        }
+        catch (Exception ex)
+        {
+            _holidayError = ex.InnerException?.Message.Contains("UNIQUE") == true
+                ? "同じ日付がすでに登録されています"
+                : $"エラー: {ex.InnerException?.Message ?? ex.Message}";
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task DeleteHoliday(int holidayId)
+    {
+        await HolidayRepo.DeleteAsync(holidayId);
+        _holidays = await HolidayRepo.GetByAssigneeAsync(AssigneeId);
+    }
+
+    private static string FormatDate(string date)
+        => DateOnly.TryParse(date, out var d) ? d.ToString("yyyy/MM/dd") : date;
+
+    private void GoBack() => Nav.NavigateTo($"/assignees/{ProjectId}");
+}

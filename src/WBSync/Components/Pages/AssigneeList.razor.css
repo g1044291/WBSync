@@ -1,0 +1,137 @@
+.assignee-list-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    font-family: sans-serif;
+    background: #f9fafb;
+}
+
+.page-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 24px;
+    height: 56px;
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0;
+}
+
+.back-btn {
+    background: none;
+    border: none;
+    color: #3b82f6;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 4px 0;
+}
+
+.back-btn:hover {
+    text-decoration: underline;
+}
+
+.page-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.page-main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    max-width: 640px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.list-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+}
+
+.assignee-list {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.assignee-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 14px 16px;
+    background: none;
+    border: none;
+    border-bottom: 1px solid #f3f4f6;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.1s;
+}
+
+.assignee-row:last-child {
+    border-bottom: none;
+}
+
+.assignee-row:hover {
+    background: #eff6ff;
+}
+
+.assignee-name {
+    flex: 1;
+    font-size: 14px;
+    color: #111827;
+}
+
+.row-arrow {
+    font-size: 18px;
+    color: #9ca3af;
+}
+
+.empty-message {
+    font-size: 14px;
+    color: #9ca3af;
+    text-align: center;
+    padding: 24px;
+    margin: 0;
+}
+
+.form-group {
+    margin-bottom: 4px;
+}
+
+.form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+}
+
+.required {
+    color: #ef4444;
+}
+
+.form-input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+.form-error {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #ef4444;
+}

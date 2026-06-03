@@ -1,0 +1,107 @@
+@page "/assignees/{ProjectId:int}"
+@inject IAssigneeRepository AssigneeRepo
+@inject IProjectRepository ProjectRepo
+@inject NavigationManager Nav
+
+<Modal IsOpen="_addModalOpen" Title="担当者を追加" OnClose="CloseAddModal">
+    <ChildContent>
+        <div class="form-group">
+            <label class="form-label">担当者名 <span class="required">*</span></label>
+            <input class="form-input" type="text" placeholder="担当者名を入力" @bind="_newName" />
+        </div>
+        @if (_error is not null)
+        {
+            <p class="form-error">@_error</p>
+        }
+    </ChildContent>
+    <Footer>
+        <Button Variant="secondary" OnClick="CloseAddModal">キャンセル</Button>
+        <Button Variant="primary" OnClick="AddAssignee" Disabled="_saving">追加</Button>
+    </Footer>
+</Modal>
+
+<div class="assignee-list-page">
+    <header class="page-header">
+        <button class="back-btn" @onclick="GoBack">← 戻る</button>
+        <span class="page-title">担当者設定</span>
+    </header>
+
+    <main class="page-main">
+        <div class="list-toolbar">
+            <Button Variant="primary" OnClick="OpenAddModal">＋ 追加</Button>
+        </div>
+
+        <div class="assignee-list">
+            @foreach (var a in _assignees)
+            {
+                <button class="assignee-row" @onclick="() => GoToDetail(a.Id)">
+                    <span class="assignee-name">@a.Name</span>
+                    <span class="row-arrow">›</span>
+                </button>
+            }
+            @if (!_assignees.Any())
+            {
+                <p class="empty-message">担当者が登録されていません</p>
+            }
+        </div>
+    </main>
+</div>
+
+@code {
+    [Parameter] public int ProjectId { get; set; }
+
+    private List<Assignee> _assignees = [];
+    private bool _addModalOpen;
+    private string _newName = string.Empty;
+    private bool _saving;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _assignees = await AssigneeRepo.GetByProjectAsync(ProjectId);
+    }
+
+    private void OpenAddModal()
+    {
+        _newName = string.Empty;
+        _error = null;
+        _addModalOpen = true;
+    }
+
+    private void CloseAddModal()
+    {
+        _addModalOpen = false;
+        _error = null;
+    }
+
+    private async Task AddAssignee()
+    {
+        _error = null;
+        if (string.IsNullOrWhiteSpace(_newName))
+        {
+            _error = "担当者名を入力してください";
+            return;
+        }
+
+        _saving = true;
+        try
+        {
+            var nextSort = _assignees.Count > 0 ? _assignees.Max(a => a.SortOrder) + 1 : 0;
+            await AssigneeRepo.CreateAsync(new Assignee
+            {
+                ProjectId = ProjectId,
+                Name = _newName.Trim(),
+                SortOrder = nextSort
+            });
+            _addModalOpen = false;
+            _assignees = await AssigneeRepo.GetByProjectAsync(ProjectId);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private void GoToDetail(int assigneeId) => Nav.NavigateTo($"/assignees/{ProjectId}/{assigneeId}");
+    private void GoBack() => Nav.NavigateTo($"/gantt/{ProjectId}");
+}
