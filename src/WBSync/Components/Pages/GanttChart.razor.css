@@ -1,0 +1,204 @@
+.gantt-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    font-family: sans-serif;
+    background: #fff;
+}
+
+/* ===== Header ===== */
+
+.gantt-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    height: 52px;
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0;
+}
+
+.gantt-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.back-btn {
+    background: none;
+    border: none;
+    color: #3b82f6;
+    font-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    padding: 4px 0;
+}
+
+.back-btn:hover {
+    text-decoration: underline;
+}
+
+.project-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #111827;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gantt-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.scale-switcher {
+    display: flex;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.scale-btn {
+    padding: 5px 14px;
+    font-size: 13px;
+    background: #fff;
+    border: none;
+    border-right: 1px solid #d1d5db;
+    cursor: pointer;
+    color: #374151;
+}
+
+.scale-btn:last-child {
+    border-right: none;
+}
+
+.scale-btn:hover {
+    background: #f3f4f6;
+}
+
+.scale-btn-active {
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-weight: 600;
+}
+
+/* ===== Body ===== */
+
+.gantt-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* ===== Left pane ===== */
+
+.task-pane {
+    display: flex;
+    flex-direction: column;
+    width: 520px;
+    min-width: 320px;
+    border-right: 2px solid #e5e7eb;
+}
+
+.task-pane-scroll {
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.task-pane-header {
+    display: flex;
+    align-items: center;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0;
+    height: 36px;
+    min-width: 520px;
+}
+
+/*
+ * box-sizing: border-box で width に padding + border を含める。
+ * 列幅の合計 = col-name(120) + 72 + 44 + 76 + 76 + 80 + 52 = 520px
+ */
+.col {
+    box-sizing: border-box;
+    padding: 0 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-right: 1px solid #e5e7eb;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.col:last-child {
+    border-right: none;
+}
+
+.col-name      { flex: 1; min-width: 120px; }
+.col-assignee  { width: 72px;  flex-shrink: 0; justify-content: center; }
+.col-workdays  { width: 44px;  flex-shrink: 0; justify-content: center; }
+.col-start     { width: 76px;  flex-shrink: 0; justify-content: center; }
+.col-end       { width: 76px;  flex-shrink: 0; justify-content: center; }
+.col-status    { width: 80px;  flex-shrink: 0; justify-content: center; }
+.col-progress  { width: 52px;  flex-shrink: 0; justify-content: center; }
+
+.task-pane-rows {
+    flex: 1;
+    overflow-y: auto;
+    min-width: 520px;
+}
+
+.task-pane-footer {
+    border-top: 1px solid #e5e7eb;
+    padding: 8px 12px;
+    flex-shrink: 0;
+}
+
+.add-task-btn {
+    background: none;
+    border: none;
+    color: #3b82f6;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 4px 0;
+}
+
+.add-task-btn:hover {
+    text-decoration: underline;
+}
+
+/* ===== Splitter ===== */
+
+.pane-splitter {
+    width: 5px;
+    background: #e5e7eb;
+    cursor: col-resize;
+    flex-shrink: 0;
+    transition: background-color 0.15s;
+}
+
+.pane-splitter:hover,
+.pane-splitter:active {
+    background: #3b82f6;
+}
+
+/* ===== Right pane ===== */
+
+.chart-pane {
+    flex: 1;
+    overflow: auto;
+    background: #fafafa;
+}

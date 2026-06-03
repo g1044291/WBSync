@@ -1,0 +1,77 @@
+@page "/gantt/{ProjectId:int}"
+@inject IProjectRepository ProjectRepo
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<div class="gantt-page">
+    <header class="gantt-header">
+        <div class="gantt-header-left">
+            <button class="back-btn" @onclick="GoBack">← 戻る</button>
+            <span class="project-name">@_projectName</span>
+        </div>
+        <div class="gantt-header-right">
+            <Button Variant="secondary" OnClick="GoToAssignees">担当者設定</Button>
+            <div class="scale-switcher">
+                <button class="scale-btn scale-btn-active">日</button>
+                <button class="scale-btn">週</button>
+                <button class="scale-btn">月</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="gantt-body">
+        <div id="task-pane" class="task-pane">
+            <div class="task-pane-scroll">
+                <div class="task-pane-header">
+                    <div class="col col-name">タスク名</div>
+                    <div class="col col-assignee">担当者</div>
+                    <div class="col col-workdays">工数</div>
+                    <div class="col col-start">開始日</div>
+                    <div class="col col-end">終了日</div>
+                    <div class="col col-status">ステータス</div>
+                    <div class="col col-progress">進捗</div>
+                </div>
+                <div class="task-pane-rows">
+                    @* task5-2 以降でタスク行を実装 *@
+                </div>
+            </div>
+            <div class="task-pane-footer">
+                <button class="add-task-btn" @onclick="AddTask">＋ タスクを追加</button>
+            </div>
+        </div>
+
+        <div id="gantt-splitter" class="pane-splitter"></div>
+
+        <div class="chart-pane">
+            @* task5-3 以降でガントバーを実装 *@
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int ProjectId { get; set; }
+
+    private string _projectName = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var projects = await ProjectRepo.GetAllAsync();
+        var project = projects.FirstOrDefault(p => p.Id == ProjectId);
+        if (project is null)
+        {
+            Nav.NavigateTo("/");
+            return;
+        }
+        _projectName = project.Name;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await JS.InvokeVoidAsync("initSplitter", "gantt-splitter", "task-pane", 320, 800);
+    }
+
+    private void GoBack() => Nav.NavigateTo("/");
+    private void GoToAssignees() => Nav.NavigateTo($"/assignees/{ProjectId}");
+    private void AddTask() { /* task5-2 で実装 */ }
+}
