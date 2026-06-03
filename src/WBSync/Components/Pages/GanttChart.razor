@@ -1,5 +1,7 @@
 @page "/gantt/{ProjectId:int}"
 @inject IProjectRepository ProjectRepo
+@inject ITaskRepository TaskRepo
+@inject IAssigneeRepository AssigneeRepo
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
@@ -32,7 +34,49 @@
                     <div class="col col-progress">進捗</div>
                 </div>
                 <div class="task-pane-rows">
-                    @* task5-2 以降でタスク行を実装 *@
+                    @foreach (var node in GetVisibleNodes(_taskRoots))
+                    {
+                        <div class="task-row" @onclick="() => OnTaskRowClick(node)">
+                            <div class="col col-name">
+                                <div class="name-indent" style="padding-left: @(8 + node.Level * 20)px">
+                                    @if (node.HasChildren)
+                                    {
+                                        <button class="expand-btn"
+                                                @onclick:stopPropagation="true"
+                                                @onclick="() => ToggleExpand(node)">
+                                            @(node.IsExpanded ? "▼" : "▶")
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="expand-spacer"></span>
+                                    }
+                                    <span class="task-name-text">@node.Task.Name</span>
+                                </div>
+                            </div>
+                            <div class="col col-assignee">
+                                @(node.HasChildren ? "-" : GetAssigneeName(node.Task.AssigneeId))
+                            </div>
+                            <div class="col col-workdays">
+                                @(node.HasChildren ? "-" : node.Task.WorkDays?.ToString("0.##") ?? "-")
+                            </div>
+                            <div class="col col-start">@FormatDate(node.DisplayStartDate)</div>
+                            <div class="col col-end">@FormatDate(node.DisplayEndDate)</div>
+                            <div class="col col-status">
+                                @if (!node.HasChildren)
+                                {
+                                    <Badge Status="@node.Task.Status" />
+                                }
+                            </div>
+                            <div class="col col-progress">
+                                @(node.HasChildren ? "" : $"{node.Task.Progress}%")
+                            </div>
+                        </div>
+                    }
+                    @if (!_taskRoots.Any())
+                    {
+                        <p class="empty-tasks">タスクが登録されていません</p>
+                    }
                 </div>
             </div>
             <div class="task-pane-footer">
@@ -43,7 +87,7 @@
         <div id="gantt-splitter" class="pane-splitter"></div>
 
         <div class="chart-pane">
-            @* task5-3 以降でガントバーを実装 *@
+            @* ガントバーは後続タスクで実装 *@
         </div>
     </div>
 </div>
@@ -52,17 +96,20 @@
     [Parameter] public int ProjectId { get; set; }
 
     private string _projectName = string.Empty;
+    private List<TaskNode> _taskRoots = [];
+    private Dictionary<int, string> _assigneeNames = [];
 
     protected override async Task OnInitializedAsync()
     {
         var projects = await ProjectRepo.GetAllAsync();
         var project = projects.FirstOrDefault(p => p.Id == ProjectId);
-        if (project is null)
-        {
-            Nav.NavigateTo("/");
-            return;
-        }
+        if (project is null) { Nav.NavigateTo("/"); return; }
         _projectName = project.Name;
+
+        var tasks = await TaskRepo.GetByProjectAsync(ProjectId);
+        var assignees = await AssigneeRepo.GetByProjectAsync(ProjectId);
+        _assigneeNames = assignees.ToDictionary(a => a.Id, a => a.Name);
+        _taskRoots = BuildTree(tasks);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -71,7 +118,84 @@
             await JS.InvokeVoidAsync("initSplitter", "gantt-splitter", "task-pane", 320, 800);
     }
 
+    // ===== ツリー構築 =====
+
+    private static List<TaskNode> BuildTree(List<WbsTask> tasks)
+    {
+        var nodeMap = tasks.ToDictionary(t => t.Id, t => new TaskNode { Task = t });
+        var roots = new List<TaskNode>();
+
+        foreach (var task in tasks.OrderBy(t => t.SortOrder))
+        {
+            if (task.ParentId is null)
+                roots.Add(nodeMap[task.Id]);
+            else if (nodeMap.TryGetValue(task.ParentId.Value, out var parent))
+                parent.Children.Add(nodeMap[task.Id]);
+        }
+
+        SetLevels(roots, 0);
+        return roots;
+    }
+
+    private static void SetLevels(List<TaskNode> nodes, int level)
+    {
+        foreach (var node in nodes)
+        {
+            node.Level = level;
+            SetLevels(node.Children, level + 1);
+        }
+    }
+
+    private static IEnumerable<TaskNode> GetVisibleNodes(List<TaskNode> roots)
+    {
+        foreach (var node in roots)
+        {
+            yield return node;
+            if (node.IsExpanded && node.HasChildren)
+                foreach (var child in GetVisibleNodes(node.Children))
+                    yield return child;
+        }
+    }
+
+    private void ToggleExpand(TaskNode node) => node.IsExpanded = !node.IsExpanded;
+
+    // ===== 表示ヘルパー =====
+
+    private string GetAssigneeName(int? assigneeId)
+        => assigneeId.HasValue && _assigneeNames.TryGetValue(assigneeId.Value, out var name) ? name : "-";
+
+    private static string FormatDate(string? date)
+    {
+        if (string.IsNullOrEmpty(date)) return "-";
+        return DateOnly.TryParse(date, out var d) ? d.ToString("M/d") : date;
+    }
+
+    // ===== ナビゲーション・操作 =====
+
     private void GoBack() => Nav.NavigateTo("/");
     private void GoToAssignees() => Nav.NavigateTo($"/assignees/{ProjectId}");
-    private void AddTask() { /* task5-2 で実装 */ }
+    private void AddTask() { /* task5-4 で実装 */ }
+    private void OnTaskRowClick(TaskNode node) { /* task5-5（S03）で実装 */ }
+
+    // ===== TaskNode =====
+
+    private class TaskNode
+    {
+        public WbsTask Task { get; init; } = null!;
+        public List<TaskNode> Children { get; } = [];
+        public int Level { get; set; }
+        public bool IsExpanded { get; set; } = true;
+
+        public bool HasChildren => Children.Count > 0;
+
+        // 親タスクの開始日 = 直接の子の DisplayStartDate の最小値
+        public string? DisplayStartDate => HasChildren
+            ? Children.Select(c => c.DisplayStartDate).Where(d => d is not null).Min()
+            : Task.StartDate;
+
+        // 親タスクの終了日 = 直接の子の DisplayEndDate の最大値
+        public string? DisplayEndDate => HasChildren
+            ? Children.Select(c => c.DisplayEndDate).Where(d => d is not null).Max()
+            : Task.EndDate;
+    }
 }

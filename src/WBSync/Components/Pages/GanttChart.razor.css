@@ -161,6 +161,79 @@
     min-width: 520px;
 }
 
+/* ===== Task rows ===== */
+
+.task-row {
+    display: flex;
+    align-items: center;
+    height: 36px;
+    border-bottom: 1px solid #f3f4f6;
+    cursor: pointer;
+    transition: background-color 0.1s;
+}
+
+.task-row:hover {
+    background: #eff6ff;
+}
+
+.task-row .col {
+    font-size: 13px;
+    font-weight: 400;
+    color: #111827;
+}
+
+.task-row .col-name {
+    padding: 0;
+}
+
+.name-indent {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-right: 8px;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+.expand-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 10px;
+    color: #6b7280;
+    padding: 0;
+    width: 16px;
+    flex-shrink: 0;
+    text-align: center;
+}
+
+.expand-btn:hover {
+    color: #111827;
+}
+
+.expand-spacer {
+    width: 16px;
+    flex-shrink: 0;
+}
+
+.task-name-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.empty-tasks {
+    font-size: 13px;
+    color: #9ca3af;
+    text-align: center;
+    padding: 24px;
+    margin: 0;
+}
+
+/* ===== Footer ===== */
+
 .task-pane-footer {
     border-top: 1px solid #e5e7eb;
     padding: 8px 12px;
