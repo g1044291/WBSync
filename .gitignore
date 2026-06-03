@@ -1,0 +1,59 @@
+# Build outputs
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider
+.idea/
+
+# NuGet
+*.nupkg
+*.snupkg
+project.lock.json
+packages/
+!**/packages/build/
+
+# SQLite DB (runtime data)
+*.db
+*.db-shm
+*.db-wal
+
+# MAUI / Android
+*.apk
+*.aab
+*.ipa
+*.app
+**/android/assets/
+**/android/bin/
+**/android/obj/
+
+# iOS / macOS
+*.xcarchive
+*.ipa
+DerivedData/
+
+# Windows packaging
+*.msix
+*.msixbundle
+AppPackages/
+
+# WebView2 cache
+*.exe.WebView2/
+
+# Test results
+TestResults/
+*.trx
+*.coverage
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
