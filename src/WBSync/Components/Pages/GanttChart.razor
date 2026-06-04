@@ -2,6 +2,7 @@
 @inject IProjectRepository ProjectRepo
 @inject ITaskRepository TaskRepo
 @inject IAssigneeRepository AssigneeRepo
+@inject IGlobalHolidayRepository GlobalHolidayRepo
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
@@ -96,7 +97,7 @@
                     <div class="chart-time-header">
                         @foreach (var col in _chartColumns)
                         {
-                            <div class="chart-col-header @(col.IsWeekend ? "col-weekend" : "")">@col.Label</div>
+                            <div class="chart-col-header @(col.IsWeekend || col.IsHoliday ? "col-weekend" : "")">@col.Label</div>
                         }
                     </div>
                     <div class="chart-rows-area" id="chart-rows-area">
@@ -105,7 +106,7 @@
                             <div class="chart-task-row">
                                 @foreach (var col in _chartColumns)
                                 {
-                                    <div class="chart-col-cell @(col.IsWeekend ? "col-weekend" : "")"></div>
+                                    <div class="chart-col-cell @(col.IsWeekend || col.IsHoliday ? "col-weekend" : "")"></div>
                                 }
                             </div>
                         }
@@ -123,6 +124,7 @@
     private string _projectStartDate = string.Empty;
     private List<TaskNode> _taskRoots = [];
     private Dictionary<int, string> _assigneeNames = [];
+    private HashSet<DateOnly> _globalHolidays = [];
 
     // ===== Chart scale & columns =====
 
@@ -132,7 +134,7 @@
     private DateOnly _chartStart;
     private DateOnly _chartEnd;
 
-    private record ChartColumn(string Label, DateOnly Date, bool IsWeekend);
+    private record ChartColumn(string Label, DateOnly Date, bool IsWeekend, bool IsHoliday = false);
     private List<ChartColumn> _chartColumns = [];
 
     // ===== Lifecycle =====
@@ -149,6 +151,13 @@
         var assignees = await AssigneeRepo.GetByProjectAsync(ProjectId);
         _assigneeNames = assignees.ToDictionary(a => a.Id, a => a.Name);
         _taskRoots = BuildTree(tasks);
+
+        var holidays = await GlobalHolidayRepo.GetAllAsync();
+        _globalHolidays = holidays
+            .Select(h => DateOnly.TryParse(h.Date, out var d) ? d : (DateOnly?)null)
+            .Where(d => d.HasValue)
+            .Select(d => d!.Value)
+            .ToHashSet();
 
         CalculateChartPeriod();
         BuildChartColumns();
@@ -205,7 +214,8 @@
         for (var d = _chartStart; d <= _chartEnd; d = d.AddDays(1))
         {
             var isWeekend = d.DayOfWeek == DayOfWeek.Saturday || d.DayOfWeek == DayOfWeek.Sunday;
-            cols.Add(new ChartColumn(d.ToString("M/d"), d, isWeekend));
+            var isHoliday = _globalHolidays.Contains(d);
+            cols.Add(new ChartColumn(d.ToString("M/d"), d, isWeekend, isHoliday));
         }
         return cols;
     }
