@@ -40,7 +40,10 @@
                 <div class="task-pane-rows">
                     @foreach (var node in GetVisibleNodes(_taskRoots))
                     {
-                        <div class="task-row" @onclick="() => OnTaskRowClick(node)">
+                        <div class="task-row"
+                             @onclick="() => OnTaskRowClick(node)"
+                             @oncontextmenu:preventDefault="true"
+                             @oncontextmenu="e => ShowContextMenu(e, node)">
                             <div class="col col-name">
                                 <div class="name-indent" style="padding-left: @(8 + node.Level * 20)px">
                                     @if (node.HasChildren)
@@ -117,6 +120,25 @@
     </div>
 </div>
 
+@if (_ctxVisible)
+{
+    <div class="ctx-overlay" @onclick="CloseContextMenu"></div>
+    <div class="ctx-menu" style="left:@(_ctxX)px;top:@(_ctxY)px;">
+        <button class="ctx-item" @onclick="AddChildTask">子タスクを追加</button>
+        <button class="ctx-item" @onclick="AddSiblingTask">同階層にタスクを追加</button>
+        <div class="ctx-separator"></div>
+        <button class="ctx-item ctx-item-danger" @onclick="ShowCtxDeleteConfirm">タスクを削除</button>
+    </div>
+}
+
+<ConfirmDialog IsOpen="_showCtxDeleteConfirm"
+               Title="タスクを削除しますか？"
+               Message="@_ctxDeleteMessage"
+               ConfirmText="削除"
+               CancelText="キャンセル"
+               OnConfirm="HandleCtxDeleteConfirm"
+               OnCancel="() => _showCtxDeleteConfirm = false" />
+
 <TaskEditModal IsOpen="_isTaskModalOpen"
                Task="_taskModalTask"
                ProjectId="ProjectId"
@@ -143,6 +165,17 @@
     private bool _isTaskModalOpen;
     private WbsTask? _taskModalTask;
     private int? _taskModalParentId;
+
+    // ===== 右クリックメニュー状態 =====
+
+    private bool _ctxVisible;
+    private double _ctxX;
+    private double _ctxY;
+    private TaskNode? _ctxNode;
+    private bool _showCtxDeleteConfirm;
+
+    private string _ctxDeleteMessage =>
+        $"「{_ctxNode?.Task.Name}」およびその配下のタスクをすべて削除します。この操作は元に戻せません。";
 
     // ===== Chart scale & columns =====
 
@@ -348,6 +381,49 @@
         _taskModalTask = node.Task;
         _taskModalParentId = null;
         _isTaskModalOpen = true;
+    }
+
+    // ===== 右クリックメニュー =====
+
+    private void ShowContextMenu(MouseEventArgs e, TaskNode node)
+    {
+        _ctxX = e.ClientX;
+        _ctxY = e.ClientY;
+        _ctxNode = node;
+        _ctxVisible = true;
+    }
+
+    private void CloseContextMenu() => _ctxVisible = false;
+
+    private void AddChildTask()
+    {
+        CloseContextMenu();
+        _taskModalTask = null;
+        _taskModalParentId = _ctxNode!.Task.Id;
+        _isTaskModalOpen = true;
+    }
+
+    private void AddSiblingTask()
+    {
+        CloseContextMenu();
+        _taskModalTask = null;
+        _taskModalParentId = _ctxNode!.Task.ParentId;
+        _isTaskModalOpen = true;
+    }
+
+    private void ShowCtxDeleteConfirm()
+    {
+        _ctxVisible = false;
+        _showCtxDeleteConfirm = true;
+    }
+
+    private async Task HandleCtxDeleteConfirm()
+    {
+        if (_ctxNode is null) return;
+        _showCtxDeleteConfirm = false;
+        await TaskRepo.DeleteAsync(_ctxNode.Task.Id);
+        _ctxNode = null;
+        await ReloadTasksAsync();
     }
 
     private void HandleTaskModalClose() => _isTaskModalOpen = false;
