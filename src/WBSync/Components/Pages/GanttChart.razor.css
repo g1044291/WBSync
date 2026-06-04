@@ -275,3 +275,82 @@
     overflow: auto;
     background: #fafafa;
 }
+
+.chart-inner {
+    display: flex;
+    flex-direction: column;
+    min-width: max-content;
+}
+
+.chart-time-header {
+    display: flex;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0;
+    height: 36px;
+}
+
+.chart-col-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: #6b7280;
+    border-right: 1px solid #e5e7eb;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.chart-col-header:last-child {
+    border-right: none;
+}
+
+.chart-rows-area {
+    flex: 1;
+}
+
+.chart-task-row {
+    display: flex;
+    height: 36px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.chart-col-cell {
+    border-right: 1px solid #f0f0f0;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+.chart-col-cell:last-child {
+    border-right: none;
+}
+
+/* Weekend highlight */
+.col-weekend {
+    background-color: #fef2f2;
+}
+
+/* Scale-specific column widths */
+.chart-inner.scale-day .chart-col-header,
+.chart-inner.scale-day .chart-col-cell {
+    width: 32px;
+    min-width: 32px;
+}
+
+.chart-inner.scale-week .chart-col-header,
+.chart-inner.scale-week .chart-col-cell {
+    width: 80px;
+    min-width: 80px;
+}
+
+.chart-inner.scale-month .chart-col-header,
+.chart-inner.scale-month .chart-col-cell {
+    width: 90px;
+    min-width: 90px;
+}

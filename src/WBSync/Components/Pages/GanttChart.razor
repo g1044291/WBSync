@@ -14,9 +14,12 @@
         <div class="gantt-header-right">
             <Button Variant="secondary" OnClick="GoToAssignees">担当者設定</Button>
             <div class="scale-switcher">
-                <button class="scale-btn scale-btn-active">日</button>
-                <button class="scale-btn">週</button>
-                <button class="scale-btn">月</button>
+                <button class="scale-btn @(_scale == ChartScale.Day ? "scale-btn-active" : "")"
+                        @onclick='() => SetScale(ChartScale.Day)'>日</button>
+                <button class="scale-btn @(_scale == ChartScale.Week ? "scale-btn-active" : "")"
+                        @onclick='() => SetScale(ChartScale.Week)'>週</button>
+                <button class="scale-btn @(_scale == ChartScale.Month ? "scale-btn-active" : "")"
+                        @onclick='() => SetScale(ChartScale.Month)'>月</button>
             </div>
         </div>
     </header>
@@ -86,8 +89,29 @@
 
         <div id="gantt-splitter" class="pane-splitter"></div>
 
-        <div class="chart-pane">
-            @* ガントバーは後続タスクで実装 *@
+        <div class="chart-pane" id="chart-pane">
+            @if (_chartColumns.Count > 0)
+            {
+                <div class="chart-inner scale-@(_scale.ToString().ToLower())">
+                    <div class="chart-time-header">
+                        @foreach (var col in _chartColumns)
+                        {
+                            <div class="chart-col-header @(col.IsWeekend ? "col-weekend" : "")">@col.Label</div>
+                        }
+                    </div>
+                    <div class="chart-rows-area" id="chart-rows-area">
+                        @foreach (var node in GetVisibleNodes(_taskRoots))
+                        {
+                            <div class="chart-task-row">
+                                @foreach (var col in _chartColumns)
+                                {
+                                    <div class="chart-col-cell @(col.IsWeekend ? "col-weekend" : "")"></div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
         </div>
     </div>
 </div>
@@ -96,8 +120,22 @@
     [Parameter] public int ProjectId { get; set; }
 
     private string _projectName = string.Empty;
+    private string _projectStartDate = string.Empty;
     private List<TaskNode> _taskRoots = [];
     private Dictionary<int, string> _assigneeNames = [];
+
+    // ===== Chart scale & columns =====
+
+    private enum ChartScale { Day, Week, Month }
+    private ChartScale _scale = ChartScale.Day;
+
+    private DateOnly _chartStart;
+    private DateOnly _chartEnd;
+
+    private record ChartColumn(string Label, DateOnly Date, bool IsWeekend);
+    private List<ChartColumn> _chartColumns = [];
+
+    // ===== Lifecycle =====
 
     protected override async Task OnInitializedAsync()
     {
@@ -105,17 +143,110 @@
         var project = projects.FirstOrDefault(p => p.Id == ProjectId);
         if (project is null) { Nav.NavigateTo("/"); return; }
         _projectName = project.Name;
+        _projectStartDate = project.StartDate;
 
         var tasks = await TaskRepo.GetByProjectAsync(ProjectId);
         var assignees = await AssigneeRepo.GetByProjectAsync(ProjectId);
         _assigneeNames = assignees.ToDictionary(a => a.Id, a => a.Name);
         _taskRoots = BuildTree(tasks);
+
+        CalculateChartPeriod();
+        BuildChartColumns();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
             await JS.InvokeVoidAsync("initSplitter", "gantt-splitter", "task-pane", 320, 800);
+    }
+
+    // ===== Scale management =====
+
+    private void SetScale(ChartScale scale)
+    {
+        _scale = scale;
+        BuildChartColumns();
+    }
+
+    // ===== Chart period & columns =====
+
+    private void CalculateChartPeriod()
+    {
+        _chartStart = DateOnly.TryParse(_projectStartDate, out var s)
+            ? s
+            : DateOnly.FromDateTime(DateTime.Today);
+
+        var endDates = GetAllLeafNodes(_taskRoots)
+            .Select(n => n.Task.EndDate)
+            .Where(d => !string.IsNullOrEmpty(d))
+            .Select(d => DateOnly.TryParse(d, out var date) ? date : (DateOnly?)null)
+            .Where(d => d.HasValue)
+            .Select(d => d!.Value)
+            .ToList();
+
+        var lastEndDate = endDates.Count > 0 ? endDates.Max() : _chartStart;
+        _chartEnd = lastEndDate.AddDays(30);
+    }
+
+    private void BuildChartColumns()
+    {
+        _chartColumns = _scale switch
+        {
+            ChartScale.Day => BuildDayColumns(),
+            ChartScale.Week => BuildWeekColumns(),
+            ChartScale.Month => BuildMonthColumns(),
+            _ => []
+        };
+    }
+
+    private List<ChartColumn> BuildDayColumns()
+    {
+        var cols = new List<ChartColumn>();
+        for (var d = _chartStart; d <= _chartEnd; d = d.AddDays(1))
+        {
+            var isWeekend = d.DayOfWeek == DayOfWeek.Saturday || d.DayOfWeek == DayOfWeek.Sunday;
+            cols.Add(new ChartColumn(d.ToString("M/d"), d, isWeekend));
+        }
+        return cols;
+    }
+
+    private List<ChartColumn> BuildWeekColumns()
+    {
+        var cols = new List<ChartColumn>();
+        var weekStart = _chartStart;
+        while (weekStart.DayOfWeek != DayOfWeek.Monday)
+            weekStart = weekStart.AddDays(-1);
+
+        for (var d = weekStart; d <= _chartEnd; d = d.AddDays(7))
+        {
+            var weekEnd = d.AddDays(6);
+            cols.Add(new ChartColumn($"{d:M/d}〜{weekEnd:M/d}", d, false));
+        }
+        return cols;
+    }
+
+    private List<ChartColumn> BuildMonthColumns()
+    {
+        var cols = new List<ChartColumn>();
+        var monthStart = new DateOnly(_chartStart.Year, _chartStart.Month, 1);
+        var chartEndMonth = new DateOnly(_chartEnd.Year, _chartEnd.Month, 1);
+
+        for (var d = monthStart; d <= chartEndMonth; d = d.AddMonths(1))
+            cols.Add(new ChartColumn($"{d:M月}", d, false));
+
+        return cols;
+    }
+
+    private static IEnumerable<TaskNode> GetAllLeafNodes(List<TaskNode> nodes)
+    {
+        foreach (var node in nodes)
+        {
+            if (!node.HasChildren)
+                yield return node;
+            else
+                foreach (var leaf in GetAllLeafNodes(node.Children))
+                    yield return leaf;
+        }
     }
 
     // ===== ツリー構築 =====
@@ -188,12 +319,10 @@
 
         public bool HasChildren => Children.Count > 0;
 
-        // 親タスクの開始日 = 直接の子の DisplayStartDate の最小値
         public string? DisplayStartDate => HasChildren
             ? Children.Select(c => c.DisplayStartDate).Where(d => d is not null).Min()
             : Task.StartDate;
 
-        // 親タスクの終了日 = 直接の子の DisplayEndDate の最大値
         public string? DisplayEndDate => HasChildren
             ? Children.Select(c => c.DisplayEndDate).Where(d => d is not null).Max()
             : Task.EndDate;
