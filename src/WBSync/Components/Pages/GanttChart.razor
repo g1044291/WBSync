@@ -117,14 +117,32 @@
     </div>
 </div>
 
+<TaskEditModal IsOpen="_isTaskModalOpen"
+               Task="_taskModalTask"
+               ProjectId="ProjectId"
+               ParentId="_taskModalParentId"
+               Assignees="_allAssignees"
+               AllTasks="_allTasks"
+               OnClose="HandleTaskModalClose"
+               OnSaved="HandleTaskSaved"
+               OnDeleted="HandleTaskDeleted" />
+
 @code {
     [Parameter] public int ProjectId { get; set; }
 
     private string _projectName = string.Empty;
     private string _projectStartDate = string.Empty;
     private List<TaskNode> _taskRoots = [];
+    private List<WbsTask> _allTasks = [];
+    private List<Assignee> _allAssignees = [];
     private Dictionary<int, string> _assigneeNames = [];
     private HashSet<DateOnly> _globalHolidays = [];
+
+    // ===== モーダル状態 =====
+
+    private bool _isTaskModalOpen;
+    private WbsTask? _taskModalTask;
+    private int? _taskModalParentId;
 
     // ===== Chart scale & columns =====
 
@@ -149,7 +167,9 @@
 
         var tasks = await TaskRepo.GetByProjectAsync(ProjectId);
         var assignees = await AssigneeRepo.GetByProjectAsync(ProjectId);
+        _allAssignees = assignees;
         _assigneeNames = assignees.ToDictionary(a => a.Id, a => a.Name);
+        _allTasks = tasks;
         _taskRoots = BuildTree(tasks);
 
         var holidays = await GlobalHolidayRepo.GetAllAsync();
@@ -315,8 +335,42 @@
 
     private void GoBack() => Nav.NavigateTo("/");
     private void GoToAssignees() => Nav.NavigateTo($"/assignees/{ProjectId}");
-    private void AddTask() { /* task5-4 で実装 */ }
-    private void OnTaskRowClick(TaskNode node) { /* task5-5（S03）で実装 */ }
+
+    private void AddTask()
+    {
+        _taskModalTask = null;
+        _taskModalParentId = null;
+        _isTaskModalOpen = true;
+    }
+
+    private void OnTaskRowClick(TaskNode node)
+    {
+        _taskModalTask = node.Task;
+        _taskModalParentId = null;
+        _isTaskModalOpen = true;
+    }
+
+    private void HandleTaskModalClose() => _isTaskModalOpen = false;
+
+    private async Task HandleTaskSaved(WbsTask _)
+    {
+        _isTaskModalOpen = false;
+        await ReloadTasksAsync();
+    }
+
+    private async Task HandleTaskDeleted(int _)
+    {
+        _isTaskModalOpen = false;
+        await ReloadTasksAsync();
+    }
+
+    private async Task ReloadTasksAsync()
+    {
+        _allTasks = await TaskRepo.GetByProjectAsync(ProjectId);
+        _taskRoots = BuildTree(_allTasks);
+        CalculateChartPeriod();
+        BuildChartColumns();
+    }
 
     // ===== TaskNode =====
 
