@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using WBSync.Models;
+using WBSync.Services;
 
 namespace WBSync.Components.Pages;
 
@@ -19,6 +20,7 @@ public partial class GanttChart
     private Dictionary<int, string> _assigneeNames = [];
     private HashSet<DateOnly> _globalHolidays = [];
     private Dictionary<int, HashSet<DateOnly>> _assigneeHolidays = [];
+    private HashSet<int> _warningTaskIds = [];
 
     // ===== モーダル状態 =====
 
@@ -76,6 +78,7 @@ public partial class GanttChart
             .ToHashSet();
 
         await LoadAssigneeHolidaysAsync();
+        _warningTaskIds = await ScheduleService.GetOverlappingTaskIdsAsync(ProjectId);
 
         CalculateChartPeriod();
         BuildChartColumns();
@@ -388,6 +391,7 @@ public partial class GanttChart
     {
         _allTasks = await TaskRepo.GetByProjectAsync(ProjectId);
         _taskRoots = BuildTree(_allTasks);
+        _warningTaskIds = await ScheduleService.GetOverlappingTaskIdsAsync(ProjectId);
         CalculateChartPeriod();
         BuildChartColumns();
     }

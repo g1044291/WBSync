@@ -224,6 +224,13 @@
     min-width: 0;
 }
 
+.warn-icon {
+    font-size: 12px;
+    color: #f59e0b;
+    flex-shrink: 0;
+    cursor: default;
+}
+
 .empty-tasks {
     font-size: 13px;
     color: #9ca3af;

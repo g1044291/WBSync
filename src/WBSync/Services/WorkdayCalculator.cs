@@ -58,6 +58,34 @@ public class WorkdayCalculator
     }
 
     /// <summary>
+    /// 開始日から工数分の稼働日を列挙する。
+    /// 開始日自体を1日目としてカウントする。
+    /// 小数の工数は切り上げて日数に変換する（例：1.5人日 → 2日）。
+    /// </summary>
+    /// <param name="startDate">開始日。稼働日であることを前提とする。</param>
+    /// <param name="workDays">工数（人日）。0 以下の場合は空列挙を返す。</param>
+    /// <param name="assigneeId">個人休日を考慮する担当者ID。<see langword="null"/> の場合は個人休日を無視する。</param>
+    /// <returns>稼働日の列挙。</returns>
+    public IEnumerable<DateOnly> GetWorkdays(DateOnly startDate, double workDays, int? assigneeId = null)
+    {
+        if (workDays <= 0) yield break;
+
+        var days = (int)Math.Ceiling(workDays);
+        var current = startDate;
+        var counted = 0;
+
+        while (counted < days)
+        {
+            if (!IsHoliday(current, assigneeId))
+            {
+                yield return current;
+                counted++;
+            }
+            current = current.AddDays(1);
+        }
+    }
+
+    /// <summary>
     /// 開始日から工数分の稼働日をカウントして終了日を算出する。
     /// 開始日自体を1日目としてカウントする。
     /// 小数の工数は切り上げて日数に変換する（例：1.5人日 → 2日）。

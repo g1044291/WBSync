@@ -34,4 +34,12 @@ public interface IScheduleService
     /// <param name="projectId">対象プロジェクトID。</param>
     /// <param name="savedTask">保存されたタスク（最新の EndDate を持つこと）。</param>
     Task PropagateSuccessorsAsync(int projectId, WbsTask savedTask);
+
+    /// <summary>
+    /// 同一担当者で稼働日が1日以上重複するタスクの ID セットを返す。
+    /// 担当者未設定・開始日未設定・工数未設定のタスクは対象外。
+    /// </summary>
+    /// <param name="projectId">対象プロジェクトID。</param>
+    /// <returns>重複警告対象タスクIDのセット。</returns>
+    Task<HashSet<int>> GetOverlappingTaskIdsAsync(int projectId);
 }

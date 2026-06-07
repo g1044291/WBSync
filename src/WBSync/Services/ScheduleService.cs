@@ -75,6 +75,51 @@ public class ScheduleService(
         }
     }
 
+    /// <inheritdoc/>
+    public async Task<HashSet<int>> GetOverlappingTaskIdsAsync(int projectId)
+    {
+        var allTasks = await taskRepo.GetByProjectAsync(projectId);
+        var calculator = await BuildCalculatorForProjectAsync(allTasks);
+
+        var assigneeWorkdays = new Dictionary<int, List<(int TaskId, HashSet<DateOnly> Workdays)>>();
+
+        foreach (var task in allTasks)
+        {
+            if (!task.AssigneeId.HasValue) continue;
+            if (!DateOnly.TryParse(task.StartDate, out var startDate)) continue;
+            if (!task.WorkDays.HasValue) continue;
+
+            var workdays = calculator.GetWorkdays(startDate, task.WorkDays.Value, task.AssigneeId).ToHashSet();
+            if (workdays.Count == 0) continue;
+
+            if (!assigneeWorkdays.TryGetValue(task.AssigneeId.Value, out var list))
+            {
+                list = [];
+                assigneeWorkdays[task.AssigneeId.Value] = list;
+            }
+            list.Add((task.Id, workdays));
+        }
+
+        var warningIds = new HashSet<int>();
+
+        foreach (var (_, taskList) in assigneeWorkdays)
+        {
+            for (var i = 0; i < taskList.Count; i++)
+            {
+                for (var j = i + 1; j < taskList.Count; j++)
+                {
+                    if (taskList[i].Workdays.Overlaps(taskList[j].Workdays))
+                    {
+                        warningIds.Add(taskList[i].TaskId);
+                        warningIds.Add(taskList[j].TaskId);
+                    }
+                }
+            }
+        }
+
+        return warningIds;
+    }
+
     /// <summary>単一担当者の休日のみを含む <see cref="WorkdayCalculator"/> を生成する。</summary>
     private async Task<WorkdayCalculator> BuildCalculatorAsync(int? assigneeId)
     {
