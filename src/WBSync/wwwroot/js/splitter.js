@@ -1,3 +1,34 @@
+window.initSortable = (containerId, dotNetRef) => {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    new Sortable(container, {
+        animation: 150,
+        // WebView2 では HTML5 DnD が不安定なため SortableJS 独自実装を使用
+        forceFallback: true,
+        fallbackClass: 'task-row-dragging',
+        onStart: () => { dotNetRef.invokeMethodAsync('SetDragging', true); },
+        // 同一階層のみ許可：dragged と related の data-parent-id が一致しなければ移動不可
+        onMove: (evt) => {
+            if (!evt.related) return true;
+            const draggedParent = evt.dragged.dataset.parentId ?? '';
+            const relatedParent = evt.related.dataset.parentId ?? '';
+            return draggedParent === relatedParent;
+        },
+        onEnd: (evt) => {
+            dotNetRef.invokeMethodAsync('SetDragging', false);
+            // ドロップ後、同一 parent-id のすべての兄弟を順番に列挙してBlazorへ通知
+            const draggedParentId = evt.item.dataset.parentId ?? '';
+            const selector = draggedParentId === ''
+                ? '[data-parent-id=""]'
+                : `[data-parent-id="${draggedParentId}"]`;
+            const siblings = Array.from(container.querySelectorAll(selector));
+            const taskIds = siblings.map(el => parseInt(el.dataset.taskId, 10));
+            dotNetRef.invokeMethodAsync('OnSortOrderChanged', taskIds);
+        }
+    });
+};
+
 window.initScrollSync = (leftId, rightId) => {
     const left = document.getElementById(leftId);
     const right = document.getElementById(rightId);

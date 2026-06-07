@@ -168,8 +168,16 @@
     align-items: center;
     height: 36px;
     border-bottom: 1px solid #f3f4f6;
-    cursor: pointer;
+    cursor: grab;
     transition: background-color 0.1s;
+}
+
+/* SortableJS fallback モードでドラッグ中に付くクラス */
+.task-row-dragging {
+    opacity: 0.8;
+    background: #dbeafe;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    cursor: grabbing;
 }
 
 .task-row:hover,

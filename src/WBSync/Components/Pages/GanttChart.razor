@@ -46,7 +46,10 @@
                     {
                         var node = visibleNodes[i];
                         var idx = i;
-                        <div class="task-row @(_hoveredRowIndex == idx ? "row-hovered" : "")"
+                        <div @key="node.Task.Id"
+                             class="task-row @(_hoveredRowIndex == idx ? "row-hovered" : "")"
+                             data-task-id="@node.Task.Id"
+                             data-parent-id="@(node.Task.ParentId?.ToString() ?? "")"
                              @onmouseenter="() => SetHoveredRow(idx)"
                              @onmouseleave="() => SetHoveredRow(-1)"
                              @onclick="() => OnTaskRowClick(node)"
@@ -121,7 +124,8 @@
                             var node = visibleNodes[i];
                             var idx = i;
                             var barStyle = GetBarStyle(node);
-                            <div class="chart-task-row @(_hoveredRowIndex == idx ? "row-hovered" : "")"
+                            <div @key="node.Task.Id"
+                                 class="chart-task-row @(_hoveredRowIndex == idx ? "row-hovered" : "")"
                                  @onmouseenter="() => SetHoveredRow(idx)"
                                  @onmouseleave="() => SetHoveredRow(-1)">
                                 @foreach (var col in _chartColumns)

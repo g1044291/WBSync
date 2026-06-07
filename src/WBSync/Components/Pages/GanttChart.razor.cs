@@ -6,8 +6,9 @@ using WBSync.Services;
 
 namespace WBSync.Components.Pages;
 
+
 /// <summary>ガントチャート画面のコードビハインド。</summary>
-public partial class GanttChart
+public partial class GanttChart : IAsyncDisposable
 {
     /// <summary>表示するプロジェクトID。</summary>
     [Parameter] public int ProjectId { get; set; }
@@ -22,6 +23,8 @@ public partial class GanttChart
     private Dictionary<int, HashSet<DateOnly>> _assigneeHolidays = [];
     private HashSet<int> _warningTaskIds = [];
     private int _hoveredRowIndex = -1;
+    private bool _isDragging;
+    private DotNetObjectReference<GanttChart>? _dotNetRef;
 
     // ===== モーダル状態 =====
 
@@ -92,7 +95,16 @@ public partial class GanttChart
         {
             await JS.InvokeVoidAsync("initSplitter", "gantt-splitter", "task-pane", 320, 800);
             await JS.InvokeVoidAsync("initScrollSync", "task-pane-rows", "chart-pane");
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("initSortable", "task-pane-rows", _dotNetRef);
         }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask DisposeAsync()
+    {
+        _dotNetRef?.Dispose();
+        await ValueTask.CompletedTask;
     }
 
     // ===== Scale management =====
@@ -295,6 +307,21 @@ public partial class GanttChart
         return DateOnly.TryParse(date, out var d) ? d.ToString("M/d") : date;
     }
 
+    // ===== D&D 並び替え =====
+
+    /// <summary>SortableJS からドロップ完了時に呼び出され、兄弟タスクの表示順を DB に保存する。</summary>
+    /// <param name="taskIds">新しい順序の兄弟タスクIDリスト。</param>
+    [JSInvokable]
+    public async Task OnSortOrderChanged(int[] taskIds)
+    {
+        for (var i = 0; i < taskIds.Length; i++)
+            await TaskRepo.UpdateSortOrderAsync(taskIds[i], i);
+
+        _allTasks = await TaskRepo.GetByProjectAsync(ProjectId);
+        _taskRoots = BuildTree(_allTasks);
+        await InvokeAsync(StateHasChanged);
+    }
+
     // ===== ナビゲーション・操作 =====
 
     /// <summary>プロジェクト一覧に戻る。</summary>
@@ -402,9 +429,18 @@ public partial class GanttChart
 
     // ===== 行ホバー =====
 
-    /// <summary>ホバー行インデックスを更新する。</summary>
+    /// <summary>ホバー行インデックスを更新する。ドラッグ中は無視する。</summary>
     /// <param name="index">ホバー中の行インデックス。-1 でホバーなし。</param>
-    private void SetHoveredRow(int index) => _hoveredRowIndex = index;
+    private void SetHoveredRow(int index)
+    {
+        if (_isDragging) return;
+        _hoveredRowIndex = index;
+    }
+
+    /// <summary>SortableJS からドラッグ開始・終了を受け取り再レンダリング競合を防ぐ。</summary>
+    /// <param name="dragging">ドラッグ中なら <see langword="true"/>。</param>
+    [JSInvokable]
+    public void SetDragging(bool dragging) => _isDragging = dragging;
 
     // ===== タスクバー描画 =====
 
