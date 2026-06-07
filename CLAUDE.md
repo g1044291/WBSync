@@ -122,6 +122,16 @@ global_holidays  # アプリ全体の祝日
 - C#クラス名・変数名・フィールド名に使わない（`s01State` や `_s02Data` などは不可）
 - ボタンラベル・画面テキスト等に表示しない
 
+### XMLコメント
+
+C# のクラス・メソッド・プロパティには必ず XML ドキュメントコメント（`///`）を付ける。
+
+```csharp
+/// <summary>担当者の個人休日一覧を取得する。</summary>
+/// <param name="assigneeId">担当者ID。</param>
+Task<List<AssigneeHoliday>> GetByAssigneeAsync(int assigneeId);
+```
+
 ## 重要設計ドキュメント
 
 - [doc/requirements.md](doc/requirements.md) — 機能要件・非機能要件
