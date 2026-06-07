@@ -3,6 +3,7 @@
 @inject ITaskRepository TaskRepo
 @inject IAssigneeRepository AssigneeRepo
 @inject IGlobalHolidayRepository GlobalHolidayRepo
+@inject IAssigneeHolidayRepository AssigneeHolidayRepo
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
@@ -109,7 +110,7 @@
                             <div class="chart-task-row">
                                 @foreach (var col in _chartColumns)
                                 {
-                                    <div class="chart-col-cell @(col.IsWeekend || col.IsHoliday ? "col-weekend" : "")"></div>
+                                    <div class="chart-col-cell @GetCellClass(node, col)"></div>
                                 }
                             </div>
                         }
@@ -159,6 +160,7 @@
     private List<Assignee> _allAssignees = [];
     private Dictionary<int, string> _assigneeNames = [];
     private HashSet<DateOnly> _globalHolidays = [];
+    private Dictionary<int, HashSet<DateOnly>> _assigneeHolidays = [];
 
     // ===== モーダル状態 =====
 
@@ -211,6 +213,8 @@
             .Where(d => d.HasValue)
             .Select(d => d!.Value)
             .ToHashSet();
+
+        await LoadAssigneeHolidaysAsync();
 
         CalculateChartPeriod();
         BuildChartColumns();
@@ -353,7 +357,36 @@
 
     private void ToggleExpand(TaskNode node) => node.IsExpanded = !node.IsExpanded;
 
+    // ===== 個人休日ロード =====
+
+    private async Task LoadAssigneeHolidaysAsync()
+    {
+        _assigneeHolidays = [];
+        foreach (var assignee in _allAssignees)
+        {
+            var ah = await AssigneeHolidayRepo.GetByAssigneeAsync(assignee.Id);
+            _assigneeHolidays[assignee.Id] = ah
+                .Select(h => DateOnly.TryParse(h.Date, out var d) ? d : (DateOnly?)null)
+                .Where(d => d.HasValue)
+                .Select(d => d!.Value)
+                .ToHashSet();
+        }
+    }
+
     // ===== 表示ヘルパー =====
+
+    private string GetCellClass(TaskNode node, ChartColumn col)
+    {
+        if (col.IsWeekend || col.IsHoliday)
+            return "col-weekend";
+        if (_scale == ChartScale.Day
+            && !node.HasChildren
+            && node.Task.AssigneeId.HasValue
+            && _assigneeHolidays.TryGetValue(node.Task.AssigneeId.Value, out var ah)
+            && ah.Contains(col.Date))
+            return "col-personal-holiday";
+        return string.Empty;
+    }
 
     private string GetAssigneeName(int? assigneeId)
         => assigneeId.HasValue && _assigneeNames.TryGetValue(assigneeId.Value, out var name) ? name : "-";

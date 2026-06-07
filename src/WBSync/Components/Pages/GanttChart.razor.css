@@ -331,9 +331,14 @@
     border-right: none;
 }
 
-/* Weekend highlight */
+/* Weekend / global holiday highlight */
 .col-weekend {
     background-color: #fef2f2;
+}
+
+/* Personal holiday highlight (leaf row only, day scale) */
+.col-personal-holiday {
+    background-color: #fff7ed;
 }
 
 /* ===== Context menu ===== */
