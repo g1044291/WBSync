@@ -139,6 +139,34 @@ public partial class TaskEditModal
     }
 
     /// <summary>
+    /// 開始日変更時に工数が設定されていれば終了日を再計算する。
+    /// </summary>
+    /// <param name="d">新しい開始日。</param>
+    private async Task HandleStartDateChanged(DateOnly? d)
+    {
+        _startDate = d;
+        _isDirty = true;
+
+        var workDays = ParseWorkDays();
+        if (_startDate.HasValue && workDays.HasValue)
+            _endDate = await ScheduleService.CalcEndDateAsync(_startDate.Value, workDays.Value, _assignee?.Id);
+    }
+
+    /// <summary>
+    /// 工数変更時に開始日が設定されていれば終了日を再計算する。
+    /// </summary>
+    /// <param name="e">変更イベント。</param>
+    private async Task HandleWorkDaysChanged(ChangeEventArgs e)
+    {
+        _workDaysStr = e.Value?.ToString() ?? string.Empty;
+        _isDirty = true;
+
+        var workDays = ParseWorkDays();
+        if (_startDate.HasValue && workDays.HasValue)
+            _endDate = await ScheduleService.CalcEndDateAsync(_startDate.Value, workDays.Value, _assignee?.Id);
+    }
+
+    /// <summary>
     /// 先行タスク選択変更時に開始日・終了日を自動計算する。
     /// 先行タスクの EndDate が未設定の場合は自動計算をスキップする。
     /// </summary>
@@ -255,6 +283,7 @@ public partial class TaskEditModal
                 saved = await TaskRepo.UpdateAsync(Task);
             }
 
+            await ScheduleService.PropagateSuccessorsAsync(ProjectId, saved);
             _isDirty = false;
             await OnSaved.InvokeAsync(saved);
         }
