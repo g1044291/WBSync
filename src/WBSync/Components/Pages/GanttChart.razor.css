@@ -326,6 +326,7 @@
     display: flex;
     height: 36px;
     border-bottom: 1px solid #f3f4f6;
+    position: relative;
 }
 
 .chart-col-cell {
@@ -395,6 +396,38 @@
     height: 1px;
     background: #e5e7eb;
     margin: 4px 0;
+}
+
+/* ===== Task bars ===== */
+
+.task-bar {
+    position: absolute;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+/* 末端タスク：薄青背景＋進捗塗りつぶし */
+.task-bar-leaf {
+    top: 9px;
+    height: 18px;
+    border-radius: 4px;
+    background: #bfdbfe;
+    border: 1px solid #60a5fa;
+    box-sizing: border-box;
+}
+
+.task-bar-progress {
+    height: 100%;
+    background: #3b82f6;
+}
+
+/* 親タスク：細くてダーク */
+.task-bar-parent {
+    top: 14px;
+    height: 8px;
+    border-radius: 1px;
+    background: #374151;
 }
 
 /* Scale-specific column widths */

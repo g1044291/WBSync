@@ -112,10 +112,24 @@
                     <div class="chart-rows-area" id="chart-rows-area">
                         @foreach (var node in GetVisibleNodes(_taskRoots))
                         {
+                            var barStyle = GetBarStyle(node);
                             <div class="chart-task-row">
                                 @foreach (var col in _chartColumns)
                                 {
                                     <div class="chart-col-cell @GetCellClass(node, col)"></div>
+                                }
+                                @if (barStyle is not null)
+                                {
+                                    @if (node.HasChildren)
+                                    {
+                                        <div class="task-bar task-bar-parent" style="@barStyle"></div>
+                                    }
+                                    else
+                                    {
+                                        <div class="task-bar task-bar-leaf" style="@barStyle">
+                                            <div class="task-bar-progress" style="width:@(node.Task.Progress)%"></div>
+                                        </div>
+                                    }
                                 }
                             </div>
                         }

@@ -396,6 +396,62 @@ public partial class GanttChart
         BuildChartColumns();
     }
 
+    // ===== タスクバー描画 =====
+
+    /// <summary>タスクバーの CSS インラインスタイル（left・width）を返す。描画不可の場合は <see langword="null"/>。</summary>
+    /// <param name="node">対象タスクノード。</param>
+    private string? GetBarStyle(TaskNode node)
+    {
+        var startStr = node.DisplayStartDate;
+        var endStr = node.DisplayEndDate;
+        if (string.IsNullOrEmpty(startStr) || string.IsNullOrEmpty(endStr)) return null;
+        if (!DateOnly.TryParse(startStr, out var start)) return null;
+        if (!DateOnly.TryParse(endStr, out var end)) return null;
+        if (start > end) return null;
+
+        var left = GetPixelOffset(start);
+        var width = GetPixelOffset(end.AddDays(1)) - left;
+        if (width <= 0) return null;
+
+        return $"left:{left:F1}px;width:{width:F1}px";
+    }
+
+    /// <summary>指定日のチャート左端からのピクセルオフセットを返す。</summary>
+    /// <param name="date">対象日付。</param>
+    private double GetPixelOffset(DateOnly date) => _scale switch
+    {
+        ChartScale.Day => (date.DayNumber - _chartStart.DayNumber) * 32.0,
+        ChartScale.Week => (date.DayNumber - GetWeekStart(_chartStart).DayNumber) * (80.0 / 7.0),
+        ChartScale.Month => GetMonthPixelOffset(date),
+        _ => 0
+    };
+
+    /// <summary>月スケール用のピクセルオフセットを計算する。</summary>
+    /// <param name="date">対象日付。</param>
+    private double GetMonthPixelOffset(DateOnly date)
+    {
+        var origin = new DateOnly(_chartStart.Year, _chartStart.Month, 1);
+        var cur = origin;
+        var px = 0.0;
+        while (new DateOnly(date.Year, date.Month, 1) > cur)
+        {
+            px += 90.0;
+            cur = cur.AddMonths(1);
+        }
+        px += (date.Day - 1) * (90.0 / DateTime.DaysInMonth(date.Year, date.Month));
+        return px;
+    }
+
+    /// <summary>指定日を含む週の月曜日を返す。</summary>
+    /// <param name="date">起点の日付。</param>
+    private static DateOnly GetWeekStart(DateOnly date)
+    {
+        var d = date;
+        while (d.DayOfWeek != DayOfWeek.Monday)
+            d = d.AddDays(-1);
+        return d;
+    }
+
     // ===== TaskNode =====
 
     /// <summary>ガントチャートのツリー表示用ノード。</summary>
