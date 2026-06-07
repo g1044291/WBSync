@@ -45,16 +45,25 @@
             </div>
         </div>
 
-        <div class="form-row">
-            <div class="form-group form-group-half">
-                <label class="form-label">開始日</label>
-                <DatePicker Value="_startDate" ValueChanged="HandleStartDateChanged" />
+        @if (_isParent)
+        {
+            <div class="form-group">
+                <p class="parent-date-note">開始日・終了日は子タスクの日付から自動計算されます</p>
             </div>
-            <div class="form-group form-group-half">
-                <label class="form-label">終了日</label>
-                <DatePicker Value="_endDate" ValueChanged="d => { _endDate = d; _isDirty = true; }" />
+        }
+        else
+        {
+            <div class="form-row">
+                <div class="form-group form-group-half">
+                    <label class="form-label">開始日</label>
+                    <DatePicker Value="_startDate" ValueChanged="HandleStartDateChanged" />
+                </div>
+                <div class="form-group form-group-half">
+                    <label class="form-label">終了日</label>
+                    <DatePicker Value="_endDate" ValueChanged="d => { _endDate = d; _isDirty = true; }" />
+                </div>
             </div>
-        </div>
+        }
 
         <div class="form-group">
             <label class="form-label">先行タスク</label>

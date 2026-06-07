@@ -36,6 +36,9 @@ public partial class TaskEditModal
     private string _title => Task is null ? "タスクを追加" : "タスクを編集";
     private string _deleteMessage => $"「{Task?.Name}」およびその配下のタスクをすべて削除します。この操作は元に戻せません。";
 
+    /// <summary>編集中のタスクが子タスクを持つ親タスクかどうか。</summary>
+    private bool _isParent => Task is not null && AllTasks.Any(t => t.ParentId == Task.Id);
+
     // フォーム状態
     private string _name = string.Empty;
     private WbsTask? _parent;
@@ -262,6 +265,18 @@ public partial class TaskEditModal
                     Notes = string.IsNullOrWhiteSpace(_notes) ? null : _notes.Trim(),
                     SortOrder = sortOrder
                 });
+
+                // 新規タスクの親になったタスクの日付をDBからクリアする
+                if (newParentId.HasValue)
+                {
+                    var parentTask = AllTasks.FirstOrDefault(t => t.Id == newParentId.Value);
+                    if (parentTask is not null && (parentTask.StartDate is not null || parentTask.EndDate is not null))
+                    {
+                        parentTask.StartDate = null;
+                        parentTask.EndDate = null;
+                        await TaskRepo.UpdateAsync(parentTask);
+                    }
+                }
             }
             else
             {
@@ -274,8 +289,9 @@ public partial class TaskEditModal
                 Task.Name = _name.Trim();
                 Task.AssigneeId = _assignee?.Id;
                 Task.WorkDays = workDays;
-                Task.StartDate = _startDate?.ToString("yyyy-MM-dd");
-                Task.EndDate = _endDate?.ToString("yyyy-MM-dd");
+                // 親タスクの日付はDBに保存しない
+                Task.StartDate = _isParent ? null : _startDate?.ToString("yyyy-MM-dd");
+                Task.EndDate = _isParent ? null : _endDate?.ToString("yyyy-MM-dd");
                 Task.PredecessorId = _predecessor?.Id;
                 Task.Status = _status;
                 Task.Progress = _progress;
