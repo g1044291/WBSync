@@ -118,12 +118,14 @@ public partial class TaskEditModal
         return AllTasks.Where(t => !excludeIds.Contains(t.Id)).ToList();
     }
 
-    /// <summary>先行タスク選択肢を構築する。自タスクとその子孫を除外する。</summary>
+    /// <summary>先行タスク選択肢を構築する。自タスク・子孫・循環依存となるタスクを除外する。</summary>
     private List<WbsTask> BuildPredecessorCandidates()
     {
         if (Task is null) return [.. AllTasks];
         var excludeIds = GetDescendantIds(Task.Id);
         excludeIds.Add(Task.Id);
+        foreach (var id in GetSuccessorIds(Task.Id))
+            excludeIds.Add(id);
         return AllTasks.Where(t => !excludeIds.Contains(t.Id)).ToList();
     }
 
@@ -137,6 +139,25 @@ public partial class TaskEditModal
             result.Add(child.Id);
             foreach (var id in GetDescendantIds(child.Id))
                 result.Add(id);
+        }
+        return result;
+    }
+
+    /// <summary>指定タスクが先行となる後続タスクID をすべて返す（循環依存検出用）。</summary>
+    /// <param name="taskId">起点タスクID。</param>
+    private HashSet<int> GetSuccessorIds(int taskId)
+    {
+        var result = new HashSet<int>();
+        var queue = new Queue<int>();
+        queue.Enqueue(taskId);
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            foreach (var t in AllTasks.Where(t => t.PredecessorId == current))
+            {
+                if (result.Add(t.Id))
+                    queue.Enqueue(t.Id);
+            }
         }
         return result;
     }
@@ -234,6 +255,18 @@ public partial class TaskEditModal
         if (string.IsNullOrWhiteSpace(_name))
         {
             _error = "タスク名を入力してください";
+            return;
+        }
+
+        if (!_isParent && _startDate is null)
+        {
+            _error = "開始日を入力してください";
+            return;
+        }
+
+        if (_progress < 0 || _progress > 100)
+        {
+            _error = "進捗率は0〜100の範囲で入力してください";
             return;
         }
 
