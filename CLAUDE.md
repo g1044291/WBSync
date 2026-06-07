@@ -138,3 +138,14 @@ Task<List<AssigneeHoliday>> GetByAssigneeAsync(int assigneeId);
 - [doc/db_design.md](doc/db_design.md) — テーブル定義・DDL・ER図
 - [doc/ui_design.md](doc/ui_design.md) — 画面レイアウト・画面遷移・共通ルール
 - [doc/task.md](doc/task.md) — 大タスク一覧と実装順序
+
+### ドキュメント更新ルール
+
+**各タスクの実装完了時に、必ず以下のドキュメントを最新化すること。**
+
+| ドキュメント | 更新が必要な変更の例 |
+|-------------|-------------------|
+| [doc/requirements.md](doc/requirements.md) | 機能の追加・変更・削除、仕様の確定・変更 |
+| [doc/ui_design.md](doc/ui_design.md) | 画面レイアウト・遷移・コンポーネントの変更 |
+
+チェックリストのタスクを完了にマークする前に、上記ドキュメントへの反映が済んでいることを確認する。
