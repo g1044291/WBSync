@@ -1,6 +1,5 @@
 @page "/assignees/{ProjectId:int}"
 @inject IAssigneeRepository AssigneeRepo
-@inject IProjectRepository ProjectRepo
 @inject NavigationManager Nav
 
 <Modal IsOpen="_addModalOpen" Title="担当者を追加" OnClose="CloseAddModal">
