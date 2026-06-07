@@ -1,3 +1,25 @@
+window.initScrollSync = (leftId, rightId) => {
+    const left = document.getElementById(leftId);
+    const right = document.getElementById(rightId);
+    if (!left || !right) return;
+
+    let syncing = false;
+
+    left.addEventListener('scroll', () => {
+        if (syncing) return;
+        syncing = true;
+        right.scrollTop = left.scrollTop;
+        syncing = false;
+    });
+
+    right.addEventListener('scroll', () => {
+        if (syncing) return;
+        syncing = true;
+        left.scrollTop = right.scrollTop;
+        syncing = false;
+    });
+};
+
 window.initSplitter = (splitterId, leftPaneId, minWidth, maxWidth) => {
     const splitter = document.getElementById(splitterId);
     const leftPane = document.getElementById(leftPaneId);

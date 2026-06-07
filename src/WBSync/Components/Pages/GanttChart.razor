@@ -39,7 +39,7 @@
                     <div class="col col-status">ステータス</div>
                     <div class="col col-progress">進捗</div>
                 </div>
-                <div class="task-pane-rows">
+                <div class="task-pane-rows" id="task-pane-rows">
                     @foreach (var node in GetVisibleNodes(_taskRoots))
                     {
                         <div class="task-row"

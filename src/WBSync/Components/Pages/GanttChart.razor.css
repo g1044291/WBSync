@@ -320,6 +320,8 @@
 
 .chart-rows-area {
     flex: 1;
+    /* 左ペインのフッター分スクロール量を合わせる */
+    padding-bottom: 41px;
 }
 
 .chart-task-row {

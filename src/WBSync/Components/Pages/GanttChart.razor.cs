@@ -88,7 +88,10 @@ public partial class GanttChart
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
+        {
             await JS.InvokeVoidAsync("initSplitter", "gantt-splitter", "task-pane", 320, 800);
+            await JS.InvokeVoidAsync("initScrollSync", "task-pane-rows", "chart-pane");
+        }
     }
 
     // ===== Scale management =====
