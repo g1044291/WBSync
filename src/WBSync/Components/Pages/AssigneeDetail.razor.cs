@@ -56,6 +56,10 @@ public partial class AssigneeDetail
             await AssigneeRepo.UpdateAsync(_assignee);
             _nameSaved = true;
         }
+        catch (Exception ex)
+        {
+            _nameError = $"エラーが発生しました: {ex.InnerException?.Message ?? ex.Message}";
+        }
         finally
         {
             _nameSaving = false;
@@ -115,8 +119,15 @@ public partial class AssigneeDetail
     /// <param name="holidayId">削除する休日ID。</param>
     private async Task DeleteHoliday(int holidayId)
     {
-        await HolidayRepo.DeleteAsync(holidayId);
-        _holidays = await HolidayRepo.GetByAssigneeAsync(AssigneeId);
+        try
+        {
+            await HolidayRepo.DeleteAsync(holidayId);
+            _holidays = await HolidayRepo.GetByAssigneeAsync(AssigneeId);
+        }
+        catch (Exception ex)
+        {
+            _holidayError = $"削除に失敗しました: {ex.InnerException?.Message ?? ex.Message}";
+        }
     }
 
     /// <summary>日付文字列を表示用にフォーマットする。</summary>

@@ -59,6 +59,12 @@ public partial class AssigneeList
             _addModalOpen = false;
             _assignees = await AssigneeRepo.GetByProjectAsync(ProjectId);
         }
+        catch (Exception ex)
+        {
+            _error = ex.InnerException?.Message.Contains("UNIQUE") == true
+                ? "同じ名前の担当者がすでに登録されています"
+                : $"エラーが発生しました: {ex.InnerException?.Message ?? ex.Message}";
+        }
         finally
         {
             _saving = false;

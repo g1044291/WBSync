@@ -7,6 +7,30 @@
     background: #fff;
 }
 
+/* ===== Page error banner ===== */
+
+.page-error-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: #fef2f2;
+    border-bottom: 1px solid #fca5a5;
+    font-size: 13px;
+    color: #b91c1c;
+    flex-shrink: 0;
+}
+
+.page-error-close {
+    background: none;
+    border: none;
+    color: #b91c1c;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+
 /* ===== Header ===== */
 
 .gantt-header {

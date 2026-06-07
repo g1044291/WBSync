@@ -58,6 +58,12 @@ public partial class ProjectCreateModal
             Reset();
             await OnCreated.InvokeAsync(project);
         }
+        catch (Exception ex)
+        {
+            _error = ex.InnerException?.Message.Contains("UNIQUE") == true
+                ? "同じ名前のプロジェクトがすでに登録されています"
+                : $"エラーが発生しました: {ex.InnerException?.Message ?? ex.Message}";
+        }
         finally
         {
             _saving = false;

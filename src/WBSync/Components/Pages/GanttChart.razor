@@ -29,6 +29,14 @@
         </div>
     </header>
 
+    @if (_pageError is not null)
+    {
+        <div class="page-error-banner">
+            <span>@_pageError</span>
+            <button class="page-error-close" @onclick="() => _pageError = null">×</button>
+        </div>
+    }
+
     <div class="gantt-body">
         <div id="task-pane" class="task-pane">
             <div class="task-pane-scroll">

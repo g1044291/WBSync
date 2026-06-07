@@ -87,8 +87,15 @@ public partial class HolidaySettingsModal
     /// <param name="holidayId">削除する休日ID。</param>
     private async Task DeleteHoliday(int holidayId)
     {
-        await HolidayRepo.DeleteAsync(holidayId);
-        _holidays = await HolidayRepo.GetAllAsync();
+        try
+        {
+            await HolidayRepo.DeleteAsync(holidayId);
+            _holidays = await HolidayRepo.GetAllAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = $"削除に失敗しました: {ex.InnerException?.Message ?? ex.Message}";
+        }
     }
 
     /// <summary>日付文字列を表示用にフォーマットする。</summary>

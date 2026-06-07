@@ -22,6 +22,7 @@ public partial class GanttChart : IAsyncDisposable
     private HashSet<DateOnly> _globalHolidays = [];
     private Dictionary<int, HashSet<DateOnly>> _assigneeHolidays = [];
     private HashSet<int> _warningTaskIds = [];
+    private string? _pageError;
     private int _hoveredRowIndex = -1;
     private bool _isDragging;
     private DotNetObjectReference<GanttChart>? _dotNetRef;
@@ -393,9 +394,17 @@ public partial class GanttChart : IAsyncDisposable
     {
         if (_ctxNode is null) return;
         _showCtxDeleteConfirm = false;
-        await TaskRepo.DeleteAsync(_ctxNode.Task.Id);
-        _ctxNode = null;
-        await ReloadTasksAsync();
+        try
+        {
+            await TaskRepo.DeleteAsync(_ctxNode.Task.Id);
+            _ctxNode = null;
+            await ReloadTasksAsync();
+        }
+        catch (Exception ex)
+        {
+            _ctxNode = null;
+            _pageError = $"削除に失敗しました: {ex.InnerException?.Message ?? ex.Message}";
+        }
     }
 
     /// <summary>タスク編集モーダルを閉じる。</summary>

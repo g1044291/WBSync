@@ -1,3 +1,18 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 
-@Body
+<ErrorBoundary @ref="_errorBoundary">
+    <ChildContent>
+        @Body
+    </ChildContent>
+    <ErrorContent Context="ex">
+        <div class="error-boundary-page">
+            <p class="error-boundary-title">予期しないエラーが発生しました</p>
+            <p class="error-boundary-message">@ex.Message</p>
+            <button class="error-boundary-btn" @onclick="() => _errorBoundary?.Recover()">再試行</button>
+        </div>
+    </ErrorContent>
+</ErrorBoundary>
+
+@code {
+    private ErrorBoundary? _errorBoundary;
+}
