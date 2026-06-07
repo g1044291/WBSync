@@ -172,7 +172,12 @@
     transition: background-color 0.1s;
 }
 
-.task-row:hover {
+.task-row:hover,
+.task-row.row-hovered {
+    background: #eff6ff;
+}
+
+.chart-task-row.row-hovered {
     background: #eff6ff;
 }
 

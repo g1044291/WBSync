@@ -21,6 +21,7 @@ public partial class GanttChart
     private HashSet<DateOnly> _globalHolidays = [];
     private Dictionary<int, HashSet<DateOnly>> _assigneeHolidays = [];
     private HashSet<int> _warningTaskIds = [];
+    private int _hoveredRowIndex = -1;
 
     // ===== モーダル状態 =====
 
@@ -398,6 +399,12 @@ public partial class GanttChart
         CalculateChartPeriod();
         BuildChartColumns();
     }
+
+    // ===== 行ホバー =====
+
+    /// <summary>ホバー行インデックスを更新する。</summary>
+    /// <param name="index">ホバー中の行インデックス。-1 でホバーなし。</param>
+    private void SetHoveredRow(int index) => _hoveredRowIndex = index;
 
     // ===== タスクバー描画 =====
 

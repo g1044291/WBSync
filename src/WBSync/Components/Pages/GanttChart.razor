@@ -8,6 +8,8 @@
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
+@{ var visibleNodes = GetVisibleNodes(_taskRoots).ToList(); }
+
 <div class="gantt-page">
     <header class="gantt-header">
         <div class="gantt-header-left">
@@ -40,9 +42,13 @@
                     <div class="col col-progress">進捗</div>
                 </div>
                 <div class="task-pane-rows" id="task-pane-rows">
-                    @foreach (var node in GetVisibleNodes(_taskRoots))
+                    @for (var i = 0; i < visibleNodes.Count; i++)
                     {
-                        <div class="task-row"
+                        var node = visibleNodes[i];
+                        var idx = i;
+                        <div class="task-row @(_hoveredRowIndex == idx ? "row-hovered" : "")"
+                             @onmouseenter="() => SetHoveredRow(idx)"
+                             @onmouseleave="() => SetHoveredRow(-1)"
                              @onclick="() => OnTaskRowClick(node)"
                              @oncontextmenu:preventDefault="true"
                              @oncontextmenu="e => ShowContextMenu(e, node)">
@@ -110,10 +116,14 @@
                         }
                     </div>
                     <div class="chart-rows-area" id="chart-rows-area">
-                        @foreach (var node in GetVisibleNodes(_taskRoots))
+                        @for (var i = 0; i < visibleNodes.Count; i++)
                         {
+                            var node = visibleNodes[i];
+                            var idx = i;
                             var barStyle = GetBarStyle(node);
-                            <div class="chart-task-row">
+                            <div class="chart-task-row @(_hoveredRowIndex == idx ? "row-hovered" : "")"
+                                 @onmouseenter="() => SetHoveredRow(idx)"
+                                 @onmouseleave="() => SetHoveredRow(-1)">
                                 @foreach (var col in _chartColumns)
                                 {
                                     <div class="chart-col-cell @GetCellClass(node, col)"></div>
