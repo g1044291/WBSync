@@ -3,14 +3,25 @@ using WBSync.Models;
 
 namespace WBSync.Data;
 
+/// <summary>アプリケーションの EF Core データベースコンテキスト。</summary>
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
+    /// <summary>プロジェクトテーブル。</summary>
     public DbSet<Project> Projects => Set<Project>();
+
+    /// <summary>担当者テーブル。</summary>
     public DbSet<Assignee> Assignees => Set<Assignee>();
+
+    /// <summary>タスクテーブル。</summary>
     public DbSet<WbsTask> Tasks => Set<WbsTask>();
+
+    /// <summary>全体休日テーブル。</summary>
     public DbSet<GlobalHoliday> GlobalHolidays => Set<GlobalHoliday>();
+
+    /// <summary>担当者個人休日テーブル。</summary>
     public DbSet<AssigneeHoliday> AssigneeHolidays => Set<AssigneeHoliday>();
 
+    /// <inheritdoc/>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

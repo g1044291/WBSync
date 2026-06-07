@@ -2,8 +2,10 @@ using WBSync.Models;
 
 namespace WBSync.Components.Pages;
 
+/// <summary>DB 動作確認画面のコードビハインド。</summary>
 public partial class DbDemo
 {
+    /// <summary>プロジェクト一覧に戻る。</summary>
     private void GoBack() => Nav.NavigateTo("/");
 
     private readonly List<string> _statuses = ["未着手", "進行中", "完了", "保留"];
@@ -14,6 +16,7 @@ public partial class DbDemo
     private DateOnly? _pjDate = DateOnly.FromDateTime(DateTime.Today);
     private string? _pjError;
 
+    /// <inheritdoc/>
     protected override async Task OnInitializedAsync()
     {
         _projects = await ProjectRepo.GetAllAsync();
@@ -21,6 +24,7 @@ public partial class DbDemo
         await RefreshAllAssignees();
     }
 
+    /// <summary>プロジェクトを作成する。</summary>
     private async Task CreateProject()
     {
         _pjError = null;
@@ -46,12 +50,14 @@ public partial class DbDemo
     private int? _editAsgId;
     private string _editAsgName = string.Empty;
 
+    /// <summary>選択中プロジェクトの担当者一覧を読み込む。</summary>
     private async Task LoadAssignees()
     {
         _editAsgId = null;
         _assignees = _asgPjId > 0 ? await AssigneeRepo.GetByProjectAsync(_asgPjId) : [];
     }
 
+    /// <summary>担当者を作成する。</summary>
     private async Task CreateAssignee()
     {
         _asgError = null;
@@ -63,9 +69,15 @@ public partial class DbDemo
         await RefreshAllAssignees();
     }
 
+    /// <summary>担当者の編集モードを開始する。</summary>
+    /// <param name="a">編集対象の担当者。</param>
     private void StartEditAssignee(Assignee a) { _editAsgId = a.Id; _editAsgName = a.Name; }
+
+    /// <summary>担当者の編集をキャンセルする。</summary>
     private void CancelEditAssignee() => _editAsgId = null;
 
+    /// <summary>担当者の編集を保存する。</summary>
+    /// <param name="a">保存対象の担当者。</param>
     private async Task SaveAssignee(Assignee a)
     {
         a.Name = _editAsgName.Trim();
@@ -75,6 +87,8 @@ public partial class DbDemo
         await RefreshAllAssignees();
     }
 
+    /// <summary>担当者を削除する。</summary>
+    /// <param name="id">削除する担当者ID。</param>
     private async Task DeleteAssignee(int id)
     {
         await AssigneeRepo.DeleteAsync(id);
@@ -82,6 +96,8 @@ public partial class DbDemo
         await RefreshAllAssignees();
     }
 
+    /// <summary>担当者を一つ上に移動する。</summary>
+    /// <param name="a">移動対象の担当者。</param>
     private async Task MoveAssigneeUp(Assignee a)
     {
         var idx = _assignees.FindIndex(x => x.Id == a.Id);
@@ -91,6 +107,8 @@ public partial class DbDemo
         _assignees = await AssigneeRepo.GetByProjectAsync(_asgPjId);
     }
 
+    /// <summary>担当者を一つ下に移動する。</summary>
+    /// <param name="a">移動対象の担当者。</param>
     private async Task MoveAssigneeDown(Assignee a)
     {
         var idx = _assignees.FindIndex(x => x.Id == a.Id);
@@ -100,12 +118,14 @@ public partial class DbDemo
         _assignees = await AssigneeRepo.GetByProjectAsync(_asgPjId);
     }
 
+    /// <summary>担当者一覧の表示順を DB に保存する。</summary>
     private async Task SaveAssigneeSortOrders()
     {
         for (int i = 0; i < _assignees.Count; i++)
             await AssigneeRepo.UpdateSortOrderAsync(_assignees[i].Id, i);
     }
 
+    /// <summary>全プロジェクトの担当者一覧を再読み込みする。</summary>
     private async Task RefreshAllAssignees()
     {
         _allAssignees = [];
@@ -127,12 +147,14 @@ public partial class DbDemo
     private string _editTaskStatus = "未着手";
     private int _editTaskProgress;
 
+    /// <summary>選択中プロジェクトのタスク一覧を読み込む。</summary>
     private async Task LoadTasks()
     {
         _editTaskId = null;
         _tasks = _taskPjId > 0 ? await TaskRepo.GetByProjectAsync(_taskPjId) : [];
     }
 
+    /// <summary>タスクを作成する。</summary>
     private async Task CreateTask()
     {
         _taskError = null;
@@ -155,6 +177,8 @@ public partial class DbDemo
         _tasks = await TaskRepo.GetByProjectAsync(_taskPjId);
     }
 
+    /// <summary>タスクの編集モードを開始する。</summary>
+    /// <param name="t">編集対象のタスク。</param>
     private void StartEditTask(WbsTask t)
     {
         _editTaskId = t.Id;
@@ -163,8 +187,11 @@ public partial class DbDemo
         _editTaskProgress = t.Progress;
     }
 
+    /// <summary>タスクの編集をキャンセルする。</summary>
     private void CancelEditTask() => _editTaskId = null;
 
+    /// <summary>タスクの編集を保存する。</summary>
+    /// <param name="t">保存対象のタスク。</param>
     private async Task SaveTask(WbsTask t)
     {
         t.Name = _editTaskName.Trim();
@@ -175,12 +202,16 @@ public partial class DbDemo
         _tasks = await TaskRepo.GetByProjectAsync(_taskPjId);
     }
 
+    /// <summary>タスクを削除する。</summary>
+    /// <param name="id">削除するタスクID。</param>
     private async Task DeleteTask(int id)
     {
         await TaskRepo.DeleteAsync(id);
         _tasks = await TaskRepo.GetByProjectAsync(_taskPjId);
     }
 
+    /// <summary>タスクを一つ上に移動する。</summary>
+    /// <param name="t">移動対象のタスク。</param>
     private async Task MoveTaskUp(WbsTask t)
     {
         var idx = _tasks.FindIndex(x => x.Id == t.Id);
@@ -190,6 +221,8 @@ public partial class DbDemo
         _tasks = await TaskRepo.GetByProjectAsync(_taskPjId);
     }
 
+    /// <summary>タスクを一つ下に移動する。</summary>
+    /// <param name="t">移動対象のタスク。</param>
     private async Task MoveTaskDown(WbsTask t)
     {
         var idx = _tasks.FindIndex(x => x.Id == t.Id);
@@ -199,6 +232,7 @@ public partial class DbDemo
         _tasks = await TaskRepo.GetByProjectAsync(_taskPjId);
     }
 
+    /// <summary>タスク一覧の表示順を DB に保存する。</summary>
     private async Task SaveTaskSortOrders()
     {
         for (int i = 0; i < _tasks.Count; i++)
@@ -211,6 +245,7 @@ public partial class DbDemo
     private string _ghName = string.Empty;
     private string? _ghError;
 
+    /// <summary>全体休日を作成する。</summary>
     private async Task CreateGlobalHoliday()
     {
         _ghError = null;
@@ -232,6 +267,8 @@ public partial class DbDemo
         }
     }
 
+    /// <summary>全体休日を削除する。</summary>
+    /// <param name="id">削除する休日ID。</param>
     private async Task DeleteGlobalHoliday(int id)
     {
         await GlobalHolidayRepo.DeleteAsync(id);
@@ -246,6 +283,7 @@ public partial class DbDemo
     private string _ahMemo = string.Empty;
     private string? _ahError;
 
+    /// <summary>選択中担当者の個人休日一覧を読み込む。</summary>
     private async Task LoadAssigneeHolidays()
     {
         _assigneeHolidays = _ahAssigneeId > 0
@@ -253,6 +291,7 @@ public partial class DbDemo
             : [];
     }
 
+    /// <summary>個人休日を作成する。</summary>
     private async Task CreateAssigneeHoliday()
     {
         _ahError = null;
@@ -275,6 +314,8 @@ public partial class DbDemo
         }
     }
 
+    /// <summary>個人休日を削除する。</summary>
+    /// <param name="id">削除する休日ID。</param>
     private async Task DeleteAssigneeHoliday(int id)
     {
         await AssigneeHolidayRepo.DeleteAsync(id);

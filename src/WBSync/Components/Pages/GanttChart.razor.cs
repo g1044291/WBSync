@@ -5,8 +5,10 @@ using WBSync.Models;
 
 namespace WBSync.Components.Pages;
 
+/// <summary>ガントチャート画面のコードビハインド。</summary>
 public partial class GanttChart
 {
+    /// <summary>表示するプロジェクトID。</summary>
     [Parameter] public int ProjectId { get; set; }
 
     private string _projectName = string.Empty;
@@ -37,17 +39,20 @@ public partial class GanttChart
 
     // ===== Chart scale & columns =====
 
+    /// <summary>チャートの時間軸スケール。</summary>
     private enum ChartScale { Day, Week, Month }
     private ChartScale _scale = ChartScale.Day;
 
     private DateOnly _chartStart;
     private DateOnly _chartEnd;
 
+    /// <summary>チャートの列定義。</summary>
     private record ChartColumn(string Label, DateOnly Date, bool IsWeekend, bool IsHoliday = false);
     private List<ChartColumn> _chartColumns = [];
 
     // ===== Lifecycle =====
 
+    /// <inheritdoc/>
     protected override async Task OnInitializedAsync()
     {
         var projects = await ProjectRepo.GetAllAsync();
@@ -76,6 +81,7 @@ public partial class GanttChart
         BuildChartColumns();
     }
 
+    /// <inheritdoc/>
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -84,6 +90,8 @@ public partial class GanttChart
 
     // ===== Scale management =====
 
+    /// <summary>チャートのスケールを切り替える。</summary>
+    /// <param name="scale">切り替え先のスケール。</param>
     private void SetScale(ChartScale scale)
     {
         _scale = scale;
@@ -92,6 +100,7 @@ public partial class GanttChart
 
     // ===== Chart period & columns =====
 
+    /// <summary>チャートの表示期間をタスクの開始日・終了日から算出する。</summary>
     private void CalculateChartPeriod()
     {
         _chartStart = DateOnly.TryParse(_projectStartDate, out var s)
@@ -110,6 +119,7 @@ public partial class GanttChart
         _chartEnd = lastEndDate.AddDays(30);
     }
 
+    /// <summary>現在のスケールに応じてチャート列一覧を構築する。</summary>
     private void BuildChartColumns()
     {
         _chartColumns = _scale switch
@@ -121,6 +131,7 @@ public partial class GanttChart
         };
     }
 
+    /// <summary>日スケールの列一覧を構築する。</summary>
     private List<ChartColumn> BuildDayColumns()
     {
         var cols = new List<ChartColumn>();
@@ -133,6 +144,7 @@ public partial class GanttChart
         return cols;
     }
 
+    /// <summary>週スケールの列一覧を構築する。</summary>
     private List<ChartColumn> BuildWeekColumns()
     {
         var cols = new List<ChartColumn>();
@@ -148,6 +160,7 @@ public partial class GanttChart
         return cols;
     }
 
+    /// <summary>月スケールの列一覧を構築する。</summary>
     private List<ChartColumn> BuildMonthColumns()
     {
         var cols = new List<ChartColumn>();
@@ -160,6 +173,8 @@ public partial class GanttChart
         return cols;
     }
 
+    /// <summary>指定ノード群からリーフノードをすべて列挙する。</summary>
+    /// <param name="nodes">検索対象のノード群。</param>
     private static IEnumerable<TaskNode> GetAllLeafNodes(List<TaskNode> nodes)
     {
         foreach (var node in nodes)
@@ -174,6 +189,8 @@ public partial class GanttChart
 
     // ===== ツリー構築 =====
 
+    /// <summary>フラットなタスクリストからツリー構造を構築する。</summary>
+    /// <param name="tasks">対象タスクのリスト。</param>
     private static List<TaskNode> BuildTree(List<WbsTask> tasks)
     {
         var nodeMap = tasks.ToDictionary(t => t.Id, t => new TaskNode { Task = t });
@@ -191,6 +208,9 @@ public partial class GanttChart
         return roots;
     }
 
+    /// <summary>ノードの階層レベルを再帰的に設定する。</summary>
+    /// <param name="nodes">対象ノード群。</param>
+    /// <param name="level">現在の階層レベル。</param>
     private static void SetLevels(List<TaskNode> nodes, int level)
     {
         foreach (var node in nodes)
@@ -200,6 +220,8 @@ public partial class GanttChart
         }
     }
 
+    /// <summary>展開状態を考慮して表示対象のノードを列挙する。</summary>
+    /// <param name="roots">ルートノード群。</param>
     private static IEnumerable<TaskNode> GetVisibleNodes(List<TaskNode> roots)
     {
         foreach (var node in roots)
@@ -211,10 +233,13 @@ public partial class GanttChart
         }
     }
 
+    /// <summary>ノードの展開・折り畳みを切り替える。</summary>
+    /// <param name="node">対象ノード。</param>
     private void ToggleExpand(TaskNode node) => node.IsExpanded = !node.IsExpanded;
 
     // ===== 個人休日ロード =====
 
+    /// <summary>全担当者の個人休日を読み込んで <see cref="_assigneeHolidays"/> に格納する。</summary>
     private async Task LoadAssigneeHolidaysAsync()
     {
         _assigneeHolidays = [];
@@ -231,6 +256,10 @@ public partial class GanttChart
 
     // ===== 表示ヘルパー =====
 
+    /// <summary>チャートセルに適用する CSS クラス名を返す。</summary>
+    /// <param name="node">対象タスクノード。</param>
+    /// <param name="col">対象チャート列。</param>
+    /// <returns>CSS クラス名。該当なしの場合は空文字。</returns>
     private string GetCellClass(TaskNode node, ChartColumn col)
     {
         if (col.IsWeekend || col.IsHoliday)
@@ -244,9 +273,15 @@ public partial class GanttChart
         return string.Empty;
     }
 
+    /// <summary>担当者IDから担当者名を取得する。</summary>
+    /// <param name="assigneeId">担当者ID。未割り当ての場合は <see langword="null"/>。</param>
+    /// <returns>担当者名。未割り当てまたは不明の場合は "-"。</returns>
     private string GetAssigneeName(int? assigneeId)
         => assigneeId.HasValue && _assigneeNames.TryGetValue(assigneeId.Value, out var name) ? name : "-";
 
+    /// <summary>日付文字列をガントチャート表示用にフォーマットする。</summary>
+    /// <param name="date">yyyy-MM-dd 形式の日付文字列。</param>
+    /// <returns>M/d 形式の文字列。空の場合は "-"。</returns>
     private static string FormatDate(string? date)
     {
         if (string.IsNullOrEmpty(date)) return "-";
@@ -255,9 +290,13 @@ public partial class GanttChart
 
     // ===== ナビゲーション・操作 =====
 
+    /// <summary>プロジェクト一覧に戻る。</summary>
     private void GoBack() => Nav.NavigateTo("/");
+
+    /// <summary>担当者設定画面に遷移する。</summary>
     private void GoToAssignees() => Nav.NavigateTo($"/assignees/{ProjectId}");
 
+    /// <summary>ルートへのタスク追加モーダルを開く。</summary>
     private void AddTask()
     {
         _taskModalTask = null;
@@ -265,6 +304,8 @@ public partial class GanttChart
         _isTaskModalOpen = true;
     }
 
+    /// <summary>タスク行クリック時にタスク編集モーダルを開く。</summary>
+    /// <param name="node">クリックされたタスクノード。</param>
     private void OnTaskRowClick(TaskNode node)
     {
         _taskModalTask = node.Task;
@@ -274,6 +315,9 @@ public partial class GanttChart
 
     // ===== 右クリックメニュー =====
 
+    /// <summary>右クリックメニューを表示する。</summary>
+    /// <param name="e">マウスイベント。</param>
+    /// <param name="node">右クリックされたタスクノード。</param>
     private void ShowContextMenu(MouseEventArgs e, TaskNode node)
     {
         _ctxX = e.ClientX;
@@ -282,8 +326,10 @@ public partial class GanttChart
         _ctxVisible = true;
     }
 
+    /// <summary>右クリックメニューを閉じる。</summary>
     private void CloseContextMenu() => _ctxVisible = false;
 
+    /// <summary>選択中タスクの子タスク追加モーダルを開く。</summary>
     private void AddChildTask()
     {
         CloseContextMenu();
@@ -292,6 +338,7 @@ public partial class GanttChart
         _isTaskModalOpen = true;
     }
 
+    /// <summary>選択中タスクと同階層へのタスク追加モーダルを開く。</summary>
     private void AddSiblingTask()
     {
         CloseContextMenu();
@@ -300,12 +347,14 @@ public partial class GanttChart
         _isTaskModalOpen = true;
     }
 
+    /// <summary>右クリックメニューからタスク削除の確認ダイアログを表示する。</summary>
     private void ShowCtxDeleteConfirm()
     {
         _ctxVisible = false;
         _showCtxDeleteConfirm = true;
     }
 
+    /// <summary>タスク削除の確認ダイアログで「削除」が押されたときの処理。</summary>
     private async Task HandleCtxDeleteConfirm()
     {
         if (_ctxNode is null) return;
@@ -315,20 +364,26 @@ public partial class GanttChart
         await ReloadTasksAsync();
     }
 
+    /// <summary>タスク編集モーダルを閉じる。</summary>
     private void HandleTaskModalClose() => _isTaskModalOpen = false;
 
+    /// <summary>タスク保存完了時にリストを更新する。</summary>
+    /// <param name="_">保存されたタスク（未使用）。</param>
     private async Task HandleTaskSaved(WbsTask _)
     {
         _isTaskModalOpen = false;
         await ReloadTasksAsync();
     }
 
+    /// <summary>タスク削除完了時にリストを更新する。</summary>
+    /// <param name="_">削除されたタスクID（未使用）。</param>
     private async Task HandleTaskDeleted(int _)
     {
         _isTaskModalOpen = false;
         await ReloadTasksAsync();
     }
 
+    /// <summary>タスク一覧・チャート列を再読み込みする。</summary>
     private async Task ReloadTasksAsync()
     {
         _allTasks = await TaskRepo.GetByProjectAsync(ProjectId);
@@ -339,19 +394,30 @@ public partial class GanttChart
 
     // ===== TaskNode =====
 
+    /// <summary>ガントチャートのツリー表示用ノード。</summary>
     private class TaskNode
     {
+        /// <summary>対応する WBS タスク。</summary>
         public WbsTask Task { get; init; } = null!;
+
+        /// <summary>子ノードのコレクション。</summary>
         public List<TaskNode> Children { get; } = [];
+
+        /// <summary>ルートから数えた階層レベル（0 始まり）。</summary>
         public int Level { get; set; }
+
+        /// <summary>子ノードが展開表示されているかどうか。</summary>
         public bool IsExpanded { get; set; } = true;
 
+        /// <summary>子ノードを持つかどうか。</summary>
         public bool HasChildren => Children.Count > 0;
 
+        /// <summary>表示用の開始日。親タスクの場合は子の最小値を動的に返す。</summary>
         public string? DisplayStartDate => HasChildren
             ? Children.Select(c => c.DisplayStartDate).Where(d => d is not null).Min()
             : Task.StartDate;
 
+        /// <summary>表示用の終了日。親タスクの場合は子の最大値を動的に返す。</summary>
         public string? DisplayEndDate => HasChildren
             ? Children.Select(c => c.DisplayEndDate).Where(d => d is not null).Max()
             : Task.EndDate;

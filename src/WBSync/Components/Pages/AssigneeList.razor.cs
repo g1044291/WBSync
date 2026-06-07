@@ -3,8 +3,10 @@ using WBSync.Models;
 
 namespace WBSync.Components.Pages;
 
+/// <summary>担当者一覧画面のコードビハインド。</summary>
 public partial class AssigneeList
 {
+    /// <summary>プロジェクトID。</summary>
     [Parameter] public int ProjectId { get; set; }
 
     private List<Assignee> _assignees = [];
@@ -13,11 +15,13 @@ public partial class AssigneeList
     private bool _saving;
     private string? _error;
 
+    /// <inheritdoc/>
     protected override async Task OnInitializedAsync()
     {
         _assignees = await AssigneeRepo.GetByProjectAsync(ProjectId);
     }
 
+    /// <summary>担当者追加モーダルを開く。</summary>
     private void OpenAddModal()
     {
         _newName = string.Empty;
@@ -25,12 +29,14 @@ public partial class AssigneeList
         _addModalOpen = true;
     }
 
+    /// <summary>担当者追加モーダルを閉じる。</summary>
     private void CloseAddModal()
     {
         _addModalOpen = false;
         _error = null;
     }
 
+    /// <summary>新しい担当者を作成する。</summary>
     private async Task AddAssignee()
     {
         _error = null;
@@ -59,6 +65,10 @@ public partial class AssigneeList
         }
     }
 
+    /// <summary>担当者詳細画面に遷移する。</summary>
+    /// <param name="assigneeId">対象担当者ID。</param>
     private void GoToDetail(int assigneeId) => Nav.NavigateTo($"/assignees/{ProjectId}/{assigneeId}");
+
+    /// <summary>ガントチャート画面に戻る。</summary>
     private void GoBack() => Nav.NavigateTo($"/gantt/{ProjectId}");
 }

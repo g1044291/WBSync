@@ -4,8 +4,10 @@ using WBSync.Models;
 
 namespace WBSync.Repositories;
 
+/// <summary><see cref="ITaskRepository"/> の EF Core 実装。</summary>
 public class TaskRepository(AppDbContext db) : ITaskRepository
 {
+    /// <inheritdoc/>
     public Task<List<WbsTask>> GetByProjectAsync(int projectId)
         => db.Tasks
              .AsNoTracking()
@@ -13,6 +15,7 @@ public class TaskRepository(AppDbContext db) : ITaskRepository
              .OrderBy(t => t.SortOrder)
              .ToListAsync();
 
+    /// <inheritdoc/>
     public async Task<WbsTask> CreateAsync(WbsTask task)
     {
         var now = Now();
@@ -31,6 +34,7 @@ public class TaskRepository(AppDbContext db) : ITaskRepository
         }
     }
 
+    /// <inheritdoc/>
     public async Task<WbsTask> UpdateAsync(WbsTask task)
     {
         task.UpdatedAt = Now();
@@ -43,11 +47,13 @@ public class TaskRepository(AppDbContext db) : ITaskRepository
         return task;
     }
 
+    /// <inheritdoc/>
     public async Task DeleteAsync(int id)
     {
         await db.Tasks.Where(t => t.Id == id).ExecuteDeleteAsync();
     }
 
+    /// <inheritdoc/>
     public async Task UpdateSortOrderAsync(int id, int sortOrder)
     {
         await db.Tasks
@@ -57,5 +63,6 @@ public class TaskRepository(AppDbContext db) : ITaskRepository
                 .SetProperty(t => t.UpdatedAt, Now()));
     }
 
+    /// <summary>現在時刻を yyyy-MM-dd HH:mm:ss 形式の文字列で返す。</summary>
     private static string Now() => DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 }

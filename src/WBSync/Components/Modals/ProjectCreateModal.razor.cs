@@ -4,11 +4,19 @@ using WBSync.Repositories;
 
 namespace WBSync.Components.Modals;
 
+/// <summary>プロジェクト作成モーダルのコードビハインド。</summary>
 public partial class ProjectCreateModal
 {
+    /// <summary>モーダルの開閉状態。</summary>
     [Parameter] public bool IsOpen { get; set; }
+
+    /// <summary>モーダルを閉じるときに呼び出されるコールバック。</summary>
     [Parameter] public EventCallback OnClose { get; set; }
+
+    /// <summary>プロジェクト作成完了時に呼び出されるコールバック。作成されたプロジェクトを渡す。</summary>
     [Parameter] public EventCallback<Project> OnCreated { get; set; }
+
+    /// <summary>プロジェクトリポジトリ。</summary>
     [Parameter, EditorRequired] public IProjectRepository ProjectRepo { get; set; } = null!;
 
     private string _name = string.Empty;
@@ -16,12 +24,14 @@ public partial class ProjectCreateModal
     private string? _error;
     private bool _saving;
 
+    /// <summary>モーダルを閉じてフォームをリセットする。</summary>
     private async Task HandleClose()
     {
         Reset();
         await OnClose.InvokeAsync();
     }
 
+    /// <summary>フォームを検証してプロジェクトを作成する。</summary>
     private async Task HandleSubmit()
     {
         _error = null;
@@ -54,6 +64,7 @@ public partial class ProjectCreateModal
         }
     }
 
+    /// <summary>フォームの入力値を初期状態にリセットする。</summary>
     private void Reset()
     {
         _name = string.Empty;

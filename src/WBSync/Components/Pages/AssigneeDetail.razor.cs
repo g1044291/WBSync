@@ -3,9 +3,13 @@ using WBSync.Models;
 
 namespace WBSync.Components.Pages;
 
+/// <summary>担当者詳細画面のコードビハインド。</summary>
 public partial class AssigneeDetail
 {
+    /// <summary>プロジェクトID。</summary>
     [Parameter] public int ProjectId { get; set; }
+
+    /// <summary>担当者ID。</summary>
     [Parameter] public int AssigneeId { get; set; }
 
     private Assignee? _assignee;
@@ -21,6 +25,7 @@ public partial class AssigneeDetail
     private bool _saving;
     private string? _holidayError;
 
+    /// <inheritdoc/>
     protected override async Task OnInitializedAsync()
     {
         var assignees = await AssigneeRepo.GetByProjectAsync(ProjectId);
@@ -34,6 +39,7 @@ public partial class AssigneeDetail
         _holidays = await HolidayRepo.GetByAssigneeAsync(AssigneeId);
     }
 
+    /// <summary>担当者名を保存する。</summary>
     private async Task SaveName()
     {
         _nameError = null;
@@ -56,6 +62,7 @@ public partial class AssigneeDetail
         }
     }
 
+    /// <summary>個人休日追加モーダルを開く。</summary>
     private void OpenAddHoliday()
     {
         _newHolidayDate = null;
@@ -64,12 +71,14 @@ public partial class AssigneeDetail
         _addHolidayOpen = true;
     }
 
+    /// <summary>個人休日追加モーダルを閉じる。</summary>
     private void CloseAddHoliday()
     {
         _addHolidayOpen = false;
         _holidayError = null;
     }
 
+    /// <summary>新しい個人休日を作成する。</summary>
     private async Task AddHoliday()
     {
         _holidayError = null;
@@ -102,14 +111,20 @@ public partial class AssigneeDetail
         }
     }
 
+    /// <summary>個人休日を削除する。</summary>
+    /// <param name="holidayId">削除する休日ID。</param>
     private async Task DeleteHoliday(int holidayId)
     {
         await HolidayRepo.DeleteAsync(holidayId);
         _holidays = await HolidayRepo.GetByAssigneeAsync(AssigneeId);
     }
 
+    /// <summary>日付文字列を表示用にフォーマットする。</summary>
+    /// <param name="date">yyyy-MM-dd 形式の日付文字列。</param>
+    /// <returns>yyyy/MM/dd 形式の文字列。</returns>
     private static string FormatDate(string date)
         => DateOnly.TryParse(date, out var d) ? d.ToString("yyyy/MM/dd") : date;
 
+    /// <summary>担当者一覧画面に戻る。</summary>
     private void GoBack() => Nav.NavigateTo($"/assignees/{ProjectId}");
 }

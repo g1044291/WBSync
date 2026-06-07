@@ -5,8 +5,13 @@ using WBSync.Repositories;
 
 namespace WBSync
 {
+    /// <summary>MAUI アプリケーションのエントリーポイント。</summary>
     public static class MauiProgram
     {
+        /// <summary>
+        /// MAUI アプリを構築して返す。
+        /// DI 登録・SQLite 接続・DB マイグレーション自動適用を行う。
+        /// </summary>
         public static MauiApp CreateMauiApp()
         {
             var builder = MauiApp.CreateBuilder();

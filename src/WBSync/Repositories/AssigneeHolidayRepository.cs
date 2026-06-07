@@ -4,11 +4,14 @@ using WBSync.Models;
 
 namespace WBSync.Repositories;
 
+/// <summary><see cref="IAssigneeHolidayRepository"/> の EF Core 実装。</summary>
 public class AssigneeHolidayRepository(AppDbContext db) : IAssigneeHolidayRepository
 {
+    /// <inheritdoc/>
     public Task<List<AssigneeHoliday>> GetByAssigneeAsync(int assigneeId)
         => db.AssigneeHolidays.Where(h => h.AssigneeId == assigneeId).OrderBy(h => h.Date).ToListAsync();
 
+    /// <inheritdoc/>
     public async Task<AssigneeHoliday> CreateAsync(AssigneeHoliday holiday)
     {
         db.AssigneeHolidays.Add(holiday);
@@ -24,6 +27,7 @@ public class AssigneeHolidayRepository(AppDbContext db) : IAssigneeHolidayReposi
         }
     }
 
+    /// <inheritdoc/>
     public async Task DeleteAsync(int id)
     {
         await db.AssigneeHolidays.Where(h => h.Id == id).ExecuteDeleteAsync();

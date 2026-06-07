@@ -3,16 +3,34 @@ using WBSync.Models;
 
 namespace WBSync.Components.Modals;
 
+/// <summary>タスク編集モーダルのコードビハインド。新規作成と既存タスク編集を兼ねる。</summary>
 public partial class TaskEditModal
 {
+    /// <summary>モーダルの開閉状態。</summary>
     [Parameter] public bool IsOpen { get; set; }
+
+    /// <summary>編集対象のタスク。<see langword="null"/> の場合は新規作成モード。</summary>
     [Parameter] public WbsTask? Task { get; set; }
+
+    /// <summary>タスクを作成・編集するプロジェクトID。</summary>
     [Parameter] public int ProjectId { get; set; }
+
+    /// <summary>新規作成時のデフォルト親タスクID。</summary>
     [Parameter] public int? ParentId { get; set; }
+
+    /// <summary>担当者の選択肢一覧。</summary>
     [Parameter, EditorRequired] public List<Assignee> Assignees { get; set; } = [];
+
+    /// <summary>親タスク・先行タスクの候補に使用する全タスク一覧。</summary>
     [Parameter, EditorRequired] public List<WbsTask> AllTasks { get; set; } = [];
+
+    /// <summary>モーダルを閉じるときに呼び出されるコールバック。</summary>
     [Parameter] public EventCallback OnClose { get; set; }
+
+    /// <summary>タスク保存完了時に呼び出されるコールバック。保存されたタスクを渡す。</summary>
     [Parameter] public EventCallback<WbsTask> OnSaved { get; set; }
+
+    /// <summary>タスク削除完了時に呼び出されるコールバック。削除されたタスクIDを渡す。</summary>
     [Parameter] public EventCallback<int> OnDeleted { get; set; }
 
     private string _title => Task is null ? "タスクを追加" : "タスクを編集";
@@ -42,6 +60,7 @@ public partial class TaskEditModal
     private bool _lastIsOpen;
     private int? _lastTaskId;
 
+    /// <inheritdoc/>
     protected override void OnParametersSet()
     {
         var shouldReset = (IsOpen && !_lastIsOpen) ||
@@ -87,6 +106,7 @@ public partial class TaskEditModal
         }
     }
 
+    /// <summary>親タスク選択肢を構築する。自タスクとその子孫を除外する。</summary>
     private List<WbsTask> BuildParentCandidates()
     {
         if (Task is null) return [.. AllTasks];
@@ -95,6 +115,7 @@ public partial class TaskEditModal
         return AllTasks.Where(t => !excludeIds.Contains(t.Id)).ToList();
     }
 
+    /// <summary>先行タスク選択肢を構築する。自タスクとその子孫を除外する。</summary>
     private List<WbsTask> BuildPredecessorCandidates()
     {
         if (Task is null) return [.. AllTasks];
@@ -103,6 +124,8 @@ public partial class TaskEditModal
         return AllTasks.Where(t => !excludeIds.Contains(t.Id)).ToList();
     }
 
+    /// <summary>指定タスクの子孫タスクID をすべて返す。</summary>
+    /// <param name="taskId">起点タスクID。</param>
     private HashSet<int> GetDescendantIds(int taskId)
     {
         var result = new HashSet<int>();
@@ -115,12 +138,15 @@ public partial class TaskEditModal
         return result;
     }
 
+    /// <summary>ステータス選択変更時にフォームを更新する。</summary>
+    /// <param name="e">変更イベント。</param>
     private void OnStatusChange(ChangeEventArgs e)
     {
         _status = e.Value?.ToString() ?? "未着手";
         _isDirty = true;
     }
 
+    /// <summary>未保存の変更がある場合は確認ダイアログを表示してからモーダルを閉じる。</summary>
     private async Task HandleClose()
     {
         if (_isDirty)
@@ -131,6 +157,7 @@ public partial class TaskEditModal
         await OnClose.InvokeAsync();
     }
 
+    /// <summary>未保存変更の破棄を確認してモーダルを閉じる。</summary>
     private async Task HandleUnsavedConfirm()
     {
         _showUnsavedDialog = false;
@@ -138,6 +165,7 @@ public partial class TaskEditModal
         await OnClose.InvokeAsync();
     }
 
+    /// <summary>フォームを検証してタスクを保存する。</summary>
     private async Task HandleSave()
     {
         _error = null;
@@ -216,8 +244,10 @@ public partial class TaskEditModal
         }
     }
 
+    /// <summary>タスク削除の確認ダイアログを表示する。</summary>
     private void HandleDeleteClick() => _showDeleteDialog = true;
 
+    /// <summary>タスク削除の確認ダイアログで「削除」が押されたときの処理。</summary>
     private async Task HandleDeleteConfirm()
     {
         if (Task is null) return;
