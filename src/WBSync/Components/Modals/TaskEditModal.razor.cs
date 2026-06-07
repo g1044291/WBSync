@@ -138,6 +138,36 @@ public partial class TaskEditModal
         return result;
     }
 
+    /// <summary>
+    /// 先行タスク選択変更時に開始日・終了日を自動計算する。
+    /// 先行タスクの EndDate が未設定の場合は自動計算をスキップする。
+    /// </summary>
+    /// <param name="predecessor">選択された先行タスク。<see langword="null"/> の場合は先行タスクなし。</param>
+    private async Task HandlePredecessorChanged(WbsTask? predecessor)
+    {
+        _predecessor = predecessor;
+        _isDirty = true;
+
+        if (string.IsNullOrEmpty(predecessor?.EndDate)) return;
+
+        var (startDate, endDate) = await ScheduleService.CalcDatesFromPredecessorAsync(
+            predecessor.EndDate, ParseWorkDays(), _assignee?.Id);
+
+        _startDate = startDate;
+        _endDate = endDate;
+    }
+
+    /// <summary>工数入力フィールドの文字列を数値にパースする。</summary>
+    /// <returns>パース成功時は工数値、入力なし・パース失敗時は <see langword="null"/>。</returns>
+    private double? ParseWorkDays()
+    {
+        if (string.IsNullOrWhiteSpace(_workDaysStr)) return null;
+        return double.TryParse(_workDaysStr,
+            System.Globalization.NumberStyles.Any,
+            System.Globalization.CultureInfo.InvariantCulture,
+            out var wd) ? wd : null;
+    }
+
     /// <summary>ステータス選択変更時にフォームを更新する。</summary>
     /// <param name="e">変更イベント。</param>
     private void OnStatusChange(ChangeEventArgs e)
@@ -176,13 +206,7 @@ public partial class TaskEditModal
             return;
         }
 
-        double? workDays = null;
-        if (!string.IsNullOrWhiteSpace(_workDaysStr) &&
-            double.TryParse(_workDaysStr,
-                            System.Globalization.NumberStyles.Any,
-                            System.Globalization.CultureInfo.InvariantCulture,
-                            out var wd))
-            workDays = wd;
+        var workDays = ParseWorkDays();
 
         _saving = true;
         try

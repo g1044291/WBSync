@@ -1,4 +1,5 @@
 @inject ITaskRepository TaskRepo
+@inject IScheduleService ScheduleService
 
 <Modal IsOpen="IsOpen" Title="@_title" OnClose="HandleClose">
     <ChildContent>
@@ -58,7 +59,7 @@
         <div class="form-group">
             <label class="form-label">先行タスク</label>
             <Dropdown TValue="WbsTask" Items="_predecessorCandidates" DisplayText="t => t.Name"
-                      Value="_predecessor" ValueChanged="t => { _predecessor = t; _isDirty = true; }"
+                      Value="_predecessor" ValueChanged="HandlePredecessorChanged"
                       AllowEmpty="true" EmptyLabel="（なし）" />
         </div>
 

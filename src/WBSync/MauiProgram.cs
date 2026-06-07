@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using WBSync.Data;
 using WBSync.Repositories;
+using WBSync.Services;
 
 namespace WBSync
 {
@@ -35,6 +36,7 @@ namespace WBSync
             builder.Services.AddScoped<ITaskRepository, TaskRepository>();
             builder.Services.AddScoped<IGlobalHolidayRepository, GlobalHolidayRepository>();
             builder.Services.AddScoped<IAssigneeHolidayRepository, AssigneeHolidayRepository>();
+            builder.Services.AddScoped<IScheduleService, ScheduleService>();
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();
