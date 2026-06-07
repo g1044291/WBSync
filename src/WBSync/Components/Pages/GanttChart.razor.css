@@ -101,7 +101,7 @@
 .task-pane {
     display: flex;
     flex-direction: column;
-    width: 520px;
+    width: 592px;
     min-width: 320px;
     border-right: 2px solid #e5e7eb;
 }
@@ -121,12 +121,12 @@
     border-bottom: 1px solid #e5e7eb;
     flex-shrink: 0;
     height: 36px;
-    min-width: 520px;
+    min-width: 592px;
 }
 
 /*
  * box-sizing: border-box で width に padding + border を含める。
- * 列幅の合計 = col-name(120) + 72 + 44 + 76 + 76 + 80 + 52 = 520px
+ * 列幅の合計 = col-name(192) + 72 + 44 + 76 + 76 + 80 + 52 = 592px
  */
 .col {
     box-sizing: border-box;
@@ -147,7 +147,7 @@
     border-right: none;
 }
 
-.col-name      { flex: 1; min-width: 120px; }
+.col-name      { flex: 1; min-width: 192px; }
 .col-assignee  { width: 72px;  flex-shrink: 0; justify-content: center; }
 .col-workdays  { width: 44px;  flex-shrink: 0; justify-content: center; }
 .col-start     { width: 76px;  flex-shrink: 0; justify-content: center; }
@@ -158,7 +158,7 @@
 .task-pane-rows {
     flex: 1;
     overflow-y: auto;
-    min-width: 520px;
+    min-width: 592px;
 }
 
 /* ===== Task rows ===== */
