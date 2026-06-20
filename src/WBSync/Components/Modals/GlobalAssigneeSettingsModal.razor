@@ -1,0 +1,62 @@
+<Modal IsOpen="IsOpen" Title="担当者設定" OnClose="HandleClose">
+    <ChildContent>
+        <div class="section-header">
+            <span class="section-title">グローバル担当者マスタ</span>
+            @if (!_isAdding)
+            {
+                <Button Variant="primary" OnClick="StartAdding">＋ 追加</Button>
+            }
+        </div>
+
+        @if (_isAdding)
+        {
+            <div class="add-form">
+                <div class="add-form-fields">
+                    <input class="name-input" type="text" placeholder="担当者名を入力" @bind="_newName" />
+                </div>
+                <div class="add-form-actions">
+                    <Button Variant="secondary" OnClick="CancelAdding">取消</Button>
+                    <Button Variant="primary" OnClick="AddAssignee" Disabled="_addSaving">保存</Button>
+                </div>
+            </div>
+            @if (_addError is not null)
+            {
+                <p class="error-message">@_addError</p>
+            }
+        }
+
+        <div class="assignee-settings-list">
+            @foreach (var g in _assignees)
+            {
+                @if (_editingId == g.Id)
+                {
+                    <div class="assignee-edit-row">
+                        <input class="name-input" type="text" @bind="_editName" />
+                        <div class="row-actions">
+                            <Button Variant="secondary" OnClick="CancelEditing">取消</Button>
+                            <Button Variant="primary" OnClick="() => SaveAssignee(g)" Disabled="_editSaving">保存</Button>
+                        </div>
+                    </div>
+                    @if (_editError is not null)
+                    {
+                        <p class="error-message">@_editError</p>
+                    }
+                }
+                else
+                {
+                    <div class="assignee-settings-row">
+                        <span class="assignee-name">@g.Name</span>
+                        <div class="row-actions">
+                            <Button Variant="secondary" OnClick="() => StartEditing(g)">編集</Button>
+                            <Button Variant="danger" OnClick="() => DeleteAssignee(g.Id)">削除</Button>
+                        </div>
+                    </div>
+                }
+            }
+            @if (!_assignees.Any())
+            {
+                <p class="empty-message">担当者が登録されていません</p>
+            }
+        </div>
+    </ChildContent>
+</Modal>

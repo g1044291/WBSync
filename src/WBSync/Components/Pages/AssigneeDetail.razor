@@ -1,5 +1,6 @@
 @page "/assignees/{ProjectId:int}/{AssigneeId:int}"
 @inject IAssigneeRepository AssigneeRepo
+@inject IGlobalAssigneeRepository GlobalAssigneeRepo
 @inject IAssigneeHolidayRepository HolidayRepo
 @inject NavigationManager Nav
 
@@ -24,6 +25,11 @@
     </Footer>
 </Modal>
 
+<ConfirmDialog IsOpen="_unlinkConfirmOpen"
+               Message="グローバルマスタとの連携を解除し、プロジェクト専用担当者にします。よろしいですか？"
+               OnConfirm="UnlinkGlobal"
+               OnCancel="CloseUnlinkConfirm" />
+
 <div class="assignee-detail-page">
     <header class="page-header">
         <button class="back-btn" @onclick="GoBack">← 戻る</button>
@@ -33,19 +39,36 @@
     @if (_assignee is not null)
     {
         <main class="page-main">
+            @if (_linkedGlobal is not null)
+            {
+                <section class="global-link-section">
+                    <span class="global-link-name">@_linkedGlobal.Name</span>
+                    <Button Variant="secondary" OnClick="OpenUnlinkConfirm">連携解除</Button>
+                </section>
+            }
+
             <section class="name-section">
                 <label class="field-label">担当者名</label>
-                <div class="name-row">
-                    <input class="name-input" type="text" @bind="_editName" />
-                    <Button Variant="primary" OnClick="SaveName" Disabled="_nameSaving">保存</Button>
-                </div>
-                @if (_nameError is not null)
+                @if (_linkedGlobal is not null)
                 {
-                    <p class="form-error">@_nameError</p>
+                    <div class="name-row">
+                        <input class="name-input" type="text" value="@_editName" readonly />
+                    </div>
                 }
-                @if (_nameSaved)
+                else
                 {
-                    <p class="save-success">保存しました</p>
+                    <div class="name-row">
+                        <input class="name-input" type="text" @bind="_editName" />
+                        <Button Variant="primary" OnClick="SaveName" Disabled="_nameSaving">保存</Button>
+                    </div>
+                    @if (_nameError is not null)
+                    {
+                        <p class="form-error">@_nameError</p>
+                    }
+                    @if (_nameSaved)
+                    {
+                        <p class="save-success">保存しました</p>
+                    }
                 }
             </section>
 

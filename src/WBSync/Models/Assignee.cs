@@ -20,6 +20,10 @@ public class Assignee
     [Required]
     public string Name { get; set; } = string.Empty;
 
+    /// <summary>グローバル担当者マスタへの参照ID。NULL の場合はプロジェクト専用担当者。</summary>
+    [Column("global_assignee_id")]
+    public int? GlobalAssigneeId { get; set; }
+
     /// <summary>同プロジェクト内の表示順。</summary>
     [Column("sort_order")]
     public int SortOrder { get; set; }
@@ -34,6 +38,9 @@ public class Assignee
 
     /// <summary>所属プロジェクト。</summary>
     public Project Project { get; set; } = null!;
+
+    /// <summary>参照するグローバル担当者マスタ。NULL の場合はプロジェクト専用。</summary>
+    public GlobalAssignee? GlobalAssignee { get; set; }
 
     /// <summary>この担当者に割り当てられたタスクのコレクション。</summary>
     public ICollection<WbsTask> Tasks { get; set; } = [];

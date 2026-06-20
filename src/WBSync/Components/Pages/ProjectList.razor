@@ -1,5 +1,6 @@
 @page "/"
 @inject IProjectRepository ProjectRepo
+@inject IGlobalAssigneeRepository GlobalAssigneeRepo
 @inject IGlobalHolidayRepository HolidayRepo
 @inject NavigationManager Nav
 
@@ -12,11 +13,16 @@
                       HolidayRepo="HolidayRepo"
                       OnClose="CloseHolidayModal" />
 
+<GlobalAssigneeSettingsModal IsOpen="_assigneeModalOpen"
+                             GlobalAssigneeRepo="GlobalAssigneeRepo"
+                             OnClose="CloseAssigneeModal" />
+
 <div class="page-project-list">
     <header class="page-header">
         <span class="app-title">WBSync</span>
         <div class="header-actions">
             <Button Variant="secondary" OnClick="OpenHolidayModal">休日設定</Button>
+            <Button Variant="secondary" OnClick="OpenAssigneeModal">担当者設定</Button>
             <Button Variant="primary" OnClick="OpenCreateModal">新規登録</Button>
         </div>
     </header>

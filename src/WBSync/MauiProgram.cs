@@ -33,6 +33,7 @@ namespace WBSync
 
             builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
             builder.Services.AddScoped<IAssigneeRepository, AssigneeRepository>();
+            builder.Services.AddScoped<IGlobalAssigneeRepository, GlobalAssigneeRepository>();
             builder.Services.AddScoped<ITaskRepository, TaskRepository>();
             builder.Services.AddScoped<IGlobalHolidayRepository, GlobalHolidayRepository>();
             builder.Services.AddScoped<IAssigneeHolidayRepository, AssigneeHolidayRepository>();

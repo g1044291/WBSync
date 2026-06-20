@@ -15,6 +15,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     /// <summary>タスクテーブル。</summary>
     public DbSet<WbsTask> Tasks => Set<WbsTask>();
 
+    /// <summary>グローバル担当者マスタテーブル。</summary>
+    public DbSet<GlobalAssignee> GlobalAssignees => Set<GlobalAssignee>();
+
     /// <summary>全体休日テーブル。</summary>
     public DbSet<GlobalHoliday> GlobalHolidays => Set<GlobalHoliday>();
 
@@ -34,12 +37,24 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                   .HasDefaultValueSql("DATETIME('now', 'localtime')");
         });
 
+        modelBuilder.Entity<GlobalAssignee>(entity =>
+        {
+            entity.HasIndex(e => e.Name)
+                  .IsUnique()
+                  .HasDatabaseName("idx_global_assignees_name");
+        });
+
         modelBuilder.Entity<Assignee>(entity =>
         {
             entity.HasOne(e => e.Project)
                   .WithMany(p => p.Assignees)
                   .HasForeignKey(e => e.ProjectId)
                   .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.GlobalAssignee)
+                  .WithMany(g => g.ProjectAssignees)
+                  .HasForeignKey(e => e.GlobalAssigneeId)
+                  .OnDelete(DeleteBehavior.SetNull);
 
             entity.Property(e => e.CreatedAt)
                   .HasDefaultValueSql("DATETIME('now', 'localtime')");
