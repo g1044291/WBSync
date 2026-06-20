@@ -1,16 +1,57 @@
 @page "/assignees/{ProjectId:int}"
 @inject IAssigneeRepository AssigneeRepo
+@inject IGlobalAssigneeRepository GlobalAssigneeRepo
 @inject NavigationManager Nav
 
 <Modal IsOpen="_addModalOpen" Title="担当者を追加" OnClose="CloseAddModal">
     <ChildContent>
-        <div class="form-group">
-            <label class="form-label">担当者名 <span class="required">*</span></label>
-            <input class="form-input" type="text" placeholder="担当者名を入力" @bind="_newName" />
+        <div class="add-mode-tabs">
+            <button class="add-mode-tab @(_addFromGlobal ? "active" : "")" @onclick="() => SetAddMode(true)">
+                グローバルから選択
+            </button>
+            <button class="add-mode-tab @(!_addFromGlobal ? "active" : "")" @onclick="() => SetAddMode(false)">
+                プロジェクト専用で追加
+            </button>
         </div>
-        @if (_error is not null)
+
+        @if (_addFromGlobal)
         {
-            <p class="form-error">@_error</p>
+            @if (_globalAssignees.Count == 0)
+            {
+                <p class="empty-message">グローバル担当者が登録されていません。プロジェクト一覧画面のマスタから追加してください。</p>
+            }
+            else
+            {
+                <div class="global-select-list">
+                    @foreach (var g in _globalAssignees)
+                    {
+                        var alreadyAdded = _assignees.Any(a => a.GlobalAssigneeId == g.Id);
+                        <label class="global-select-row @(alreadyAdded ? "disabled" : "")">
+                            <input type="radio" name="global_assignee" value="@g.Id"
+                                   disabled="@alreadyAdded"
+                                   checked="@(_selectedGlobalId == g.Id)"
+                                   @onchange="() => _selectedGlobalId = g.Id" />
+                            <span>@g.Name</span>
+                            @if (alreadyAdded)
+                            {
+                                <span class="badge-added">追加済み</span>
+                            }
+                        </label>
+                    }
+                </div>
+            }
+        }
+        else
+        {
+            <div class="form-group">
+                <label class="form-label">担当者名 <span class="required">*</span></label>
+                <input class="form-input" type="text" placeholder="担当者名を入力" @bind="_newName" />
+            </div>
+        }
+
+        @if (_addError is not null)
+        {
+            <p class="form-error">@_addError</p>
         }
     </ChildContent>
     <Footer>
@@ -35,6 +76,10 @@
             {
                 <button class="assignee-row" @onclick="() => GoToDetail(a.Id)">
                     <span class="assignee-name">@a.Name</span>
+                    @if (a.GlobalAssigneeId.HasValue)
+                    {
+                        <span class="badge-global">グローバル</span>
+                    }
                     <span class="row-arrow">›</span>
                 </button>
             }

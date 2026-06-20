@@ -135,3 +135,102 @@
     font-size: 13px;
     color: #ef4444;
 }
+
+/* 追加モーダル：タブ切り替え */
+.add-mode-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid #e5e7eb;
+    margin-bottom: 16px;
+}
+
+.add-mode-tab {
+    flex: 1;
+    padding: 8px 12px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #6b7280;
+    cursor: pointer;
+    transition: color 0.1s, border-color 0.1s;
+}
+
+.add-mode-tab:hover {
+    color: #374151;
+}
+
+.add-mode-tab.active {
+    color: #3b82f6;
+    border-bottom-color: #3b82f6;
+    font-weight: 600;
+}
+
+/* グローバルから選択：一覧 */
+.global-select-list {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 4px;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.global-select-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 14px;
+    color: #111827;
+    cursor: pointer;
+    transition: background-color 0.1s;
+}
+
+.global-select-row:last-child {
+    border-bottom: none;
+}
+
+.global-select-row:hover:not(.disabled) {
+    background: #eff6ff;
+}
+
+.global-select-row.disabled {
+    color: #9ca3af;
+    cursor: default;
+    background: #f9fafb;
+}
+
+.global-select-row input[type="radio"] {
+    accent-color: #3b82f6;
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+}
+
+/* バッジ */
+.badge-added {
+    font-size: 11px;
+    font-weight: 600;
+    color: #6b7280;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    padding: 1px 6px;
+    margin-left: auto;
+}
+
+.badge-global {
+    font-size: 11px;
+    font-weight: 600;
+    color: #2563eb;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 4px;
+    padding: 1px 6px;
+}

@@ -18,6 +18,7 @@
 | テーブル名 | 説明 |
 |------------|------|
 | projects | プロジェクト |
+| global_assignees | アプリ全体で共有する担当者マスタ |
 | assignees | 担当者（プロジェクト内で管理） |
 | tasks | タスク（階層構造・依存関係を含む） |
 | global_holidays | アプリ全体の休日（祝日等） |
@@ -29,6 +30,7 @@
 
 ```mermaid
 erDiagram
+    global_assignees ||--o{ assignees : "referenced by"
     projects ||--o{ assignees : "has"
     projects ||--o{ tasks : "has"
     tasks    |o--o{ tasks : "parent_id / children"
@@ -53,12 +55,25 @@ erDiagram
 
 ---
 
-### 4.2 assignees（担当者）
+### 4.2 global_assignees（グローバル担当者マスタ）
+
+| カラム名 | 型 | NULL | デフォルト | 説明 |
+|----------|----|------|------------|------|
+| id | INTEGER | NOT NULL | AUTOINCREMENT | PK |
+| name | TEXT | NOT NULL | - | 担当者名 |
+
+**制約**
+- `name` UNIQUE（重複登録を禁止）
+
+---
+
+### 4.3 assignees（担当者）
 
 | カラム名 | 型 | NULL | デフォルト | 説明 |
 |----------|----|------|------------|------|
 | id | INTEGER | NOT NULL | AUTOINCREMENT | PK |
 | project_id | INTEGER | NOT NULL | - | FK → projects.id |
+| global_assignee_id | INTEGER | NULL | - | FK → global_assignees.id。NULL = プロジェクト専用 |
 | name | TEXT | NOT NULL | - | 担当者名 |
 | sort_order | INTEGER | NOT NULL | 0 | 担当者一覧の表示順 |
 | created_at | TEXT | NOT NULL | DATETIME('now') | 作成日時 |
@@ -66,10 +81,11 @@ erDiagram
 
 **制約**
 - `project_id` → `projects.id` ON DELETE CASCADE（プロジェクト削除時に担当者も削除）
+- `global_assignee_id` → `global_assignees.id` ON DELETE SET NULL（グローバルマスタ削除時は連携解除）
 
 ---
 
-### 4.3 tasks（タスク）
+### 4.4 tasks（タスク）
 
 | カラム名 | 型 | NULL | デフォルト | 説明 |
 |----------|----|------|------------|------|
@@ -109,7 +125,7 @@ erDiagram
 
 ---
 
-### 4.4 global_holidays（全体休日）
+### 4.5 global_holidays（全体休日）
 
 | カラム名 | 型 | NULL | デフォルト | 説明 |
 |----------|----|------|------------|------|
@@ -124,7 +140,7 @@ erDiagram
 
 ---
 
-### 4.5 assignee_holidays（担当者個人休日）
+### 4.6 assignee_holidays（担当者個人休日）
 
 | カラム名 | 型 | NULL | デフォルト | 説明 |
 |----------|----|------|------------|------|
@@ -143,6 +159,7 @@ erDiagram
 
 | インデックス名 | テーブル | カラム | 用途 |
 |---------------|----------|--------|------|
+| idx_global_assignees_name | global_assignees | name | 名前重複チェック（UNIQUE） |
 | idx_tasks_project_id | tasks | project_id | プロジェクト別タスク取得 |
 | idx_tasks_parent_id | tasks | parent_id | 子タスク一覧取得 |
 | idx_tasks_predecessor_id | tasks | predecessor_id | 後続タスク検索（再計算時） |
@@ -165,14 +182,21 @@ CREATE TABLE IF NOT EXISTS projects (
     updated_at TEXT    NOT NULL DEFAULT (DATETIME('now', 'localtime'))
 );
 
+-- グローバル担当者マスタ
+CREATE TABLE IF NOT EXISTS global_assignees (
+    id   INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT    NOT NULL UNIQUE
+);
+
 -- 担当者
 CREATE TABLE IF NOT EXISTS assignees (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    name       TEXT    NOT NULL,
-    sort_order INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT    NOT NULL DEFAULT (DATETIME('now', 'localtime')),
-    updated_at TEXT    NOT NULL DEFAULT (DATETIME('now', 'localtime'))
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id         INTEGER NOT NULL REFERENCES projects(id)         ON DELETE CASCADE,
+    global_assignee_id INTEGER          REFERENCES global_assignees(id) ON DELETE SET NULL,
+    name               TEXT    NOT NULL,
+    sort_order         INTEGER NOT NULL DEFAULT 0,
+    created_at         TEXT    NOT NULL DEFAULT (DATETIME('now', 'localtime')),
+    updated_at         TEXT    NOT NULL DEFAULT (DATETIME('now', 'localtime'))
 );
 
 -- タスク

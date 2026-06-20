@@ -13,6 +13,7 @@ public partial class AssigneeDetail
     [Parameter] public int AssigneeId { get; set; }
 
     private Assignee? _assignee;
+    private GlobalAssignee? _linkedGlobal;
     private string _editName = string.Empty;
     private bool _nameSaving;
     private string? _nameError;
@@ -25,6 +26,8 @@ public partial class AssigneeDetail
     private bool _saving;
     private string? _holidayError;
 
+    private bool _unlinkConfirmOpen;
+
     /// <inheritdoc/>
     protected override async Task OnInitializedAsync()
     {
@@ -36,6 +39,13 @@ public partial class AssigneeDetail
             return;
         }
         _editName = _assignee.Name;
+
+        if (_assignee.GlobalAssigneeId.HasValue)
+        {
+            var allGlobals = await GlobalAssigneeRepo.GetAllAsync();
+            _linkedGlobal = allGlobals.FirstOrDefault(g => g.Id == _assignee.GlobalAssigneeId);
+        }
+
         _holidays = await HolidayRepo.GetByAssigneeAsync(AssigneeId);
     }
 
@@ -65,6 +75,34 @@ public partial class AssigneeDetail
             _nameSaving = false;
         }
     }
+
+    // ---- グローバルマスタ連携解除 ----
+
+    /// <summary>グローバルマスタ連携解除確認ダイアログを開く。</summary>
+    private void OpenUnlinkConfirm() => _unlinkConfirmOpen = true;
+
+    /// <summary>グローバルマスタ連携解除確認ダイアログを閉じる。</summary>
+    private void CloseUnlinkConfirm() => _unlinkConfirmOpen = false;
+
+    /// <summary>グローバルマスタとの連携を解除してプロジェクト専用担当者にする。</summary>
+    private async Task UnlinkGlobal()
+    {
+        if (_assignee is null) return;
+        try
+        {
+            _assignee.GlobalAssigneeId = null;
+            await AssigneeRepo.UpdateAsync(_assignee);
+            _linkedGlobal = null;
+            _unlinkConfirmOpen = false;
+        }
+        catch (Exception ex)
+        {
+            _nameError = $"連携解除に失敗しました: {ex.InnerException?.Message ?? ex.Message}";
+            _unlinkConfirmOpen = false;
+        }
+    }
+
+    // ---- 個人休日 ----
 
     /// <summary>個人休日追加モーダルを開く。</summary>
     private void OpenAddHoliday()
@@ -116,7 +154,6 @@ public partial class AssigneeDetail
     }
 
     /// <summary>個人休日を削除する。</summary>
-    /// <param name="holidayId">削除する休日ID。</param>
     private async Task DeleteHoliday(int holidayId)
     {
         try
@@ -131,8 +168,6 @@ public partial class AssigneeDetail
     }
 
     /// <summary>日付文字列を表示用にフォーマットする。</summary>
-    /// <param name="date">yyyy-MM-dd 形式の日付文字列。</param>
-    /// <returns>yyyy/MM/dd 形式の文字列。</returns>
     private static string FormatDate(string date)
         => DateOnly.TryParse(date, out var d) ? d.ToString("yyyy/MM/dd") : date;
 
