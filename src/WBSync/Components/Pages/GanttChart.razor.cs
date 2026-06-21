@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
+using WBSync.Helpers;
 using WBSync.Models;
 using WBSync.Services;
 
 namespace WBSync.Components.Pages;
-
 
 /// <summary>ガントチャート画面のコードビハインド。</summary>
 public partial class GanttChart : IAsyncDisposable
@@ -29,13 +29,15 @@ public partial class GanttChart : IAsyncDisposable
     private bool _isDragging;
     private DotNetObjectReference<GanttChart>? _dotNetRef;
 
-    // ===== モーダル状態 =====
+    #region モーダル状態
 
     private bool _isTaskModalOpen;
     private WbsTask? _taskModalTask;
     private int? _taskModalParentId;
 
-    // ===== 右クリックメニュー状態 =====
+    #endregion
+
+    #region 右クリックメニュー状態
 
     private bool _ctxVisible;
     private double _ctxX;
@@ -46,20 +48,18 @@ public partial class GanttChart : IAsyncDisposable
     private string _ctxDeleteMessage =>
         $"「{_ctxNode?.Task.Name}」およびその配下のタスクをすべて削除します。この操作は元に戻せません。";
 
-    // ===== Chart scale & columns =====
+    #endregion
 
-    /// <summary>チャートの時間軸スケール。</summary>
-    private enum ChartScale { Day, Week, Month }
+    #region Chart scale & columns
+
     private ChartScale _scale = ChartScale.Day;
-
     private DateOnly _chartStart;
     private DateOnly _chartEnd;
-
-    /// <summary>チャートの列定義。</summary>
-    private record ChartColumn(string Label, DateOnly Date, bool IsWeekend, bool IsHoliday = false);
     private List<ChartColumn> _chartColumns = [];
 
-    // ===== Lifecycle =====
+    #endregion
+
+    #region Lifecycle
 
     /// <inheritdoc/>
     protected override async Task OnInitializedAsync()
@@ -75,8 +75,8 @@ public partial class GanttChart : IAsyncDisposable
         _allAssignees = assignees;
         _assigneeNames = assignees.ToDictionary(a => a.Id, a => a.Name);
         _allTasks = tasks;
-        _taskRoots = BuildTree(tasks);
-        _allTasksWbsOrdered = GetAllNodesInDisplayOrder(_taskRoots).Select(n => n.Task).ToList();
+        _taskRoots = TaskTreeHelper.BuildTree(tasks);
+        _allTasksWbsOrdered = TaskTreeHelper.GetAllNodesInDisplayOrder(_taskRoots).Select(n => n.Task).ToList();
 
         var holidays = await GlobalHolidayRepo.GetAllAsync();
         _globalHolidays = holidays
@@ -89,7 +89,7 @@ public partial class GanttChart : IAsyncDisposable
         _warningTaskIds = await ScheduleService.GetOverlappingTaskIdsAsync(ProjectId);
 
         CalculateChartPeriod();
-        BuildChartColumns();
+        _chartColumns = GanttChartLayoutHelper.BuildColumns(_scale, _chartStart, _chartEnd, _globalHolidays);
     }
 
     /// <inheritdoc/>
@@ -112,17 +112,21 @@ public partial class GanttChart : IAsyncDisposable
         await ValueTask.CompletedTask;
     }
 
-    // ===== Scale management =====
+    #endregion
+
+    #region Scale management
 
     /// <summary>チャートのスケールを切り替える。</summary>
     /// <param name="scale">切り替え先のスケール。</param>
     private void SetScale(ChartScale scale)
     {
         _scale = scale;
-        BuildChartColumns();
+        _chartColumns = GanttChartLayoutHelper.BuildColumns(_scale, _chartStart, _chartEnd, _globalHolidays);
     }
 
-    // ===== Chart period & columns =====
+    #endregion
+
+    #region Chart period
 
     /// <summary>チャートの表示期間をタスクの開始日・終了日から算出する。</summary>
     private void CalculateChartPeriod()
@@ -131,7 +135,7 @@ public partial class GanttChart : IAsyncDisposable
             ? s
             : DateOnly.FromDateTime(DateTime.Today);
 
-        var endDates = GetAllLeafNodes(_taskRoots)
+        var endDates = TaskTreeHelper.GetAllLeafNodes(_taskRoots)
             .Select(n => n.Task.EndDate)
             .Where(d => !string.IsNullOrEmpty(d))
             .Select(d => DateOnly.TryParse(d, out var date) ? date : (DateOnly?)null)
@@ -143,137 +147,9 @@ public partial class GanttChart : IAsyncDisposable
         _chartEnd = lastEndDate.AddDays(30);
     }
 
-    /// <summary>現在のスケールに応じてチャート列一覧を構築する。</summary>
-    private void BuildChartColumns()
-    {
-        _chartColumns = _scale switch
-        {
-            ChartScale.Day => BuildDayColumns(),
-            ChartScale.Week => BuildWeekColumns(),
-            ChartScale.Month => BuildMonthColumns(),
-            _ => []
-        };
-    }
+    #endregion
 
-    /// <summary>日スケールの列一覧を構築する。</summary>
-    private List<ChartColumn> BuildDayColumns()
-    {
-        var cols = new List<ChartColumn>();
-        for (var d = _chartStart; d <= _chartEnd; d = d.AddDays(1))
-        {
-            var isWeekend = d.DayOfWeek == DayOfWeek.Saturday || d.DayOfWeek == DayOfWeek.Sunday;
-            var isHoliday = _globalHolidays.Contains(d);
-            cols.Add(new ChartColumn(d.ToString("M/d"), d, isWeekend, isHoliday));
-        }
-        return cols;
-    }
-
-    /// <summary>週スケールの列一覧を構築する。</summary>
-    private List<ChartColumn> BuildWeekColumns()
-    {
-        var cols = new List<ChartColumn>();
-        var weekStart = _chartStart;
-        while (weekStart.DayOfWeek != DayOfWeek.Monday)
-            weekStart = weekStart.AddDays(-1);
-
-        for (var d = weekStart; d <= _chartEnd; d = d.AddDays(7))
-        {
-            var weekEnd = d.AddDays(6);
-            cols.Add(new ChartColumn($"{d:M/d}〜{weekEnd:M/d}", d, false));
-        }
-        return cols;
-    }
-
-    /// <summary>月スケールの列一覧を構築する。</summary>
-    private List<ChartColumn> BuildMonthColumns()
-    {
-        var cols = new List<ChartColumn>();
-        var monthStart = new DateOnly(_chartStart.Year, _chartStart.Month, 1);
-        var chartEndMonth = new DateOnly(_chartEnd.Year, _chartEnd.Month, 1);
-
-        for (var d = monthStart; d <= chartEndMonth; d = d.AddMonths(1))
-            cols.Add(new ChartColumn($"{d:M月}", d, false));
-
-        return cols;
-    }
-
-    /// <summary>指定ノード群からリーフノードをすべて列挙する。</summary>
-    /// <param name="nodes">検索対象のノード群。</param>
-    private static IEnumerable<TaskNode> GetAllLeafNodes(List<TaskNode> nodes)
-    {
-        foreach (var node in nodes)
-        {
-            if (!node.HasChildren)
-                yield return node;
-            else
-                foreach (var leaf in GetAllLeafNodes(node.Children))
-                    yield return leaf;
-        }
-    }
-
-    // ===== ツリー構築 =====
-
-    /// <summary>フラットなタスクリストからツリー構造を構築する。</summary>
-    /// <param name="tasks">対象タスクのリスト。</param>
-    private static List<TaskNode> BuildTree(List<WbsTask> tasks)
-    {
-        var nodeMap = tasks.ToDictionary(t => t.Id, t => new TaskNode { Task = t });
-        var roots = new List<TaskNode>();
-
-        foreach (var task in tasks.OrderBy(t => t.SortOrder))
-        {
-            if (task.ParentId is null)
-                roots.Add(nodeMap[task.Id]);
-            else if (nodeMap.TryGetValue(task.ParentId.Value, out var parent))
-                parent.Children.Add(nodeMap[task.Id]);
-        }
-
-        SetLevels(roots, 0);
-        return roots;
-    }
-
-    /// <summary>ノードの階層レベルを再帰的に設定する。</summary>
-    /// <param name="nodes">対象ノード群。</param>
-    /// <param name="level">現在の階層レベル。</param>
-    private static void SetLevels(List<TaskNode> nodes, int level)
-    {
-        foreach (var node in nodes)
-        {
-            node.Level = level;
-            SetLevels(node.Children, level + 1);
-        }
-    }
-
-    /// <summary>展開状態によらず全ノードを DFS 順で列挙する（WBS 表示順）。</summary>
-    /// <param name="roots">ルートノード群。</param>
-    private static IEnumerable<TaskNode> GetAllNodesInDisplayOrder(List<TaskNode> roots)
-    {
-        foreach (var node in roots)
-        {
-            yield return node;
-            foreach (var child in GetAllNodesInDisplayOrder(node.Children))
-                yield return child;
-        }
-    }
-
-    /// <summary>展開状態を考慮して表示対象のノードを列挙する。</summary>
-    /// <param name="roots">ルートノード群。</param>
-    private static IEnumerable<TaskNode> GetVisibleNodes(List<TaskNode> roots)
-    {
-        foreach (var node in roots)
-        {
-            yield return node;
-            if (node.IsExpanded && node.HasChildren)
-                foreach (var child in GetVisibleNodes(node.Children))
-                    yield return child;
-        }
-    }
-
-    /// <summary>ノードの展開・折り畳みを切り替える。</summary>
-    /// <param name="node">対象ノード。</param>
-    private void ToggleExpand(TaskNode node) => node.IsExpanded = !node.IsExpanded;
-
-    // ===== 個人休日ロード =====
+    #region 個人休日ロード
 
     /// <summary>全担当者の個人休日を読み込んで <see cref="_assigneeHolidays"/> に格納する。</summary>
     private async Task LoadAssigneeHolidaysAsync()
@@ -290,7 +166,9 @@ public partial class GanttChart : IAsyncDisposable
         }
     }
 
-    // ===== 表示ヘルパー =====
+    #endregion
+
+    #region 表示ヘルパー
 
     /// <summary>ヘッダーセルに適用する CSS クラス名を返す。</summary>
     /// <param name="col">対象チャート列。</param>
@@ -343,7 +221,9 @@ public partial class GanttChart : IAsyncDisposable
         return DateOnly.TryParse(date, out var d) ? d.ToString("M/d") : date;
     }
 
-    // ===== D&D 並び替え =====
+    #endregion
+
+    #region D&D 並び替え
 
     /// <summary>SortableJS からドロップ完了時に呼び出され、兄弟タスクの表示順を DB に保存する。</summary>
     /// <param name="taskIds">新しい順序の兄弟タスクIDリスト。</param>
@@ -354,11 +234,13 @@ public partial class GanttChart : IAsyncDisposable
             await TaskRepo.UpdateSortOrderAsync(taskIds[i], i);
 
         _allTasks = await TaskRepo.GetByProjectAsync(ProjectId);
-        _taskRoots = BuildTree(_allTasks);
+        _taskRoots = TaskTreeHelper.BuildTree(_allTasks);
         await InvokeAsync(StateHasChanged);
     }
 
-    // ===== ナビゲーション・操作 =====
+    #endregion
+
+    #region ナビゲーション・操作
 
     /// <summary>プロジェクト一覧に戻る。</summary>
     private void GoBack() => Nav.NavigateTo("/");
@@ -383,7 +265,9 @@ public partial class GanttChart : IAsyncDisposable
         _isTaskModalOpen = true;
     }
 
-    // ===== 右クリックメニュー =====
+    #endregion
+
+    #region 右クリックメニュー
 
     /// <summary>右クリックメニューを表示する。</summary>
     /// <param name="e">マウスイベント。</param>
@@ -465,14 +349,16 @@ public partial class GanttChart : IAsyncDisposable
     private async Task ReloadTasksAsync()
     {
         _allTasks = await TaskRepo.GetByProjectAsync(ProjectId);
-        _taskRoots = BuildTree(_allTasks);
-        _allTasksWbsOrdered = GetAllNodesInDisplayOrder(_taskRoots).Select(n => n.Task).ToList();
+        _taskRoots = TaskTreeHelper.BuildTree(_allTasks);
+        _allTasksWbsOrdered = TaskTreeHelper.GetAllNodesInDisplayOrder(_taskRoots).Select(n => n.Task).ToList();
         _warningTaskIds = await ScheduleService.GetOverlappingTaskIdsAsync(ProjectId);
         CalculateChartPeriod();
-        BuildChartColumns();
+        _chartColumns = GanttChartLayoutHelper.BuildColumns(_scale, _chartStart, _chartEnd, _globalHolidays);
     }
 
-    // ===== 行ホバー =====
+    #endregion
+
+    #region 行ホバー
 
     /// <summary>ホバー行インデックスを更新する。ドラッグ中は無視する。</summary>
     /// <param name="index">ホバー中の行インデックス。-1 でホバーなし。</param>
@@ -487,7 +373,9 @@ public partial class GanttChart : IAsyncDisposable
     [JSInvokable]
     public void SetDragging(bool dragging) => _isDragging = dragging;
 
-    // ===== タスクバー描画 =====
+    #endregion
+
+    #region タスクバー描画
 
     /// <summary>タスクバーの CSS インラインスタイル（left・width）を返す。描画不可の場合は <see langword="null"/>。</summary>
     /// <param name="node">対象タスクノード。</param>
@@ -500,77 +388,20 @@ public partial class GanttChart : IAsyncDisposable
         if (!DateOnly.TryParse(endStr, out var end)) return null;
         if (start > end) return null;
 
-        var left = GetPixelOffset(start);
-        var width = GetPixelOffset(end.AddDays(1)) - left;
+        var left = GanttChartLayoutHelper.GetPixelOffset(_scale, _chartStart, start);
+        var width = GanttChartLayoutHelper.GetPixelOffset(_scale, _chartStart, end.AddDays(1)) - left;
         if (width <= 0) return null;
 
         return $"left:{left:F1}px;width:{width:F1}px";
     }
 
-    /// <summary>指定日のチャート左端からのピクセルオフセットを返す。</summary>
-    /// <param name="date">対象日付。</param>
-    private double GetPixelOffset(DateOnly date) => _scale switch
-    {
-        ChartScale.Day => (date.DayNumber - _chartStart.DayNumber) * 32.0,
-        ChartScale.Week => (date.DayNumber - GetWeekStart(_chartStart).DayNumber) * (80.0 / 7.0),
-        ChartScale.Month => GetMonthPixelOffset(date),
-        _ => 0
-    };
+    #endregion
 
-    /// <summary>月スケール用のピクセルオフセットを計算する。</summary>
-    /// <param name="date">対象日付。</param>
-    private double GetMonthPixelOffset(DateOnly date)
-    {
-        var origin = new DateOnly(_chartStart.Year, _chartStart.Month, 1);
-        var cur = origin;
-        var px = 0.0;
-        while (new DateOnly(date.Year, date.Month, 1) > cur)
-        {
-            px += 90.0;
-            cur = cur.AddMonths(1);
-        }
-        px += (date.Day - 1) * (90.0 / DateTime.DaysInMonth(date.Year, date.Month));
-        return px;
-    }
+    #region ツリー操作
 
-    /// <summary>指定日を含む週の月曜日を返す。</summary>
-    /// <param name="date">起点の日付。</param>
-    private static DateOnly GetWeekStart(DateOnly date)
-    {
-        var d = date;
-        while (d.DayOfWeek != DayOfWeek.Monday)
-            d = d.AddDays(-1);
-        return d;
-    }
+    /// <summary>ノードの展開・折り畳みを切り替える。</summary>
+    /// <param name="node">対象ノード。</param>
+    private void ToggleExpand(TaskNode node) => node.IsExpanded = !node.IsExpanded;
 
-    // ===== TaskNode =====
-
-    /// <summary>ガントチャートのツリー表示用ノード。</summary>
-    private class TaskNode
-    {
-        /// <summary>対応する WBS タスク。</summary>
-        public WbsTask Task { get; init; } = null!;
-
-        /// <summary>子ノードのコレクション。</summary>
-        public List<TaskNode> Children { get; } = [];
-
-        /// <summary>ルートから数えた階層レベル（0 始まり）。</summary>
-        public int Level { get; set; }
-
-        /// <summary>子ノードが展開表示されているかどうか。</summary>
-        public bool IsExpanded { get; set; } = true;
-
-        /// <summary>子ノードを持つかどうか。</summary>
-        public bool HasChildren => Children.Count > 0;
-
-        /// <summary>表示用の開始日。親タスクの場合は子の最小値を動的に返す。</summary>
-        public string? DisplayStartDate => HasChildren
-            ? Children.Select(c => c.DisplayStartDate).Where(d => d is not null).Min()
-            : Task.StartDate;
-
-        /// <summary>表示用の終了日。親タスクの場合は子の最大値を動的に返す。</summary>
-        public string? DisplayEndDate => HasChildren
-            ? Children.Select(c => c.DisplayEndDate).Where(d => d is not null).Max()
-            : Task.EndDate;
-    }
+    #endregion
 }

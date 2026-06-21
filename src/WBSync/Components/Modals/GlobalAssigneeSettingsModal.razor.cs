@@ -18,13 +18,11 @@ public partial class GlobalAssigneeSettingsModal
 
     private List<GlobalAssignee> _assignees = [];
 
-    // 追加フォーム
     private bool _isAdding;
     private string _newName = string.Empty;
     private bool _addSaving;
     private string? _addError;
 
-    // インライン編集
     private int? _editingId;
     private string _editName = string.Empty;
     private bool _editSaving;
@@ -47,7 +45,7 @@ public partial class GlobalAssigneeSettingsModal
         await OnClose.InvokeAsync();
     }
 
-    // ---- 追加 ----
+    #region 追加
 
     /// <summary>追加フォームを表示する。</summary>
     private void StartAdding()
@@ -90,7 +88,9 @@ public partial class GlobalAssigneeSettingsModal
         }
     }
 
-    // ---- 編集 ----
+    #endregion
+
+    #region 編集
 
     /// <summary>指定行をインライン編集モードにする。</summary>
     private void StartEditing(GlobalAssignee g)
@@ -135,7 +135,9 @@ public partial class GlobalAssigneeSettingsModal
         }
     }
 
-    // ---- 削除 ----
+    #endregion
+
+    #region 削除
 
     /// <summary>グローバル担当者を削除する。</summary>
     private async Task DeleteAssignee(int id)
@@ -150,4 +152,6 @@ public partial class GlobalAssigneeSettingsModal
             _editError = $"削除に失敗しました: {ex.InnerException?.Message ?? ex.Message}";
         }
     }
+
+    #endregion
 }

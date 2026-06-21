@@ -76,7 +76,7 @@ public partial class AssigneeDetail
         }
     }
 
-    // ---- グローバルマスタ連携解除 ----
+    #region グローバルマスタ連携解除
 
     /// <summary>グローバルマスタ連携解除確認ダイアログを開く。</summary>
     private void OpenUnlinkConfirm() => _unlinkConfirmOpen = true;
@@ -102,7 +102,9 @@ public partial class AssigneeDetail
         }
     }
 
-    // ---- 個人休日 ----
+    #endregion
+
+    #region 個人休日
 
     /// <summary>個人休日追加モーダルを開く。</summary>
     private void OpenAddHoliday()
@@ -166,6 +168,8 @@ public partial class AssigneeDetail
             _holidayError = $"削除に失敗しました: {ex.InnerException?.Message ?? ex.Message}";
         }
     }
+
+    #endregion
 
     /// <summary>日付文字列を表示用にフォーマットする。</summary>
     private static string FormatDate(string date)

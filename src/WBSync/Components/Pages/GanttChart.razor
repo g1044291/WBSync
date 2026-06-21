@@ -8,7 +8,7 @@
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-@{ var visibleNodes = GetVisibleNodes(_taskRoots).ToList(); }
+@{ var visibleNodes = TaskTreeHelper.GetVisibleNodes(_taskRoots).ToList(); }
 
 <div class="gantt-page">
     <header class="gantt-header">
