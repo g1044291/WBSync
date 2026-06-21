@@ -20,11 +20,13 @@ public partial class GlobalAssigneeSettingsModal
 
     private bool _isAdding;
     private string _newName = string.Empty;
+    private decimal _newCoefficient = 1.0m;
     private bool _addSaving;
     private string? _addError;
 
     private int? _editingId;
     private string _editName = string.Empty;
+    private decimal _editCoefficient = 1.0m;
     private bool _editSaving;
     private string? _editError;
 
@@ -51,6 +53,7 @@ public partial class GlobalAssigneeSettingsModal
     private void StartAdding()
     {
         _newName = string.Empty;
+        _newCoefficient = 1.0m;
         _addError = null;
         _editingId = null;
         _isAdding = true;
@@ -68,11 +71,12 @@ public partial class GlobalAssigneeSettingsModal
     {
         _addError = null;
         if (string.IsNullOrWhiteSpace(_newName)) { _addError = "担当者名を入力してください"; return; }
+        if (_newCoefficient <= 0) { _addError = "生産性係数は 0 より大きい値を入力してください"; return; }
 
         _addSaving = true;
         try
         {
-            await GlobalAssigneeRepo.CreateAsync(new GlobalAssignee { Name = _newName.Trim() });
+            await GlobalAssigneeRepo.CreateAsync(new GlobalAssignee { Name = _newName.Trim(), ProductivityCoefficient = _newCoefficient });
             _isAdding = false;
             _assignees = await GlobalAssigneeRepo.GetAllAsync();
         }
@@ -99,6 +103,7 @@ public partial class GlobalAssigneeSettingsModal
         _addError = null;
         _editingId = g.Id;
         _editName = g.Name;
+        _editCoefficient = g.ProductivityCoefficient;
         _editError = null;
     }
 
@@ -109,16 +114,18 @@ public partial class GlobalAssigneeSettingsModal
         _editError = null;
     }
 
-    /// <summary>グローバル担当者名を保存する。</summary>
+    /// <summary>グローバル担当者名と生産性係数を保存する。</summary>
     private async Task SaveAssignee(GlobalAssignee g)
     {
         _editError = null;
         if (string.IsNullOrWhiteSpace(_editName)) { _editError = "担当者名を入力してください"; return; }
+        if (_editCoefficient <= 0) { _editError = "生産性係数は 0 より大きい値を入力してください"; return; }
 
         _editSaving = true;
         try
         {
             g.Name = _editName.Trim();
+            g.ProductivityCoefficient = _editCoefficient;
             await GlobalAssigneeRepo.UpdateAsync(g);
             _editingId = null;
             _assignees = await GlobalAssigneeRepo.GetAllAsync();

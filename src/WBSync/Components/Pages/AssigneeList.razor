@@ -43,9 +43,9 @@
         }
         else
         {
-            <div class="form-group">
-                <label class="form-label">担当者名 <span class="required">*</span></label>
+            <div class="project-add-fields">
                 <input class="form-input" type="text" placeholder="担当者名を入力" @bind="_newName" />
+                <input class="coefficient-input" type="number" step="0.01" min="0.01" placeholder="係数（例: 1.0）" @bind="_newCoefficient" />
             </div>
         }
 

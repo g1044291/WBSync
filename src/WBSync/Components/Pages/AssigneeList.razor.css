@@ -136,6 +136,34 @@
     color: #ef4444;
 }
 
+/* プロジェクト専用追加フォーム：横並び */
+.project-add-fields {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.project-add-fields .form-input {
+    width: auto;
+    flex: 1;
+}
+
+.coefficient-input {
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 14px;
+    width: 120px;
+    flex-shrink: 0;
+}
+
+.coefficient-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
 /* 追加モーダル：タブ切り替え */
 .add-mode-tabs {
     display: flex;

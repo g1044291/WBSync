@@ -17,6 +17,7 @@ public partial class AssigneeList
     private bool _addFromGlobal = true;
     private int? _selectedGlobalId;
     private string _newName = string.Empty;
+    private decimal _newCoefficient = 1.0m;
     private bool _saving;
     private string? _addError;
 
@@ -33,6 +34,7 @@ public partial class AssigneeList
         _addFromGlobal = true;
         _selectedGlobalId = null;
         _newName = string.Empty;
+        _newCoefficient = 1.0m;
         _addError = null;
         _addModalOpen = true;
     }
@@ -50,6 +52,7 @@ public partial class AssigneeList
         _addFromGlobal = fromGlobal;
         _selectedGlobalId = null;
         _newName = string.Empty;
+        _newCoefficient = 1.0m;
         _addError = null;
     }
 
@@ -83,6 +86,7 @@ public partial class AssigneeList
                     ProjectId = ProjectId,
                     GlobalAssigneeId = _selectedGlobalId,
                     Name = selected.Name,
+                    ProductivityCoefficient = selected.ProductivityCoefficient,
                     SortOrder = nextSort
                 });
                 _addModalOpen = false;
@@ -104,6 +108,11 @@ public partial class AssigneeList
                 _addError = "担当者名を入力してください";
                 return;
             }
+            if (_newCoefficient <= 0)
+            {
+                _addError = "生産性係数は 0 より大きい値を入力してください";
+                return;
+            }
 
             _saving = true;
             try
@@ -113,6 +122,7 @@ public partial class AssigneeList
                 {
                     ProjectId = ProjectId,
                     Name = _newName.Trim(),
+                    ProductivityCoefficient = _newCoefficient,
                     SortOrder = nextSort
                 });
                 _addModalOpen = false;

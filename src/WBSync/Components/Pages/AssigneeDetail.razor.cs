@@ -19,6 +19,11 @@ public partial class AssigneeDetail
     private string? _nameError;
     private bool _nameSaved;
 
+    private decimal _editCoefficient = 1.0m;
+    private bool _coefficientSaving;
+    private string? _coefficientError;
+    private bool _coefficientSaved;
+
     private List<AssigneeHoliday> _holidays = [];
     private bool _addHolidayOpen;
     private DateOnly? _newHolidayDate;
@@ -39,6 +44,7 @@ public partial class AssigneeDetail
             return;
         }
         _editName = _assignee.Name;
+        _editCoefficient = _assignee.ProductivityCoefficient;
 
         if (_assignee.GlobalAssigneeId.HasValue)
         {
@@ -73,6 +79,33 @@ public partial class AssigneeDetail
         finally
         {
             _nameSaving = false;
+        }
+    }
+
+    /// <summary>生産性係数を保存する。</summary>
+    private async Task SaveCoefficient()
+    {
+        _coefficientError = null;
+        _coefficientSaved = false;
+        if (_editCoefficient <= 0)
+        {
+            _coefficientError = "生産性係数は 0 より大きい値を入力してください";
+            return;
+        }
+        _coefficientSaving = true;
+        try
+        {
+            _assignee!.ProductivityCoefficient = _editCoefficient;
+            await AssigneeRepo.UpdateAsync(_assignee);
+            _coefficientSaved = true;
+        }
+        catch (Exception ex)
+        {
+            _coefficientError = $"エラーが発生しました: {ex.InnerException?.Message ?? ex.Message}";
+        }
+        finally
+        {
+            _coefficientSaving = false;
         }
     }
 

@@ -97,6 +97,27 @@
     flex: 1;
 }
 
+.assignee-coefficient {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.coefficient-input {
+    padding: 6px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 14px;
+    flex: 1;
+    min-width: 100px;
+    max-width: 140px;
+}
+
+.coefficient-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
 .row-actions {
     display: flex;
     gap: 6px;

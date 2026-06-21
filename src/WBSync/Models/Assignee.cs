@@ -24,6 +24,10 @@ public class Assignee
     [Column("global_assignee_id")]
     public int? GlobalAssigneeId { get; set; }
 
+    /// <summary>プロジェクト内での生産性係数。グローバルマスタからの引き継ぎ値をオーバーライドできる。</summary>
+    [Column("productivity_coefficient")]
+    public decimal ProductivityCoefficient { get; set; } = 1.0m;
+
     /// <summary>同プロジェクト内の表示順。</summary>
     [Column("sort_order")]
     public int SortOrder { get; set; }

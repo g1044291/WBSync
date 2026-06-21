@@ -116,6 +116,16 @@
     color: #059669;
 }
 
+/* ===== Coefficient section ===== */
+
+.coefficient-section {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+}
+
 /* ===== Holiday section ===== */
 
 .holiday-section {
