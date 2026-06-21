@@ -4,7 +4,8 @@
       "Bash(dotnet build *)",
       "Bash(dotnet ef *)",
       "PowerShell(dotnet build *)",
-      "PowerShell(dotnet ef *)"
+      "PowerShell(dotnet ef *)",
+      "PowerShell(tail -5)"
     ]
   }
 }
