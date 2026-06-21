@@ -32,9 +32,13 @@ public class WbsTask
     [Required]
     public string Name { get; set; } = string.Empty;
 
-    /// <summary>工数（人日）。未設定の場合は <see langword="null"/>。</summary>
+    /// <summary>見積工数（人日）。未設定の場合は <see langword="null"/>。</summary>
     [Column("work_days")]
     public double? WorkDays { get; set; }
+
+    /// <summary>予定工数（人日）。日付計算のベース。未設定の場合は <see langword="null"/>。</summary>
+    [Column("planned_work_days")]
+    public double? PlannedWorkDays { get; set; }
 
     /// <summary>開始日（yyyy-MM-dd 形式）。親タスクは DB に保存せず <see langword="null"/>。</summary>
     [Column("start_date")]

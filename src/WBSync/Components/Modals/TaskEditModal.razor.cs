@@ -44,6 +44,7 @@ public partial class TaskEditModal
     private WbsTask? _parent;
     private Assignee? _assignee;
     private string _workDaysStr = string.Empty;
+    private string _plannedWorkDaysStr = string.Empty;
     private DateOnly? _startDate;
     private DateOnly? _endDate;
     private WbsTask? _predecessor;
@@ -89,6 +90,7 @@ public partial class TaskEditModal
             _parent = _parentCandidates.FirstOrDefault(t => t.Id == ParentId);
             _assignee = null;
             _workDaysStr = string.Empty;
+            _plannedWorkDaysStr = string.Empty;
             _startDate = null;
             _endDate = null;
             _predecessor = null;
@@ -102,6 +104,7 @@ public partial class TaskEditModal
             _parent = _parentCandidates.FirstOrDefault(t => t.Id == Task.ParentId);
             _assignee = Assignees.FirstOrDefault(a => a.Id == Task.AssigneeId);
             _workDaysStr = Task.WorkDays?.ToString() ?? string.Empty;
+            _plannedWorkDaysStr = Task.PlannedWorkDays?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty;
             _startDate = DateOnly.TryParse(Task.StartDate, out var s) ? s : null;
             _endDate = DateOnly.TryParse(Task.EndDate, out var e) ? e : null;
             _predecessor = _predecessorCandidates.FirstOrDefault(t => t.Id == Task.PredecessorId);
@@ -192,7 +195,7 @@ public partial class TaskEditModal
     }
 
     /// <summary>
-    /// 開始日変更時に工数が設定されていれば終了日を再計算する。
+    /// 開始日変更時に予定工数が設定されていれば終了日を再計算する。
     /// </summary>
     /// <param name="d">新しい開始日。</param>
     private async Task HandleStartDateChanged(DateOnly? d)
@@ -200,13 +203,36 @@ public partial class TaskEditModal
         _startDate = d;
         _isDirty = true;
 
-        var workDays = ParseWorkDays();
-        if (_startDate.HasValue && workDays.HasValue)
-            _endDate = await ScheduleService.CalcEndDateAsync(_startDate.Value, workDays.Value, _assignee?.Id);
+        var plannedWorkDays = ParsePlannedWorkDays();
+        if (_startDate.HasValue && plannedWorkDays.HasValue)
+            _endDate = await ScheduleService.CalcEndDateAsync(_startDate.Value, plannedWorkDays.Value, _assignee?.Id);
     }
 
     /// <summary>
-    /// 工数変更時に開始日が設定されていれば終了日を再計算する。
+    /// 担当者変更時に生産性係数が変わるため予定工数を再計算し、終了日も更新する。
+    /// </summary>
+    /// <param name="assignee">選択された担当者。<see langword="null"/> の場合は担当者なし。</param>
+    private async Task HandleAssigneeChanged(Assignee? assignee)
+    {
+        _assignee = assignee;
+        _isDirty = true;
+
+        var workDays = ParseWorkDays();
+        if (workDays.HasValue)
+        {
+            var coeff = _assignee?.ProductivityCoefficient ?? 1.0m;
+            var planned = coeff > 0 ? workDays.Value / (double)coeff : workDays.Value;
+            _plannedWorkDaysStr = Math.Round(planned, 1)
+                .ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        var plannedWorkDays = ParsePlannedWorkDays();
+        if (_startDate.HasValue && plannedWorkDays.HasValue)
+            _endDate = await ScheduleService.CalcEndDateAsync(_startDate.Value, plannedWorkDays.Value, _assignee?.Id);
+    }
+
+    /// <summary>
+    /// 見積工数変更時に予定工数を自動計算し、開始日が設定されていれば終了日を再計算する。
     /// </summary>
     /// <param name="e">変更イベント。</param>
     private async Task HandleWorkDaysChanged(ChangeEventArgs e)
@@ -215,8 +241,35 @@ public partial class TaskEditModal
         _isDirty = true;
 
         var workDays = ParseWorkDays();
-        if (_startDate.HasValue && workDays.HasValue)
-            _endDate = await ScheduleService.CalcEndDateAsync(_startDate.Value, workDays.Value, _assignee?.Id);
+        if (workDays.HasValue)
+        {
+            var coeff = _assignee?.ProductivityCoefficient ?? 1.0m;
+            var planned = coeff > 0 ? workDays.Value / (double)coeff : workDays.Value;
+            _plannedWorkDaysStr = Math.Round(planned, 1)
+                .ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+        else
+        {
+            _plannedWorkDaysStr = string.Empty;
+        }
+
+        var plannedWorkDays = ParsePlannedWorkDays();
+        if (_startDate.HasValue && plannedWorkDays.HasValue)
+            _endDate = await ScheduleService.CalcEndDateAsync(_startDate.Value, plannedWorkDays.Value, _assignee?.Id);
+    }
+
+    /// <summary>
+    /// 予定工数変更時に開始日が設定されていれば終了日を再計算する。
+    /// </summary>
+    /// <param name="e">変更イベント。</param>
+    private async Task HandlePlannedWorkDaysChanged(ChangeEventArgs e)
+    {
+        _plannedWorkDaysStr = e.Value?.ToString() ?? string.Empty;
+        _isDirty = true;
+
+        var plannedWorkDays = ParsePlannedWorkDays();
+        if (_startDate.HasValue && plannedWorkDays.HasValue)
+            _endDate = await ScheduleService.CalcEndDateAsync(_startDate.Value, plannedWorkDays.Value, _assignee?.Id);
     }
 
     /// <summary>
@@ -232,18 +285,29 @@ public partial class TaskEditModal
         if (string.IsNullOrEmpty(predecessor?.EndDate)) return;
 
         var (startDate, endDate) = await ScheduleService.CalcDatesFromPredecessorAsync(
-            predecessor.EndDate, ParseWorkDays(), _assignee?.Id);
+            predecessor.EndDate, ParsePlannedWorkDays(), _assignee?.Id);
 
         _startDate = startDate;
         _endDate = endDate;
     }
 
-    /// <summary>工数入力フィールドの文字列を数値にパースする。</summary>
+    /// <summary>見積工数入力フィールドの文字列を数値にパースする。</summary>
     /// <returns>パース成功時は工数値、入力なし・パース失敗時は <see langword="null"/>。</returns>
     private double? ParseWorkDays()
     {
         if (string.IsNullOrWhiteSpace(_workDaysStr)) return null;
         return double.TryParse(_workDaysStr,
+            System.Globalization.NumberStyles.Any,
+            System.Globalization.CultureInfo.InvariantCulture,
+            out var wd) ? wd : null;
+    }
+
+    /// <summary>予定工数入力フィールドの文字列を数値にパースする。</summary>
+    /// <returns>パース成功時は予定工数値、入力なし・パース失敗時は <see langword="null"/>。</returns>
+    private double? ParsePlannedWorkDays()
+    {
+        if (string.IsNullOrWhiteSpace(_plannedWorkDaysStr)) return null;
+        return double.TryParse(_plannedWorkDaysStr,
             System.Globalization.NumberStyles.Any,
             System.Globalization.CultureInfo.InvariantCulture,
             out var wd) ? wd : null;
@@ -300,6 +364,7 @@ public partial class TaskEditModal
         }
 
         var workDays = ParseWorkDays();
+        var plannedWorkDays = ParsePlannedWorkDays();
 
         _saving = true;
         try
@@ -320,6 +385,7 @@ public partial class TaskEditModal
                     AssigneeId = _assignee?.Id,
                     Name = _name.Trim(),
                     WorkDays = workDays,
+                    PlannedWorkDays = plannedWorkDays,
                     StartDate = _startDate?.ToString("yyyy-MM-dd"),
                     EndDate = _endDate?.ToString("yyyy-MM-dd"),
                     Status = _status,
@@ -351,6 +417,7 @@ public partial class TaskEditModal
                 Task.Name = _name.Trim();
                 Task.AssigneeId = _assignee?.Id;
                 Task.WorkDays = workDays;
+                Task.PlannedWorkDays = plannedWorkDays;
                 // 親タスクの日付はDBに保存しない
                 Task.StartDate = _isParent ? null : _startDate?.ToString("yyyy-MM-dd");
                 Task.EndDate = _isParent ? null : _endDate?.ToString("yyyy-MM-dd");

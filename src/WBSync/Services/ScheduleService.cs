@@ -58,8 +58,9 @@ public class ScheduleService(
         foreach (var successor in successors)
         {
             var newStart = calculator.GetNextWorkday(predEnd.AddDays(1), successor.AssigneeId);
-            var newEnd = successor.WorkDays.HasValue
-                ? calculator.CalcEndDate(newStart, successor.WorkDays.Value, successor.AssigneeId)
+            var effectiveWorkDays = successor.PlannedWorkDays ?? successor.WorkDays;
+            var newEnd = effectiveWorkDays.HasValue
+                ? calculator.CalcEndDate(newStart, effectiveWorkDays.Value, successor.AssigneeId)
                 : (DateOnly?)null;
 
             var newStartStr = newStart.ToString("yyyy-MM-dd");
@@ -87,9 +88,10 @@ public class ScheduleService(
         {
             if (!task.AssigneeId.HasValue) continue;
             if (!DateOnly.TryParse(task.StartDate, out var startDate)) continue;
-            if (!task.WorkDays.HasValue) continue;
+            var taskWorkDays = task.PlannedWorkDays ?? task.WorkDays;
+            if (!taskWorkDays.HasValue) continue;
 
-            var workdays = calculator.GetWorkdays(startDate, task.WorkDays.Value, task.AssigneeId).ToHashSet();
+            var workdays = calculator.GetWorkdays(startDate, taskWorkDays.Value, task.AssigneeId).ToHashSet();
             if (workdays.Count == 0) continue;
 
             if (!assigneeWorkdays.TryGetValue(task.AssigneeId.Value, out var list))
