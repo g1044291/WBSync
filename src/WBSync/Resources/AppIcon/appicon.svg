@@ -1,4 +1,16 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg width="456" height="456" viewBox="0 0 456 456" version="1.1" xmlns="http://www.w3.org/2000/svg">
-    <rect x="0" y="0" width="456" height="456" fill="#512BD4" />
+<svg width="456" height="456" viewBox="0 0 456 456" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="456" height="456" rx="40" fill="#1E293B"/>
+  <line x1="80" y1="120" x2="340" y2="120" stroke="#94A3B8" stroke-width="4"/>
+  <line x1="80" y1="200" x2="380" y2="200" stroke="#94A3B8" stroke-width="4"/>
+  <line x1="80" y1="280" x2="380" y2="280" stroke="#94A3B8" stroke-width="4"/>
+  <line x1="80" y1="360" x2="380" y2="360" stroke="#94A3B8" stroke-width="4"/>
+  <rect x="100" y="95" width="140" height="50" rx="12" fill="#38BDF8"/>
+  <rect x="180" y="175" width="160" height="50" rx="12" fill="#22C55E"/>
+  <rect x="140" y="255" width="120" height="50" rx="12" fill="#F59E0B"/>
+  <rect x="220" y="335" width="100" height="50" rx="12" fill="#EF4444"/>
+  <circle cx="60" cy="120" r="10" fill="#64748B"/>
+  <circle cx="60" cy="200" r="10" fill="#64748B"/>
+  <circle cx="60" cy="280" r="10" fill="#64748B"/>
+  <circle cx="60" cy="360" r="10" fill="#64748B"/>
+  <polygon points="340,90 380,120 340,150" fill="#38BDF8"/>
 </svg>
