@@ -53,6 +53,7 @@ public partial class TaskEditModal
 
     private List<WbsTask> _parentCandidates = [];
     private List<WbsTask> _predecessorCandidates = [];
+    private Dictionary<int, int> _taskLevels = [];
     private bool _isDirty;
     private bool _saving;
     private string? _error;
@@ -78,6 +79,7 @@ public partial class TaskEditModal
         _showUnsavedDialog = false;
         _showDeleteDialog = false;
 
+        BuildTaskLevels();
         _parentCandidates = BuildParentCandidates();
         _predecessorCandidates = BuildPredecessorCandidates();
 
@@ -107,6 +109,33 @@ public partial class TaskEditModal
             _progress = Task.Progress;
             _notes = Task.Notes ?? string.Empty;
         }
+    }
+
+    /// <summary>全タスクの階層レベル（0 始まり）を計算して <see cref="_taskLevels"/> に格納する。</summary>
+    private void BuildTaskLevels()
+    {
+        _taskLevels = [];
+        foreach (var task in AllTasks)
+        {
+            var level = 0;
+            var parentId = task.ParentId;
+            while (parentId.HasValue)
+            {
+                level++;
+                var parent = AllTasks.FirstOrDefault(t => t.Id == parentId.Value);
+                if (parent is null) break;
+                parentId = parent.ParentId;
+            }
+            _taskLevels[task.Id] = level;
+        }
+    }
+
+    /// <summary>タスクIDに対応する表示名（インデント付き）を返す。</summary>
+    /// <param name="task">対象タスク。</param>
+    internal string GetDisplayName(WbsTask task)
+    {
+        var indent = _taskLevels.GetValueOrDefault(task.Id);
+        return indent == 0 ? task.Name : new string('　', indent) + task.Name;
     }
 
     /// <summary>親タスク選択肢を構築する。自タスクとその子孫を除外する。</summary>

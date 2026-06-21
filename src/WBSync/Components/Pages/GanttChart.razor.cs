@@ -15,8 +15,10 @@ public partial class GanttChart : IAsyncDisposable
 
     private string _projectName = string.Empty;
     private string _projectStartDate = string.Empty;
+    private readonly DateOnly _today = DateOnly.FromDateTime(DateTime.Today);
     private List<TaskNode> _taskRoots = [];
     private List<WbsTask> _allTasks = [];
+    private List<WbsTask> _allTasksWbsOrdered = [];
     private List<Assignee> _allAssignees = [];
     private Dictionary<int, string> _assigneeNames = [];
     private HashSet<DateOnly> _globalHolidays = [];
@@ -74,6 +76,7 @@ public partial class GanttChart : IAsyncDisposable
         _assigneeNames = assignees.ToDictionary(a => a.Id, a => a.Name);
         _allTasks = tasks;
         _taskRoots = BuildTree(tasks);
+        _allTasksWbsOrdered = GetAllNodesInDisplayOrder(_taskRoots).Select(n => n.Task).ToList();
 
         var holidays = await GlobalHolidayRepo.GetAllAsync();
         _globalHolidays = holidays
@@ -96,6 +99,7 @@ public partial class GanttChart : IAsyncDisposable
         {
             await JS.InvokeVoidAsync("initSplitter", "gantt-splitter", "task-pane", 320, 800);
             await JS.InvokeVoidAsync("initScrollSync", "task-pane-rows", "chart-pane");
+            await JS.InvokeVoidAsync("initColNameResize", "col-name-resize", "task-pane", 120);
             _dotNetRef = DotNetObjectReference.Create(this);
             await JS.InvokeVoidAsync("initSortable", "task-pane-rows", _dotNetRef);
         }
@@ -240,6 +244,18 @@ public partial class GanttChart : IAsyncDisposable
         }
     }
 
+    /// <summary>展開状態によらず全ノードを DFS 順で列挙する（WBS 表示順）。</summary>
+    /// <param name="roots">ルートノード群。</param>
+    private static IEnumerable<TaskNode> GetAllNodesInDisplayOrder(List<TaskNode> roots)
+    {
+        foreach (var node in roots)
+        {
+            yield return node;
+            foreach (var child in GetAllNodesInDisplayOrder(node.Children))
+                yield return child;
+        }
+    }
+
     /// <summary>展開状態を考慮して表示対象のノードを列挙する。</summary>
     /// <param name="roots">ルートノード群。</param>
     private static IEnumerable<TaskNode> GetVisibleNodes(List<TaskNode> roots)
@@ -276,14 +292,23 @@ public partial class GanttChart : IAsyncDisposable
 
     // ===== 表示ヘルパー =====
 
+    /// <summary>ヘッダーセルに適用する CSS クラス名を返す。</summary>
+    /// <param name="col">対象チャート列。</param>
+    private string GetHeaderCellClass(ChartColumn col)
+    {
+        if (IsToday(col)) return "col-today";
+        if (col.IsWeekend || col.IsHoliday) return "col-weekend";
+        return string.Empty;
+    }
+
     /// <summary>チャートセルに適用する CSS クラス名を返す。</summary>
     /// <param name="node">対象タスクノード。</param>
     /// <param name="col">対象チャート列。</param>
     /// <returns>CSS クラス名。該当なしの場合は空文字。</returns>
     private string GetCellClass(TaskNode node, ChartColumn col)
     {
-        if (col.IsWeekend || col.IsHoliday)
-            return "col-weekend";
+        if (IsToday(col)) return "col-today";
+        if (col.IsWeekend || col.IsHoliday) return "col-weekend";
         if (_scale == ChartScale.Day
             && !node.HasChildren
             && node.Task.AssigneeId.HasValue
@@ -292,6 +317,16 @@ public partial class GanttChart : IAsyncDisposable
             return "col-personal-holiday";
         return string.Empty;
     }
+
+    /// <summary>指定列が今日を含むかどうかを返す。</summary>
+    /// <param name="col">対象チャート列。</param>
+    private bool IsToday(ChartColumn col) => _scale switch
+    {
+        ChartScale.Day => col.Date == _today,
+        ChartScale.Week => col.Date <= _today && _today < col.Date.AddDays(7),
+        ChartScale.Month => col.Date.Year == _today.Year && col.Date.Month == _today.Month,
+        _ => false
+    };
 
     /// <summary>担当者IDから担当者名を取得する。</summary>
     /// <param name="assigneeId">担当者ID。未割り当ての場合は <see langword="null"/>。</param>
@@ -431,6 +466,7 @@ public partial class GanttChart : IAsyncDisposable
     {
         _allTasks = await TaskRepo.GetByProjectAsync(ProjectId);
         _taskRoots = BuildTree(_allTasks);
+        _allTasksWbsOrdered = GetAllNodesInDisplayOrder(_taskRoots).Select(n => n.Task).ToList();
         _warningTaskIds = await ScheduleService.GetOverlappingTaskIdsAsync(ProjectId);
         CalculateChartPeriod();
         BuildChartColumns();

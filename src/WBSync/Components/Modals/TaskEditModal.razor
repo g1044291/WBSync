@@ -12,7 +12,7 @@
 
         <div class="form-group">
             <label class="form-label">親タスク</label>
-            <Dropdown TValue="WbsTask" Items="_parentCandidates" DisplayText="t => t.Name"
+            <Dropdown TValue="WbsTask" Items="_parentCandidates" DisplayText="GetDisplayName"
                       Value="_parent" ValueChanged="t => { _parent = t; _isDirty = true; }"
                       AllowEmpty="true" EmptyLabel="（ルート）" />
         </div>
@@ -67,7 +67,7 @@
 
         <div class="form-group">
             <label class="form-label">先行タスク</label>
-            <Dropdown TValue="WbsTask" Items="_predecessorCandidates" DisplayText="t => t.Name"
+            <Dropdown TValue="WbsTask" Items="_predecessorCandidates" DisplayText="GetDisplayName"
                       Value="_predecessor" ValueChanged="HandlePredecessorChanged"
                       AllowEmpty="true" EmptyLabel="（なし）" />
         </div>

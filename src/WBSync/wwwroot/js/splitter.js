@@ -51,6 +51,38 @@ window.initScrollSync = (leftId, rightId) => {
     });
 };
 
+window.initColNameResize = (handleId, taskPaneId, minWidth) => {
+    const handle = document.getElementById(handleId);
+    const taskPane = document.getElementById(taskPaneId);
+    if (!handle || !taskPane) return;
+
+    let startX = 0;
+    let startWidth = 0;
+
+    handle.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        startX = e.clientX;
+        const colName = taskPane.querySelector('.col-name');
+        startWidth = colName ? colName.offsetWidth : 192;
+        handle.setPointerCapture(e.pointerId);
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+    });
+
+    handle.addEventListener('pointermove', (e) => {
+        if (!handle.hasPointerCapture(e.pointerId)) return;
+        const newWidth = Math.max(minWidth, startWidth + (e.clientX - startX));
+        taskPane.style.setProperty('--col-name-width', newWidth + 'px');
+    });
+
+    handle.addEventListener('pointerup', (e) => {
+        if (!handle.hasPointerCapture(e.pointerId)) return;
+        handle.releasePointerCapture(e.pointerId);
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+    });
+};
+
 window.initSplitter = (splitterId, leftPaneId, minWidth, maxWidth) => {
     const splitter = document.getElementById(splitterId);
     const leftPane = document.getElementById(leftPaneId);

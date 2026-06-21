@@ -145,7 +145,7 @@
     border-bottom: 1px solid #e5e7eb;
     flex-shrink: 0;
     height: 36px;
-    min-width: 592px;
+    min-width: max-content;
 }
 
 /*
@@ -171,7 +171,27 @@
     border-right: none;
 }
 
-.col-name      { flex: 1; min-width: 192px; }
+.col-name      { flex: none; width: var(--col-name-width, 192px); min-width: 120px; }
+
+.task-pane-header .col-name {
+    position: relative;
+    overflow: visible;
+}
+
+.col-name-resize-handle {
+    position: absolute;
+    right: -3px;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    cursor: col-resize;
+    background: transparent;
+    z-index: 2;
+}
+
+.col-name-resize-handle:hover {
+    background: rgba(59, 130, 246, 0.4);
+}
 .col-assignee  { width: 72px;  flex-shrink: 0; justify-content: center; }
 .col-workdays  { width: 44px;  flex-shrink: 0; justify-content: center; }
 .col-start     { width: 76px;  flex-shrink: 0; justify-content: center; }
@@ -182,7 +202,7 @@
 .task-pane-rows {
     flex: 1;
     overflow-y: auto;
-    min-width: 592px;
+    min-width: max-content;
 }
 
 /* ===== Task rows ===== */
@@ -376,6 +396,11 @@
 
 .chart-col-cell:last-child {
     border-right: none;
+}
+
+/* Today highlight */
+.col-today {
+    background-color: #fef9c3;
 }
 
 /* Weekend / global holiday highlight */

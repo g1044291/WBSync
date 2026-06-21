@@ -41,7 +41,10 @@
         <div id="task-pane" class="task-pane">
             <div class="task-pane-scroll">
                 <div class="task-pane-header">
-                    <div class="col col-name">タスク名</div>
+                    <div class="col col-name">
+                        タスク名
+                        <div class="col-name-resize-handle" id="col-name-resize"></div>
+                    </div>
                     <div class="col col-assignee">担当者</div>
                     <div class="col col-workdays">工数</div>
                     <div class="col col-start">開始日</div>
@@ -60,7 +63,7 @@
                              data-parent-id="@(node.Task.ParentId?.ToString() ?? "")"
                              @onmouseenter="() => SetHoveredRow(idx)"
                              @onmouseleave="() => SetHoveredRow(-1)"
-                             @onclick="() => OnTaskRowClick(node)"
+                             @ondblclick="() => OnTaskRowClick(node)"
                              @oncontextmenu:preventDefault="true"
                              @oncontextmenu="e => ShowContextMenu(e, node)">
                             <div class="col col-name">
@@ -123,7 +126,7 @@
                     <div class="chart-time-header">
                         @foreach (var col in _chartColumns)
                         {
-                            <div class="chart-col-header @(col.IsWeekend || col.IsHoliday ? "col-weekend" : "")">@col.Label</div>
+                            <div class="chart-col-header @GetHeaderCellClass(col)">@col.Label</div>
                         }
                     </div>
                     <div class="chart-rows-area" id="chart-rows-area">
@@ -186,7 +189,7 @@
                ProjectId="ProjectId"
                ParentId="_taskModalParentId"
                Assignees="_allAssignees"
-               AllTasks="_allTasks"
+               AllTasks="_allTasksWbsOrdered"
                OnClose="HandleTaskModalClose"
                OnSaved="HandleTaskSaved"
                OnDeleted="HandleTaskDeleted" />
