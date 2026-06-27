@@ -94,6 +94,59 @@ C# のクラス・メソッド・プロパティには必ず `///` コメント�
 Task<List<AssigneeHoliday>> GetByAssigneeAsync(int assigneeId);
 ```
 
+## タスク管理
+
+タスク・バックログは **GitHub Issues** で管理する。
+
+## ブランチルール
+
+| ブランチ | 用途 |
+|----------|------|
+| `main` | 本番ブランチ。直接pushしない。PRマージのみ。 |
+| `feature/<description>` | 機能追加 |
+| `fix/<description>` | バグ修正 |
+| `chore/<description>` | リファクタリング・設定変更・ドキュメント更新 |
+
+- `<description>` は英語のスネークケース（例: `feature/add_coefficient`）
+- 作業はissueに対応するブランチを切り、PRで `main` にマージする
+
+## コミット・PRルール
+
+### 言語
+
+- **コミットメッセージ・PRタイトル・PR本文はすべて日本語**で書く
+- ブランチ名とプレフィックスは英語
+
+### コミットメッセージ形式
+
+issueに対応する作業は先頭にissue番号を付ける。
+
+```
+#42 タスク編集に予定工数欄を追加
+```
+
+issueに紐づかない作業（リファクタリング等）はプレフィックスを付ける。
+
+```
+fix: スケジュール再計算で終了日がずれるバグを修正
+chore: 不要なusingを削除
+```
+
+プレフィックス一覧：`feat` / `fix` / `chore` / `docs` / `refactor` / `test`
+
+### PRルール
+
+- タイトル：日本語の説明のみ（PR番号はGitHubが自動採番するため不要）
+- 本文：変更概要・動作確認内容を日本語で記載
+- マージ前にCIが通っていること
+
+**依存関係がある場合：** 依存元のissue番号を依存先のPRタイトルまたは本文に記載する。
+
+```
+# 例：このPRがissue #45に依存している場合
+タイトル：#45 スケジュール再計算の修正
+```
+
 ## 設計ドキュメント
 
 | ドキュメント | 内容 |
@@ -101,6 +154,5 @@ Task<List<AssigneeHoliday>> GetByAssigneeAsync(int assigneeId);
 | [doc/requirements.md](doc/requirements.md) | 機能要件・非機能要件 |
 | [doc/db_design.md](doc/db_design.md) | テーブル定義・DDL・ER図 |
 | [doc/ui_design.md](doc/ui_design.md) | 画面レイアウト・画面遷移・共通ルール |
-| [doc/task.md](doc/task.md) | 追加機能メモ |
 
 **タスク完了時に必ず更新**: requirements.md（仕様変更時）、ui_design.md（画面変更時）

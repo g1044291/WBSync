@@ -1,11 +1,13 @@
 {
   "permissions": {
     "allow": [
+      "mcp__github__issue_read",
       "Bash(dotnet build *)",
       "Bash(dotnet ef *)",
+      "Bash(git *)",
       "PowerShell(dotnet build *)",
       "PowerShell(dotnet ef *)",
-      "PowerShell(tail -5)"
+      "PowerShell(git *)"
     ]
   }
 }
