@@ -1,10 +1,6 @@
+using WBSync.Models;
+
 namespace WBSync.Helpers;
-
-/// <summary>チャートの時間軸スケール。</summary>
-internal enum ChartScale { Day, Week, Month }
-
-/// <summary>チャートの列定義。</summary>
-internal record ChartColumn(string Label, DateOnly Date, bool IsWeekend, bool IsHoliday = false);
 
 /// <summary>ガントチャートの列ビルドとピクセルオフセット計算ユーティリティ。</summary>
 internal static class GanttChartLayoutHelper
@@ -24,6 +20,10 @@ internal static class GanttChartLayoutHelper
         _ => []
     };
 
+    /// <summary>日単位のチャート列一覧を構築する。</summary>
+    /// <param name="chartStart">チャート表示開始日。</param>
+    /// <param name="chartEnd">チャート表示終了日。</param>
+    /// <param name="globalHolidays">祝日セット。</param>
     private static List<ChartColumn> BuildDayColumns(
         DateOnly chartStart, DateOnly chartEnd, HashSet<DateOnly> globalHolidays)
     {
@@ -37,6 +37,9 @@ internal static class GanttChartLayoutHelper
         return cols;
     }
 
+    /// <summary>週単位のチャート列一覧を構築する。</summary>
+    /// <param name="chartStart">チャート表示開始日。</param>
+    /// <param name="chartEnd">チャート表示終了日。</param>
     private static List<ChartColumn> BuildWeekColumns(DateOnly chartStart, DateOnly chartEnd)
     {
         var cols = new List<ChartColumn>();
@@ -52,6 +55,9 @@ internal static class GanttChartLayoutHelper
         return cols;
     }
 
+    /// <summary>月単位のチャート列一覧を構築する。</summary>
+    /// <param name="chartStart">チャート表示開始日。</param>
+    /// <param name="chartEnd">チャート表示終了日。</param>
     private static List<ChartColumn> BuildMonthColumns(DateOnly chartStart, DateOnly chartEnd)
     {
         var cols = new List<ChartColumn>();
@@ -76,6 +82,9 @@ internal static class GanttChartLayoutHelper
         _ => 0
     };
 
+    /// <summary>月表示スケールにおける、指定日のチャート左端からのピクセルオフセットを返す。</summary>
+    /// <param name="chartStart">チャート表示開始日。</param>
+    /// <param name="date">対象日付。</param>
     private static double GetMonthPixelOffset(DateOnly chartStart, DateOnly date)
     {
         var origin = new DateOnly(chartStart.Year, chartStart.Month, 1);
