@@ -10,7 +10,7 @@ public record HolidayCsvParseResult(List<string> Dates, int InvalidLineCount);
 /// <summary>全体休日のCSVインポート用パーサー。1列目の日付のみを読み取る。</summary>
 public static class HolidayCsvParser
 {
-    private static readonly string[] DateFormats = ["yyyy/MM/dd", "yyyy-MM-dd"];
+    private static readonly string[] DateFormats = ["yyyy/MM/dd", "yyyy-MM-dd", "yyyy/M/d", "yyyy-M-d"];
 
     /// <summary>CSVテキストをパースし、日付のリストを返す。</summary>
     /// <param name="csvText">CSVファイルの内容。</param>
