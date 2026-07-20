@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.Maui.Devices;
+using Microsoft.Maui.Storage;
 using WBSync.Models;
 using WBSync.Repositories;
+using WBSync.Services;
 
 namespace WBSync.Components.Modals;
 
@@ -22,6 +25,9 @@ public partial class HolidaySettingsModal
     private string _newName = string.Empty;
     private bool _saving;
     private string? _error;
+    private bool _importing;
+    private string? _importMessage;
+    private bool _importIsError;
 
     /// <summary>モーダルが開かれたときに休日一覧を読み込む。</summary>
     protected override async Task OnParametersSetAsync()
@@ -35,6 +41,7 @@ public partial class HolidaySettingsModal
     {
         _isAdding = false;
         _error = null;
+        _importMessage = null;
         await OnClose.InvokeAsync();
     }
 
@@ -95,6 +102,72 @@ public partial class HolidaySettingsModal
         catch (Exception ex)
         {
             _error = $"削除に失敗しました: {ex.InnerException?.Message ?? ex.Message}";
+        }
+    }
+
+    /// <summary>CSVファイルを選択し、全体休日を一括インポートする。</summary>
+    private async Task ImportCsv()
+    {
+        _importMessage = null;
+        _importIsError = false;
+
+        FileResult? file;
+        try
+        {
+            file = await FilePicker.Default.PickAsync(new PickOptions
+            {
+                PickerTitle = "休日CSVファイルを選択",
+                FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
+                {
+                    { DevicePlatform.WinUI, new[] { ".csv" } }
+                })
+            });
+        }
+        catch (Exception ex)
+        {
+            _importMessage = $"ファイル選択に失敗しました: {ex.Message}";
+            _importIsError = true;
+            return;
+        }
+
+        if (file is null)
+            return;
+
+        _importing = true;
+        try
+        {
+            var csvText = await File.ReadAllTextAsync(file.FullPath);
+            var parsed = HolidayCsvParser.Parse(csvText);
+
+            if (parsed.Dates.Count == 0)
+            {
+                _importMessage = parsed.InvalidLineCount > 0
+                    ? $"インポートできる日付がありませんでした（{parsed.InvalidLineCount}行が不正な形式です）"
+                    : "インポートできる日付がありませんでした";
+                _importIsError = true;
+                return;
+            }
+
+            var imported = await HolidayRepo.CreateManyAsync(parsed.Dates.Select(d => new GlobalHoliday { Date = d }));
+            var skipped = parsed.Dates.Count - imported;
+
+            var message = $"{imported}件登録しました";
+            if (skipped > 0)
+                message += $"（{skipped}件は重複のためスキップ）";
+            if (parsed.InvalidLineCount > 0)
+                message += $"（{parsed.InvalidLineCount}行は不正な形式のためスキップ）";
+            _importMessage = message;
+
+            _holidays = await HolidayRepo.GetAllAsync();
+        }
+        catch (Exception ex)
+        {
+            _importMessage = $"インポートに失敗しました: {ex.InnerException?.Message ?? ex.Message}";
+            _importIsError = true;
+        }
+        finally
+        {
+            _importing = false;
         }
     }
 

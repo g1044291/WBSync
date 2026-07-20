@@ -6,9 +6,17 @@
             <span class="section-title">祝日・特別休日</span>
             @if (!_isAdding)
             {
-                <Button Variant="primary" OnClick="StartAdding">＋ 追加</Button>
+                <div class="header-actions">
+                    <Button Variant="secondary" OnClick="ImportCsv" Disabled="_importing">CSVインポート</Button>
+                    <Button Variant="primary" OnClick="StartAdding">＋ 追加</Button>
+                </div>
             }
         </div>
+
+        @if (_importMessage is not null)
+        {
+            <p class="@(_importIsError ? "error-message" : "import-message")">@_importMessage</p>
+        }
 
         @if (_isAdding)
         {

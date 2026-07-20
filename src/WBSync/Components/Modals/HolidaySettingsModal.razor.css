@@ -17,6 +17,11 @@
     color: #374151;
 }
 
+.header-actions {
+    display: flex;
+    gap: 8px;
+}
+
 .add-form {
     background: #eff6ff;
     border: 1px solid #bfdbfe;
@@ -58,6 +63,12 @@
 .error-message {
     font-size: 13px;
     color: #ef4444;
+    margin: 0 0 8px;
+}
+
+.import-message {
+    font-size: 13px;
+    color: #16a34a;
     margin: 0 0 8px;
 }
 
