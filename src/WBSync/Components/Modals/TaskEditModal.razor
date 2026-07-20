@@ -91,9 +91,9 @@
                       @onchange="e => { _notes = e.Value?.ToString() ?? string.Empty; _isDirty = true; }"></textarea>
         </div>
 
-        @if (_error is not null)
+        @if (_formStatus is { } formStatus)
         {
-            <p class="form-error">@_error</p>
+            <p class="form-error">@formStatus.Message</p>
         }
     </ChildContent>
     <Footer>
@@ -104,7 +104,7 @@
             </div>
         }
         <Button Variant="secondary" OnClick="HandleClose">キャンセル</Button>
-        <Button Variant="primary" OnClick="HandleSave" Disabled="_saving">保存</Button>
+        <Button Variant="primary" OnClick="HandleSave" Disabled="_disableSave">保存</Button>
     </Footer>
 </Modal>
 

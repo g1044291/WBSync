@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace WBSync.Services;
+namespace WBSync.Helpers;
 
 /// <summary>休日CSVのパース結果。</summary>
 /// <param name="Dates">パースに成功した日付（yyyy-MM-dd 形式）のリスト。</param>
@@ -8,7 +8,7 @@ namespace WBSync.Services;
 public record HolidayCsvParseResult(List<string> Dates, int InvalidLineCount);
 
 /// <summary>全体休日のCSVインポート用パーサー。1列目の日付のみを読み取る。</summary>
-public static class HolidayCsvParser
+public static class HolidayCsvHelper
 {
     private static readonly string[] DateFormats = ["yyyy/MM/dd", "yyyy-MM-dd", "yyyy/M/d", "yyyy-M-d"];
 

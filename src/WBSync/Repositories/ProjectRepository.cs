@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using WBSync.Data;
 using WBSync.Models;
+using WBSync.Repositories.Interfaces;
 
 namespace WBSync.Repositories;
 

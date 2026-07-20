@@ -1,5 +1,7 @@
+using WBSync.Helpers;
 using WBSync.Models;
-using WBSync.Repositories;
+using WBSync.Repositories.Interfaces;
+using WBSync.Services.Interfaces;
 
 namespace WBSync.Services;
 
@@ -18,10 +20,10 @@ public class ScheduleService(
         if (!DateOnly.TryParse(predecessorEndDate, out var predEnd))
             throw new ArgumentException($"無効な終了日: {predecessorEndDate}", nameof(predecessorEndDate));
 
-        var calculator = await BuildCalculatorAsync(assigneeId);
-        var startDate = calculator.GetNextWorkday(predEnd.AddDays(1), assigneeId);
+        var (globalHolidays, assigneeHolidays) = await LoadHolidaysAsync(assigneeId);
+        var startDate = WorkdayHelper.GetNextWorkday(predEnd.AddDays(1), globalHolidays, assigneeHolidays, assigneeId);
         DateOnly? endDate = workDays.HasValue
-            ? calculator.CalcEndDate(startDate, workDays.Value, assigneeId)
+            ? WorkdayHelper.CalcEndDate(startDate, workDays.Value, globalHolidays, assigneeHolidays, assigneeId)
             : null;
 
         return (startDate, endDate);
@@ -30,8 +32,8 @@ public class ScheduleService(
     /// <inheritdoc/>
     public async Task<DateOnly> CalcEndDateAsync(DateOnly startDate, double workDays, int? assigneeId)
     {
-        var calculator = await BuildCalculatorAsync(assigneeId);
-        return calculator.CalcEndDate(startDate, workDays, assigneeId);
+        var (globalHolidays, assigneeHolidays) = await LoadHolidaysAsync(assigneeId);
+        return WorkdayHelper.CalcEndDate(startDate, workDays, globalHolidays, assigneeHolidays, assigneeId);
     }
 
     /// <inheritdoc/>
@@ -40,16 +42,17 @@ public class ScheduleService(
         if (string.IsNullOrEmpty(savedTask.EndDate)) return;
 
         var allTasks = await taskRepo.GetByProjectAsync(projectId);
-        var calculator = await BuildCalculatorForProjectAsync(allTasks);
+        var (globalHolidays, assigneeHolidays) = await LoadHolidaysForProjectAsync(allTasks);
 
-        await PropagateRecursiveAsync(allTasks, savedTask, calculator);
+        await PropagateRecursiveAsync(allTasks, savedTask, globalHolidays, assigneeHolidays);
     }
 
     /// <summary>後続タスクへの伝播を再帰的に実行する。</summary>
     private async Task PropagateRecursiveAsync(
         List<WbsTask> allTasks,
         WbsTask predecessor,
-        WorkdayCalculator calculator)
+        HashSet<DateOnly> globalHolidays,
+        IReadOnlyDictionary<int, IReadOnlySet<DateOnly>> assigneeHolidays)
     {
         if (!DateOnly.TryParse(predecessor.EndDate, out var predEnd)) return;
 
@@ -57,9 +60,9 @@ public class ScheduleService(
 
         foreach (var successor in successors)
         {
-            var newStart = calculator.GetNextWorkday(predEnd.AddDays(1), successor.AssigneeId);
+            var newStart = WorkdayHelper.GetNextWorkday(predEnd.AddDays(1), globalHolidays, assigneeHolidays, successor.AssigneeId);
             var newEnd = successor.WorkDays.HasValue
-                ? calculator.CalcEndDate(newStart, successor.WorkDays.Value, successor.AssigneeId)
+                ? WorkdayHelper.CalcEndDate(newStart, successor.WorkDays.Value, globalHolidays, assigneeHolidays, successor.AssigneeId)
                 : (DateOnly?)null;
 
             var newStartStr = newStart.ToString("yyyy-MM-dd");
@@ -71,7 +74,7 @@ public class ScheduleService(
             successor.EndDate = newEndStr;
             await taskRepo.UpdateAsync(successor);
 
-            await PropagateRecursiveAsync(allTasks, successor, calculator);
+            await PropagateRecursiveAsync(allTasks, successor, globalHolidays, assigneeHolidays);
         }
     }
 
@@ -79,7 +82,7 @@ public class ScheduleService(
     public async Task<HashSet<int>> GetOverlappingTaskIdsAsync(int projectId)
     {
         var allTasks = await taskRepo.GetByProjectAsync(projectId);
-        var calculator = await BuildCalculatorForProjectAsync(allTasks);
+        var (globalHolidays, assigneeHolidays) = await LoadHolidaysForProjectAsync(allTasks);
 
         var assigneeWorkdays = new Dictionary<int, List<(int TaskId, HashSet<DateOnly> Workdays)>>();
 
@@ -89,7 +92,7 @@ public class ScheduleService(
             if (!DateOnly.TryParse(task.StartDate, out var startDate)) continue;
             if (!task.WorkDays.HasValue) continue;
 
-            var workdays = calculator.GetWorkdays(startDate, task.WorkDays.Value, task.AssigneeId).ToHashSet();
+            var workdays = WorkdayHelper.GetWorkdays(startDate, task.WorkDays.Value, globalHolidays, assigneeHolidays, task.AssigneeId).ToHashSet();
             if (workdays.Count == 0) continue;
 
             if (!assigneeWorkdays.TryGetValue(task.AssigneeId.Value, out var list))
@@ -120,8 +123,8 @@ public class ScheduleService(
         return warningIds;
     }
 
-    /// <summary>単一担当者の休日のみを含む <see cref="WorkdayCalculator"/> を生成する。</summary>
-    private async Task<WorkdayCalculator> BuildCalculatorAsync(int? assigneeId)
+    /// <summary>単一担当者の休日のみを含む休日データを DB から読み込む。</summary>
+    private async Task<(HashSet<DateOnly> GlobalHolidays, Dictionary<int, IReadOnlySet<DateOnly>> AssigneeHolidays)> LoadHolidaysAsync(int? assigneeId)
     {
         var globalSet = await LoadGlobalHolidaysAsync();
 
@@ -132,11 +135,11 @@ public class ScheduleService(
             assigneeDict[assigneeId.Value] = ParseDates(ah.Select(h => h.Date));
         }
 
-        return new WorkdayCalculator(globalSet, assigneeDict);
+        return (globalSet, assigneeDict);
     }
 
-    /// <summary>プロジェクト全担当者の休日を含む <see cref="WorkdayCalculator"/> を生成する。</summary>
-    private async Task<WorkdayCalculator> BuildCalculatorForProjectAsync(List<WbsTask> allTasks)
+    /// <summary>プロジェクト全担当者の休日を含む休日データを DB から読み込む。</summary>
+    private async Task<(HashSet<DateOnly> GlobalHolidays, Dictionary<int, IReadOnlySet<DateOnly>> AssigneeHolidays)> LoadHolidaysForProjectAsync(List<WbsTask> allTasks)
     {
         var globalSet = await LoadGlobalHolidaysAsync();
 
@@ -152,7 +155,7 @@ public class ScheduleService(
             assigneeDict[assigneeId] = ParseDates(ah.Select(h => h.Date));
         }
 
-        return new WorkdayCalculator(globalSet, assigneeDict);
+        return (globalSet, assigneeDict);
     }
 
     /// <summary>全体休日を DB から読み込んで <see cref="DateOnly"/> のセットに変換する。</summary>

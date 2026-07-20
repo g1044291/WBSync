@@ -17,8 +17,8 @@ public partial class AssigneeList
     private bool _addFromGlobal = true;
     private int? _selectedGlobalId;
     private string _newName = string.Empty;
-    private bool _saving;
-    private string? _addError;
+    private bool _disableAdd;
+    private StatusMessage? _addStatus;
 
     /// <inheritdoc/>
     protected override async Task OnInitializedAsync()
@@ -33,7 +33,7 @@ public partial class AssigneeList
         _addFromGlobal = true;
         _selectedGlobalId = null;
         _newName = string.Empty;
-        _addError = null;
+        _addStatus = null;
         _addModalOpen = true;
     }
 
@@ -41,7 +41,7 @@ public partial class AssigneeList
     private void CloseAddModal()
     {
         _addModalOpen = false;
-        _addError = null;
+        _addStatus = null;
     }
 
     /// <summary>追加モードを切り替える。</summary>
@@ -50,31 +50,31 @@ public partial class AssigneeList
         _addFromGlobal = fromGlobal;
         _selectedGlobalId = null;
         _newName = string.Empty;
-        _addError = null;
+        _addStatus = null;
     }
 
     /// <summary>新しい担当者を作成する（グローバル選択 or プロジェクト専用）。</summary>
     private async Task AddAssignee()
     {
-        _addError = null;
+        _addStatus = null;
 
         if (_addFromGlobal)
         {
             if (_selectedGlobalId is null)
             {
-                _addError = "担当者を選択してください";
+                _addStatus = StatusMessage.Error("担当者を選択してください");
                 return;
             }
 
             var alreadyAdded = _assignees.Any(a => a.GlobalAssigneeId == _selectedGlobalId);
             if (alreadyAdded)
             {
-                _addError = "選択した担当者はすでにプロジェクトに追加されています";
+                _addStatus = StatusMessage.Error("選択した担当者はすでにプロジェクトに追加されています");
                 return;
             }
 
             var selected = _globalAssignees.First(g => g.Id == _selectedGlobalId);
-            _saving = true;
+            _disableAdd = true;
             try
             {
                 var nextSort = _assignees.Count > 0 ? _assignees.Max(a => a.SortOrder) + 1 : 0;
@@ -90,22 +90,22 @@ public partial class AssigneeList
             }
             catch (Exception ex)
             {
-                _addError = $"エラーが発生しました: {ex.InnerException?.Message ?? ex.Message}";
+                _addStatus = StatusMessage.Error($"エラーが発生しました: {ex.InnerException?.Message ?? ex.Message}");
             }
             finally
             {
-                _saving = false;
+                _disableAdd = false;
             }
         }
         else
         {
             if (string.IsNullOrWhiteSpace(_newName))
             {
-                _addError = "担当者名を入力してください";
+                _addStatus = StatusMessage.Error("担当者名を入力してください");
                 return;
             }
 
-            _saving = true;
+            _disableAdd = true;
             try
             {
                 var nextSort = _assignees.Count > 0 ? _assignees.Max(a => a.SortOrder) + 1 : 0;
@@ -120,13 +120,14 @@ public partial class AssigneeList
             }
             catch (Exception ex)
             {
-                _addError = ex.InnerException?.Message.Contains("UNIQUE") == true
-                    ? "同じ名前の担当者がすでに登録されています"
-                    : $"エラーが発生しました: {ex.InnerException?.Message ?? ex.Message}";
+                _addStatus = StatusMessage.Error(
+                    ex.InnerException?.Message.Contains("UNIQUE") == true
+                        ? "同じ名前の担当者がすでに登録されています"
+                        : $"エラーが発生しました: {ex.InnerException?.Message ?? ex.Message}");
             }
             finally
             {
-                _saving = false;
+                _disableAdd = false;
             }
         }
     }

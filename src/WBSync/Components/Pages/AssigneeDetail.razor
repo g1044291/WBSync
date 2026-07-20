@@ -14,14 +14,14 @@
             <label class="form-label">メモ</label>
             <input class="form-input" type="text" placeholder="例：有給休暇" @bind="_newHolidayMemo" />
         </div>
-        @if (_holidayError is not null)
+        @if (_holidayStatus is { } holidayStatus)
         {
-            <p class="form-error">@_holidayError</p>
+            <p class="form-error">@holidayStatus.Message</p>
         }
     </ChildContent>
     <Footer>
         <Button Variant="secondary" OnClick="CloseAddHoliday">キャンセル</Button>
-        <Button Variant="primary" OnClick="AddHoliday" Disabled="_saving">保存</Button>
+        <Button Variant="primary" OnClick="AddHoliday" Disabled="_disableSaveHoliday">保存</Button>
     </Footer>
 </Modal>
 
@@ -59,11 +59,11 @@
                 {
                     <div class="name-row">
                         <input class="name-input" type="text" @bind="_editName" />
-                        <Button Variant="primary" OnClick="SaveName" Disabled="_nameSaving">保存</Button>
+                        <Button Variant="primary" OnClick="SaveName" Disabled="_disableSaveName">保存</Button>
                     </div>
-                    @if (_nameError is not null)
+                    @if (_nameStatus is { } nameStatus)
                     {
-                        <p class="form-error">@_nameError</p>
+                        <p class="form-error">@nameStatus.Message</p>
                     }
                     @if (_nameSaved)
                     {

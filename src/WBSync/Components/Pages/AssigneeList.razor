@@ -49,14 +49,14 @@
             </div>
         }
 
-        @if (_addError is not null)
+        @if (_addStatus is { } addStatus)
         {
-            <p class="form-error">@_addError</p>
+            <p class="form-error">@addStatus.Message</p>
         }
     </ChildContent>
     <Footer>
         <Button Variant="secondary" OnClick="CloseAddModal">キャンセル</Button>
-        <Button Variant="primary" OnClick="AddAssignee" Disabled="_saving">追加</Button>
+        <Button Variant="primary" OnClick="AddAssignee" Disabled="_disableAdd">追加</Button>
     </Footer>
 </Modal>
 

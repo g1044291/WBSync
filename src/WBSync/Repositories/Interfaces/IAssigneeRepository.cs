@@ -1,6 +1,6 @@
 using WBSync.Models;
 
-namespace WBSync.Repositories;
+namespace WBSync.Repositories.Interfaces;
 
 /// <summary>担当者リポジトリのインターフェース。</summary>
 public interface IAssigneeRepository
