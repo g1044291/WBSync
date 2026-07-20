@@ -1,6 +1,6 @@
 using WBSync.Models;
 
-namespace WBSync.Services;
+namespace WBSync.Services.Interfaces;
 
 /// <summary>スケジュール計算サービスのインターフェース。</summary>
 public interface IScheduleService

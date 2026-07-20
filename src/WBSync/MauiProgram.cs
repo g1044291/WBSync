@@ -2,7 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using WBSync.Data;
 using WBSync.Repositories;
+using WBSync.Repositories.Interfaces;
 using WBSync.Services;
+using WBSync.Services.Interfaces;
 
 namespace WBSync
 {

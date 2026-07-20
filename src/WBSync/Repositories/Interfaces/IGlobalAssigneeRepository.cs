@@ -1,6 +1,6 @@
 using WBSync.Models;
 
-namespace WBSync.Repositories;
+namespace WBSync.Repositories.Interfaces;
 
 /// <summary>グローバル担当者マスタリポジトリのインターフェース。</summary>
 public interface IGlobalAssigneeRepository
