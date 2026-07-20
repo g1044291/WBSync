@@ -20,7 +20,7 @@
             <DatePicker Value="_pjDate" ValueChanged="d => _pjDate = d" />
             <Button Variant="primary" OnClick="CreateProject">作成</Button>
         </div>
-        @if (_pjError is not null) { <p class="error">@_pjError</p> }
+        @if (_pjStatus is { } pjStatus) { <p class="error">@pjStatus.Message</p> }
         <table class="tbl">
             <thead><tr><th>ID</th><th>名前</th><th>開始日</th><th>作成日時</th></tr></thead>
             <tbody>
@@ -52,7 +52,7 @@
                 <input class="inp" placeholder="担当者名" @bind="_asgName" />
                 <Button Variant="primary" OnClick="CreateAssignee">追加</Button>
             </div>
-            @if (_asgError is not null) { <p class="error">@_asgError</p> }
+            @if (_asgStatus is { } asgStatus) { <p class="error">@asgStatus.Message</p> }
             <table class="tbl">
                 <thead><tr><th>ID</th><th>名前</th><th>Sort</th><th>更新日時</th><th>操作</th></tr></thead>
                 <tbody>
@@ -113,7 +113,7 @@
                 </select>
                 <Button Variant="primary" OnClick="CreateTask">追加</Button>
             </div>
-            @if (_taskError is not null) { <p class="error">@_taskError</p> }
+            @if (_taskAddStatus is { } taskAddStatus) { <p class="error">@taskAddStatus.Message</p> }
             <table class="tbl">
                 <thead>
                     <tr><th>ID</th><th>名前</th><th>工数</th><th>開始</th><th>終了</th><th>ステータス</th><th>進捗</th><th>Sort</th><th>操作</th></tr>
@@ -174,7 +174,7 @@
             <input class="inp" placeholder="休日名（例：元日）" @bind="_ghName" />
             <Button Variant="primary" OnClick="CreateGlobalHoliday">追加</Button>
         </div>
-        @if (_ghError is not null) { <p class="error">@_ghError</p> }
+        @if (_ghStatus is { } ghStatus) { <p class="error">@ghStatus.Message</p> }
         <table class="tbl">
             <thead><tr><th>ID</th><th>日付</th><th>名称</th><th>操作</th></tr></thead>
             <tbody>
@@ -210,7 +210,7 @@
                 <input class="inp" placeholder="メモ（例：有給休暇）" @bind="_ahMemo" />
                 <Button Variant="primary" OnClick="CreateAssigneeHoliday">追加</Button>
             </div>
-            @if (_ahError is not null) { <p class="error">@_ahError</p> }
+            @if (_ahStatus is { } ahStatus) { <p class="error">@ahStatus.Message</p> }
             <table class="tbl">
                 <thead><tr><th>ID</th><th>日付</th><th>メモ</th><th>操作</th></tr></thead>
                 <tbody>

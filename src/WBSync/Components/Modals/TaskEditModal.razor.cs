@@ -55,8 +55,8 @@ public partial class TaskEditModal
     private List<WbsTask> _predecessorCandidates = [];
     private Dictionary<int, int> _taskLevels = [];
     private bool _isDirty;
-    private bool _saving;
-    private string? _error;
+    private bool _disableSave;
+    private StatusMessage? _formStatus;
     private bool _showUnsavedDialog;
     private bool _showDeleteDialog;
 
@@ -75,7 +75,7 @@ public partial class TaskEditModal
         if (!shouldReset) return;
 
         _isDirty = false;
-        _error = null;
+        _formStatus = null;
         _showUnsavedDialog = false;
         _showDeleteDialog = false;
 
@@ -279,29 +279,29 @@ public partial class TaskEditModal
     /// <summary>フォームを検証してタスクを保存する。</summary>
     private async Task HandleSave()
     {
-        _error = null;
+        _formStatus = null;
 
         if (string.IsNullOrWhiteSpace(_name))
         {
-            _error = "タスク名を入力してください";
+            _formStatus = StatusMessage.Error("タスク名を入力してください");
             return;
         }
 
         if (!_isParent && _startDate is null)
         {
-            _error = "開始日を入力してください";
+            _formStatus = StatusMessage.Error("開始日を入力してください");
             return;
         }
 
         if (_progress < 0 || _progress > 100)
         {
-            _error = "進捗率は0〜100の範囲で入力してください";
+            _formStatus = StatusMessage.Error("進捗率は0〜100の範囲で入力してください");
             return;
         }
 
         var workDays = ParseWorkDays();
 
-        _saving = true;
+        _disableSave = true;
         try
         {
             WbsTask saved;
@@ -367,11 +367,11 @@ public partial class TaskEditModal
         }
         catch (Exception ex)
         {
-            _error = $"保存に失敗しました: {ex.Message}";
+            _formStatus = StatusMessage.Error($"保存に失敗しました: {ex.Message}");
         }
         finally
         {
-            _saving = false;
+            _disableSave = false;
         }
     }
 
@@ -391,7 +391,7 @@ public partial class TaskEditModal
         }
         catch (Exception ex)
         {
-            _error = $"削除に失敗しました: {ex.Message}";
+            _formStatus = StatusMessage.Error($"削除に失敗しました: {ex.Message}");
         }
     }
 }

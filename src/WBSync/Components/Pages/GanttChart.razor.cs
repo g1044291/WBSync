@@ -24,7 +24,7 @@ public partial class GanttChart : IAsyncDisposable
     private HashSet<DateOnly> _globalHolidays = [];
     private Dictionary<int, HashSet<DateOnly>> _assigneeHolidays = [];
     private HashSet<int> _warningTaskIds = [];
-    private string? _pageError;
+    private StatusMessage? _pageStatus;
     private int _hoveredRowIndex = -1;
     private bool _isDragging;
     private DotNetObjectReference<GanttChart>? _dotNetRef;
@@ -322,7 +322,7 @@ public partial class GanttChart : IAsyncDisposable
         catch (Exception ex)
         {
             _ctxNode = null;
-            _pageError = $"削除に失敗しました: {ex.InnerException?.Message ?? ex.Message}";
+            _pageStatus = StatusMessage.Error($"削除に失敗しました: {ex.InnerException?.Message ?? ex.Message}");
         }
     }
 

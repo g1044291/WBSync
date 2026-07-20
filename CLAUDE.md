@@ -31,7 +31,7 @@ dotnet ef database update --project src/WBSync
 src/WBSync/
 ├── Components/        # Razor コンポーネント（画面・共通部品）
 ├── Data/              # AppDbContext
-├── Models/            # EF Core エンティティクラス
+├── Models/            # EF Core エンティティクラス、および画面用ViewModel（DB非対応の表示専用モデル）
 ├── Repositories/      # リポジトリパターンのデータアクセス層
 ├── Services/          # ビジネスロジック（スケジュール計算等）
 ├── Platforms/Windows/ # Windows固有エントリーポイント
@@ -39,7 +39,8 @@ src/WBSync/
 ```
 
 **名前空間**: フォルダに対応した階層（`WBSync.Models`, `WBSync.Data`, `WBSync.Repositories`, `WBSync.Services`）。  
-**エンティティのクラス名**: `System.Threading.Tasks.Task` との衝突を避けるため、タスクエンティティは `WbsTask` とする。
+**エンティティのクラス名**: `System.Threading.Tasks.Task` との衝突を避けるため、タスクエンティティは `WbsTask` とする。  
+**Models内のViewModel**: DBに対応しない画面専用モデル（例: `TaskNode`, `StatusMessage`）は `internal` にし、EF Coreエンティティ（`public`）と区別する。
 
 ## アーキテクチャの要点
 
@@ -83,6 +84,12 @@ private void OpenAddHoliday() { ... }
 
 #endregion
 ```
+
+### Disabled制御用フラグの命名
+
+非同期処理中にボタンを無効化するbool変数は `_disable<用途>` とする（例: `_disableCreate`, `_disableAdd`, `_disableImport`）。
+同一ファイル内に複数ある場合は、操作で区別できるときは操作名（`_disableAdd` / `_disableEdit`）、
+対象で区別できるときは対象名（`_disableSaveName` / `_disableSaveHoliday`）で修飾する。
 
 ### XMLドキュメントコメント
 

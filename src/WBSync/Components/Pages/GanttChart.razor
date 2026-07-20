@@ -29,11 +29,11 @@
         </div>
     </header>
 
-    @if (_pageError is not null)
+    @if (_pageStatus is { } pageStatus)
     {
         <div class="page-error-banner">
-            <span>@_pageError</span>
-            <button class="page-error-close" @onclick="() => _pageError = null">×</button>
+            <span>@pageStatus.Message</span>
+            <button class="page-error-close" @onclick="() => _pageStatus = null">×</button>
         </div>
     }
 
