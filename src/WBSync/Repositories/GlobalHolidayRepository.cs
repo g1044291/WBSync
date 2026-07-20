@@ -32,4 +32,16 @@ public class GlobalHolidayRepository(AppDbContext db) : IGlobalHolidayRepository
     {
         await db.GlobalHolidays.Where(h => h.Id == id).ExecuteDeleteAsync();
     }
+
+    public async Task<int> CreateManyAsync(IEnumerable<GlobalHoliday> holidays)
+    {
+        var existingDates = (await db.GlobalHolidays.Select(h => h.Date).ToListAsync()).ToHashSet();
+        var newHolidays = holidays.Where(h => existingDates.Add(h.Date)).ToList();
+        if (newHolidays.Count == 0)
+            return 0;
+
+        db.GlobalHolidays.AddRange(newHolidays);
+        await db.SaveChangesAsync();
+        return newHolidays.Count;
+    }
 }
