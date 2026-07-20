@@ -17,6 +17,8 @@
             <span class="project-name">@_projectName</span>
         </div>
         <div class="gantt-header-right">
+            <button class="scale-btn @(_showDependencyLines ? "scale-btn-active" : "")"
+                    @onclick="ToggleDependencyLines">矢印</button>
             <Button Variant="secondary" OnClick="GoToAssignees">担当者設定</Button>
             <div class="scale-switcher">
                 <button class="scale-btn @(_scale == ChartScale.Day ? "scale-btn-active" : "")"
@@ -147,11 +149,11 @@
                                 {
                                     @if (node.HasChildren)
                                     {
-                                        <div class="task-bar task-bar-parent" style="@barStyle"></div>
+                                        <div id="task-bar-@node.Task.Id" class="task-bar task-bar-parent" style="@barStyle"></div>
                                     }
                                     else
                                     {
-                                        <div class="task-bar task-bar-leaf" style="@barStyle">
+                                        <div id="task-bar-@node.Task.Id" class="task-bar task-bar-leaf" style="@barStyle">
                                             <div class="task-bar-progress" style="width:@(node.Task.Progress)%"></div>
                                         </div>
                                     }
