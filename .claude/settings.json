@@ -9,5 +9,19 @@
       "PowerShell(dotnet ef *)",
       "PowerShell(git *)"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$cmd = ([Console]::In.ReadToEnd() | ConvertFrom-Json).tool_input.command; if ($cmd -match '&&|\\|\\||;') { Write-Error 'Do not chain commands with &&/||/;'; exit 2 }",
+            "shell": "powershell"
+          }
+        ]
+      }
+    ]
   }
 }
