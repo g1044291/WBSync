@@ -8,7 +8,9 @@ namespace WBSync.Repositories;
 /// <summary><see cref="ITaskRepository"/> の EF Core 実装。</summary>
 public class TaskRepository(AppDbContext db) : ITaskRepository
 {
-    /// <inheritdoc/>
+    /// <summary>指定プロジェクトのタスクを表示順で取得する。</summary>
+    /// <param name="projectId">プロジェクトID。</param>
+    /// <returns>タスクのリスト。</returns>
     public Task<List<WbsTask>> GetByProjectAsync(int projectId)
         => db.Tasks
              .AsNoTracking()
@@ -16,7 +18,9 @@ public class TaskRepository(AppDbContext db) : ITaskRepository
              .OrderBy(t => t.SortOrder)
              .ToListAsync();
 
-    /// <inheritdoc/>
+    /// <summary>タスクを新規作成する。</summary>
+    /// <param name="task">作成するタスク。</param>
+    /// <returns>DB に保存されたタスク。</returns>
     public async Task<WbsTask> CreateAsync(WbsTask task)
     {
         var now = Now();
@@ -35,7 +39,9 @@ public class TaskRepository(AppDbContext db) : ITaskRepository
         }
     }
 
-    /// <inheritdoc/>
+    /// <summary>タスク情報を更新する。</summary>
+    /// <param name="task">更新するタスク。</param>
+    /// <returns>更新後のタスク。</returns>
     public async Task<WbsTask> UpdateAsync(WbsTask task)
     {
         task.UpdatedAt = Now();
@@ -48,13 +54,16 @@ public class TaskRepository(AppDbContext db) : ITaskRepository
         return task;
     }
 
-    /// <inheritdoc/>
+    /// <summary>タスクを削除する。子タスクも ON DELETE CASCADE で連鎖削除される。</summary>
+    /// <param name="id">タスクID。</param>
     public async Task DeleteAsync(int id)
     {
         await db.Tasks.Where(t => t.Id == id).ExecuteDeleteAsync();
     }
 
-    /// <inheritdoc/>
+    /// <summary>タスクの表示順を更新する。</summary>
+    /// <param name="id">タスクID。</param>
+    /// <param name="sortOrder">新しい表示順。</param>
     public async Task UpdateSortOrderAsync(int id, int sortOrder)
     {
         await db.Tasks
