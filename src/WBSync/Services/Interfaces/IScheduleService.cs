@@ -30,6 +30,8 @@ public interface IScheduleService
 
     /// <summary>
     /// 保存されたタスクの後続タスクに開始日・終了日の変更を連鎖伝播させ DB を更新する。
+    /// 後続タスクの開始日 = 前タスク終了日の翌稼働日。終了日は後続タスクの既存の期間（開始日〜終了日の日数）を維持したままずらす
+    /// （工数からの再計算は行わない）。既存の開始日・終了日が未設定の場合のみ、工数から終了日を算出する。
     /// </summary>
     /// <param name="projectId">対象プロジェクトID。</param>
     /// <param name="savedTask">保存されたタスク（最新の EndDate を持つこと）。</param>

@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS tasks (
 
 1. 変更されたタスクの `predecessor_id` を持つタスクを `idx_tasks_predecessor_id` で検索
 2. 該当タスクの `start_date` を「前タスクの `end_date` の翌稼働日」に更新
-3. 更新したタスクの `end_date` を「新 `start_date` + `work_days`（稼働日カウント）」で再計算
+3. 該当タスクに既存の `start_date` / `end_date` がある場合、その期間（日数）を維持したまま `end_date` をずらす（`work_days` からの再計算は行わない）。既存の日付がない場合のみ、新 `start_date` + `work_days`（稼働日カウント）で `end_date` を算出する
 4. そのタスクを前タスクとして持つタスクに再帰的に同処理を適用
 
 稼働日判定の優先順序は [../requirements/holiday-settings.md](../requirements/holiday-settings.md) を参照。
