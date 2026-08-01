@@ -28,9 +28,13 @@ private void OpenAddHoliday() { ... }
 ## XMLドキュメントコメント
 
 C# のクラス・メソッド・プロパティには必ず `///` コメントを付ける。
+引数がある場合は `<param>`、戻り値がある場合は `<returns>` を必ず書く。補足説明が必要な場合は `<remarks>` を追加する。
 
 ```csharp
 /// <summary>担当者の個人休日一覧を取得する。</summary>
 /// <param name="assigneeId">担当者ID。</param>
+/// <returns>個人休日の一覧。</returns>
 Task<List<AssigneeHoliday>> GetByAssigneeAsync(int assigneeId);
 ```
+
+インターフェースを実装するメソッドでも `<inheritdoc/>` は使わず、`summary` / `param` / `returns` / `remarks` を実装側にも書く（可読性のため、コメントを読むためだけにインターフェース定義へ飛ぶ必要をなくす）。
