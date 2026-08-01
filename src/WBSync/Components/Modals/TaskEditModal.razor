@@ -76,6 +76,10 @@
                     <DatePicker Value="_endDate" ValueChanged="d => { _endDate = d; _isDirty = true; }" />
                 </div>
             </div>
+            <div class="form-group date-recalc-buttons">
+                <Button Variant="secondary" OnClick="HandleCalcEndDateClick" Disabled="@(!_canCalcEndDate)">終了日を計算</Button>
+                <Button Variant="secondary" OnClick="HandleSetStartDateFromPredecessorClick" Disabled="@(!_canSetStartDateFromPredecessor)">先行タスクから開始日を設定</Button>
+            </div>
         }
 
         <div class="form-group">

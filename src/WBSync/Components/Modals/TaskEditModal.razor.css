@@ -76,6 +76,12 @@
     margin-right: auto;
 }
 
+.date-recalc-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
 .parent-date-note {
     margin: 0;
     padding: 7px 10px;
