@@ -79,7 +79,9 @@ CREATE TABLE IF NOT EXISTS tasks (
 
 ## 再計算の伝播
 
-後続タスクの再計算は以下の手順でアプリケーションが実施する：
+後続タスクの `start_date` 計算には前タスクの `end_date` のみを使用するため、タスク保存時に保存前後で `end_date` に変化がない場合（`start_date` のみの変更を含む）、後続タスクへの再計算処理自体を行わない。
+
+変化がある場合、後続タスクの再計算は以下の手順でアプリケーションが実施する：
 
 1. 変更されたタスクの `predecessor_id` を持つタスクを `idx_tasks_predecessor_id` で検索
 2. 該当タスクの `start_date` を「前タスクの `end_date` の翌稼働日」に更新

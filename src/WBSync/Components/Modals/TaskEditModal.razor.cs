@@ -306,6 +306,7 @@ public partial class TaskEditModal
         {
             WbsTask saved;
             var newParentId = _parent?.Id;
+            string? oldEndDate = Task?.EndDate;
 
             if (Task is null)
             {
@@ -361,7 +362,7 @@ public partial class TaskEditModal
                 saved = await TaskRepo.UpdateAsync(Task);
             }
 
-            await ScheduleService.PropagateSuccessorsAsync(ProjectId, saved);
+            await ScheduleService.PropagateSuccessorsAsync(ProjectId, saved, oldEndDate);
             _isDirty = false;
             await OnSaved.InvokeAsync(saved);
         }
