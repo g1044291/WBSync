@@ -39,6 +39,12 @@ public partial class TaskEditModal
     /// <summary>編集中のタスクが子タスクを持つ親タスクかどうか。</summary>
     private bool _isParent => Task is not null && AllTasks.Any(t => t.ParentId == Task.Id);
 
+    /// <summary>「終了日を計算」ボタンの活性条件。開始日・予定工数の両方が入力されている場合のみ活性化する。</summary>
+    private bool _canCalcEndDate => _startDate.HasValue && ParsePlannedWorkDays().HasValue;
+
+    /// <summary>「先行タスクから開始日を設定」ボタンの活性条件。先行タスクが選択され、その終了日が設定済みの場合のみ活性化する。</summary>
+    private bool _canSetStartDateFromPredecessor => !string.IsNullOrEmpty(_predecessor?.EndDate);
+
     // フォーム状態
     private string _name = string.Empty;
     private WbsTask? _parent;
@@ -289,6 +295,32 @@ public partial class TaskEditModal
 
         _startDate = startDate;
         _endDate = endDate;
+    }
+
+    /// <summary>
+    /// 「終了日を計算」ボタン押下時に、開始日と予定工数（稼働日カウント）から終了日を計算して自動入力する。
+    /// 後続タスクへの伝播は行わない。
+    /// </summary>
+    private async Task HandleCalcEndDateClick()
+    {
+        var plannedWorkDays = ParsePlannedWorkDays();
+        if (!_startDate.HasValue || !plannedWorkDays.HasValue) return;
+
+        _endDate = await ScheduleService.CalcEndDateAsync(_startDate.Value, plannedWorkDays.Value, _assignee?.Id);
+        _isDirty = true;
+    }
+
+    /// <summary>
+    /// 「先行タスクから開始日を設定」ボタン押下時に、先行タスクの終了日の翌稼働日を開始日に自動入力する。
+    /// 終了日は変更せず、後続タスクへの伝播も行わない。
+    /// </summary>
+    private async Task HandleSetStartDateFromPredecessorClick()
+    {
+        if (string.IsNullOrEmpty(_predecessor?.EndDate)) return;
+
+        var (startDate, _) = await ScheduleService.CalcDatesFromPredecessorAsync(_predecessor.EndDate, null, _assignee?.Id);
+        _startDate = startDate;
+        _isDirty = true;
     }
 
     /// <summary>見積工数入力フィールドの文字列を数値にパースする。</summary>
