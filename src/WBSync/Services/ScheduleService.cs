@@ -54,15 +54,15 @@ public class ScheduleService(
     /// 保存されたタスクの後続タスクに開始日・終了日の変更を連鎖伝播させ DB を更新する。
     /// 後続タスクの開始日 = 前タスク終了日の翌稼働日。終了日は後続タスクの既存の期間（開始日〜終了日の日数）を維持したままずらす
     /// （工数からの再計算は行わない）。既存の開始日・終了日が未設定の場合のみ、工数から終了日を算出する。
-    /// 保存前後で開始日・終了日が変わっていない場合は、伝播処理自体を行わない。
+    /// 後続タスクの計算には保存されたタスクの終了日のみを使用するため、保存前後で終了日が変わっていない場合は、
+    /// 開始日のみの変更であっても伝播処理自体を行わない。
     /// </summary>
     /// <param name="projectId">対象プロジェクトID。</param>
     /// <param name="savedTask">保存されたタスク（最新の EndDate を持つこと）。</param>
-    /// <param name="oldStartDate">保存前の開始日（yyyy-MM-dd 形式）。新規作成の場合は <see langword="null"/>。</param>
     /// <param name="oldEndDate">保存前の終了日（yyyy-MM-dd 形式）。新規作成の場合は <see langword="null"/>。</param>
-    public async Task PropagateSuccessorsAsync(int projectId, WbsTask savedTask, string? oldStartDate, string? oldEndDate)
+    public async Task PropagateSuccessorsAsync(int projectId, WbsTask savedTask, string? oldEndDate)
     {
-        if (oldStartDate == savedTask.StartDate && oldEndDate == savedTask.EndDate) return;
+        if (oldEndDate == savedTask.EndDate) return;
         if (string.IsNullOrEmpty(savedTask.EndDate)) return;
 
         var allTasks = await taskRepo.GetByProjectAsync(projectId);
