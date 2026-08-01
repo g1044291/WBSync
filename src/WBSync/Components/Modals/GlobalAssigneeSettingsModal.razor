@@ -17,12 +17,12 @@
                 </div>
                 <div class="add-form-actions">
                     <Button Variant="secondary" OnClick="CancelAdding">取消</Button>
-                    <Button Variant="primary" OnClick="AddAssignee" Disabled="_addSaving">保存</Button>
+                    <Button Variant="primary" OnClick="AddAssignee" Disabled="_disableAdd">保存</Button>
                 </div>
             </div>
-            @if (_addError is not null)
+            @if (_addStatus is { } addStatus)
             {
-                <p class="error-message">@_addError</p>
+                <p class="error-message">@addStatus.Message</p>
             }
         }
 
@@ -36,12 +36,12 @@
                         <input class="coefficient-input" type="number" step="0.01" min="0.01" @bind="_editCoefficient" />
                         <div class="row-actions">
                             <Button Variant="secondary" OnClick="CancelEditing">取消</Button>
-                            <Button Variant="primary" OnClick="() => SaveAssignee(g)" Disabled="_editSaving">保存</Button>
+                            <Button Variant="primary" OnClick="() => SaveAssignee(g)" Disabled="_disableEdit">保存</Button>
                         </div>
                     </div>
-                    @if (_editError is not null)
+                    @if (_editStatus is { } editStatus)
                     {
-                        <p class="error-message">@_editError</p>
+                        <p class="error-message">@editStatus.Message</p>
                     }
                 }
                 else

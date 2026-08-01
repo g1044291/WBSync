@@ -31,7 +31,7 @@ dotnet ef database update --project src/WBSync
 src/WBSync/
 ├── Components/        # Razor コンポーネント（画面・共通部品）
 ├── Data/              # AppDbContext
-├── Models/            # EF Core エンティティクラス
+├── Models/            # EF Core エンティティクラス、および画面用ViewModel（DB非対応の表示専用モデル）
 ├── Repositories/      # リポジトリパターンのデータアクセス層
 ├── Services/          # ビジネスロジック（スケジュール計算等）
 ├── Platforms/Windows/ # Windows固有エントリーポイント
@@ -39,7 +39,8 @@ src/WBSync/
 ```
 
 **名前空間**: フォルダに対応した階層（`WBSync.Models`, `WBSync.Data`, `WBSync.Repositories`, `WBSync.Services`）。  
-**エンティティのクラス名**: `System.Threading.Tasks.Task` との衝突を避けるため、タスクエンティティは `WbsTask` とする。
+**エンティティのクラス名**: `System.Threading.Tasks.Task` との衝突を避けるため、タスクエンティティは `WbsTask` とする。  
+**Models内のViewModel**: DBに対応しない画面専用モデル（例: `TaskNode`, `StatusMessage`）は `internal` にし、EF Coreエンティティ（`public`）と区別する。
 
 ## アーキテクチャの要点
 
@@ -49,58 +50,42 @@ src/WBSync/
 
 ### 親タスクの日付（DBに保存しない）
 
-子タスクを持つ親タスクの `start_date` / `end_date` は **DBにNULL**。表示時に動的計算する：
-- 親の開始日 = 子の `start_date` の最小値
-- 親の終了日 = 子の `end_date` の最大値
+子タスクを持つ親タスクの `start_date` / `end_date` はDBに保存せずNULL。表示時に子タスクから動的計算する。詳細: `doc/tables/tasks.md`
 
 ### スケジュール再計算
 
-前タスクの終了日変更 → 後続タスクの開始日を「翌稼働日」に更新 → `work_days` から終了日を再計算 → 再帰伝播。  
-**後続タスクが手動で開始日を変更済みであっても、再計算で上書きする。**
+**後続タスクが手動で開始日を変更済みであっても、再計算で上書きする。**  
+詳細: `doc/requirements/schedule-calculation.md`, `doc/tables/tasks.md`
 
 ### 稼働日判定の優先順序
 
-1. 土曜・日曜 → 休日
-2. `global_holidays.date` に存在 → 休日
-3. 対象担当者の `assignee_holidays.date` に存在 → 休日
-4. それ以外 → 稼働日
+稼働日判定の優先順序は `doc/requirements/holiday-settings.md` を参照。
 
 ## コーディング規約
 
-### 画面IDはコードに持ち込まない
+C#コーディング規約は `.claude/rules/csharp-style.md` を参照。
 
-設計書の画面ID（S01, S02 等）はコードに持ち込まない。CSSクラス名・C#クラス名・変数名・UIテキストに使わない。
+## ツール使用
 
-### セクション分割に #region を使う
+- シェルコマンドは `&&` / `||` / `;` で連結せず、1コマンドずつ個別のツール呼び出しで実行する
+- `|`（パイプ）と `>`（リダイレクト）は単一コマンド内の使用はOK（例: `git log | head -10`）
 
-C# ファイル内でメソッド群をセクションに分ける場合は `// ===` や `// ---` などのコメント区切りではなく `#region` / `#endregion` を使う。
+## タスク管理
 
-```csharp
-#region 個人休日
+タスク・バックログは **GitHub Issues** で管理する。
 
-/// <summary>個人休日追加モーダルを開く。</summary>
-private void OpenAddHoliday() { ... }
+## ブランチ・コミット・PR
 
-#endregion
-```
-
-### XMLドキュメントコメント
-
-C# のクラス・メソッド・プロパティには必ず `///` コメントを付ける。
-
-```csharp
-/// <summary>担当者の個人休日一覧を取得する。</summary>
-/// <param name="assigneeId">担当者ID。</param>
-Task<List<AssigneeHoliday>> GetByAssigneeAsync(int assigneeId);
-```
+ブランチ作成・コミット・PR作成時は [CONTRIBUTING.md](CONTRIBUTING.md) を参照。
 
 ## 設計ドキュメント
 
-| ドキュメント | 内容 |
-|-------------|------|
-| [doc/requirements.md](doc/requirements.md) | 機能要件・非機能要件 |
-| [doc/db_design.md](doc/db_design.md) | テーブル定義・DDL・ER図 |
-| [doc/ui_design.md](doc/ui_design.md) | 画面レイアウト・画面遷移・共通ルール |
-| [doc/task.md](doc/task.md) | 追加機能メモ |
+[doc/index.md](doc/index.md) を起点とする。[Open Knowledge Format](https://cloud.google.com/blog/ja/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing/) を参考に、YAMLフロントマター付きMarkdownファイルの集合として構成する（1ファイル1トピック、相互リンクで関連付け）。
 
-**タスク完了時に必ず更新**: requirements.md（仕様変更時）、ui_design.md（画面変更時）
+| ディレクトリ | 内容 |
+|-------------|------|
+| [doc/requirements/](doc/requirements/index.md) | 機能要件・非機能要件 |
+| [doc/tables/](doc/tables/index.md) | テーブル定義・DDL・ER図 |
+| [doc/screens/](doc/screens/index.md) | 画面レイアウト・画面遷移・共通ルール |
+
+**タスク完了時に必ず更新**: `doc/requirements/`（仕様変更時）、`doc/screens/`（画面変更時）、`doc/tables/`（テーブル変更時）。新しいテーブル・画面・要件項目を追加する場合は、既存ファイルに倣いYAMLフロントマター（`type` / `title` / `description` / `tags`、必要に応じ実装ファイルへの`resource`）を付与し、関連ファイルへの相互リンクを追加すること。

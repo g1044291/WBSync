@@ -9,13 +9,13 @@
             <label class="form-label">開始日 <span class="required">*</span></label>
             <DatePicker Value="_startDate" ValueChanged="d => _startDate = d" />
         </div>
-        @if (_error is not null)
+        @if (_formStatus is { } formStatus)
         {
-            <p class="form-error">@_error</p>
+            <p class="form-error">@formStatus.Message</p>
         }
     </ChildContent>
     <Footer>
         <Button Variant="secondary" OnClick="HandleClose">キャンセル</Button>
-        <Button Variant="primary" OnClick="HandleSubmit" Disabled="_saving">作成</Button>
+        <Button Variant="primary" OnClick="HandleSubmit" Disabled="_disableCreate">作成</Button>
     </Footer>
 </Modal>

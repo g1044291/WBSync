@@ -1,17 +1,21 @@
 using Microsoft.EntityFrameworkCore;
 using WBSync.Data;
 using WBSync.Models;
+using WBSync.Repositories.Interfaces;
 
 namespace WBSync.Repositories;
 
 /// <summary><see cref="IProjectRepository"/> の EF Core 実装。</summary>
 public class ProjectRepository(AppDbContext db) : IProjectRepository
 {
-    /// <inheritdoc/>
+    /// <summary>全プロジェクトを ID 順で取得する。</summary>
+    /// <returns>プロジェクトのリスト。</returns>
     public Task<List<Project>> GetAllAsync()
         => db.Projects.OrderBy(p => p.Id).ToListAsync();
 
-    /// <inheritdoc/>
+    /// <summary>プロジェクトを新規作成する。</summary>
+    /// <param name="project">作成するプロジェクト。</param>
+    /// <returns>DB に保存されたプロジェクト。</returns>
     public async Task<Project> CreateAsync(Project project)
     {
         var now = Now();

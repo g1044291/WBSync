@@ -24,10 +24,13 @@ public partial class GanttChart : IAsyncDisposable
     private HashSet<DateOnly> _globalHolidays = [];
     private Dictionary<int, HashSet<DateOnly>> _assigneeHolidays = [];
     private HashSet<int> _warningTaskIds = [];
-    private string? _pageError;
+    private StatusMessage? _pageStatus;
     private int _hoveredRowIndex = -1;
     private bool _isDragging;
     private DotNetObjectReference<GanttChart>? _dotNetRef;
+    private List<(int PredecessorId, int SuccessorId)> _dependencyPairs = [];
+    private bool _linesDirty;
+    private bool _showDependencyLines = true;
 
     #region モーダル状態
 
@@ -87,6 +90,7 @@ public partial class GanttChart : IAsyncDisposable
 
         await LoadAssigneeHolidaysAsync();
         _warningTaskIds = await ScheduleService.GetOverlappingTaskIdsAsync(ProjectId);
+        BuildDependencyPairs();
 
         CalculateChartPeriod();
         _chartColumns = GanttChartLayoutHelper.BuildColumns(_scale, _chartStart, _chartEnd, _globalHolidays);
@@ -102,6 +106,13 @@ public partial class GanttChart : IAsyncDisposable
             await JS.InvokeVoidAsync("initColNameResize", "col-name-resize", "task-pane", 120);
             _dotNetRef = DotNetObjectReference.Create(this);
             await JS.InvokeVoidAsync("initSortable", "task-pane-rows", _dotNetRef);
+            await JS.InvokeVoidAsync("initLeaderLineSync", "chart-pane", "task-pane-rows");
+            await UpdateLeaderLinesAsync();
+        }
+        else if (_linesDirty)
+        {
+            _linesDirty = false;
+            await UpdateLeaderLinesAsync();
         }
     }
 
@@ -109,7 +120,7 @@ public partial class GanttChart : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         _dotNetRef?.Dispose();
-        await ValueTask.CompletedTask;
+        await JS.InvokeVoidAsync("disposeLeaderLines");
     }
 
     #endregion
@@ -122,6 +133,7 @@ public partial class GanttChart : IAsyncDisposable
     {
         _scale = scale;
         _chartColumns = GanttChartLayoutHelper.BuildColumns(_scale, _chartStart, _chartEnd, _globalHolidays);
+        _linesDirty = true;
     }
 
     #endregion
@@ -235,6 +247,8 @@ public partial class GanttChart : IAsyncDisposable
 
         _allTasks = await TaskRepo.GetByProjectAsync(ProjectId);
         _taskRoots = TaskTreeHelper.BuildTree(_allTasks);
+        BuildDependencyPairs();
+        _linesDirty = true;
         await InvokeAsync(StateHasChanged);
     }
 
@@ -322,7 +336,7 @@ public partial class GanttChart : IAsyncDisposable
         catch (Exception ex)
         {
             _ctxNode = null;
-            _pageError = $"削除に失敗しました: {ex.InnerException?.Message ?? ex.Message}";
+            _pageStatus = StatusMessage.Error($"削除に失敗しました: {ex.InnerException?.Message ?? ex.Message}");
         }
     }
 
@@ -352,8 +366,10 @@ public partial class GanttChart : IAsyncDisposable
         _taskRoots = TaskTreeHelper.BuildTree(_allTasks);
         _allTasksWbsOrdered = TaskTreeHelper.GetAllNodesInDisplayOrder(_taskRoots).Select(n => n.Task).ToList();
         _warningTaskIds = await ScheduleService.GetOverlappingTaskIdsAsync(ProjectId);
+        BuildDependencyPairs();
         CalculateChartPeriod();
         _chartColumns = GanttChartLayoutHelper.BuildColumns(_scale, _chartStart, _chartEnd, _globalHolidays);
+        _linesDirty = true;
     }
 
     #endregion
@@ -401,7 +417,36 @@ public partial class GanttChart : IAsyncDisposable
 
     /// <summary>ノードの展開・折り畳みを切り替える。</summary>
     /// <param name="node">対象ノード。</param>
-    private void ToggleExpand(TaskNode node) => node.IsExpanded = !node.IsExpanded;
+    private void ToggleExpand(TaskNode node)
+    {
+        node.IsExpanded = !node.IsExpanded;
+        _linesDirty = true;
+    }
+
+    #endregion
+
+    #region 先行・後続タスク矢印
+
+    /// <summary><see cref="_allTasks"/> から先行・後続タスクIDのペア一覧を再構築する。</summary>
+    private void BuildDependencyPairs()
+        => _dependencyPairs = _allTasks
+            .Where(t => t.PredecessorId.HasValue)
+            .Select(t => (PredecessorId: t.PredecessorId!.Value, SuccessorId: t.Id))
+            .ToList();
+
+    /// <summary>JS側のLeaderLineを現在の先行・後続ペアで再構築する。表示OFF時は空配列を渡して矢印を消す。</summary>
+    private async Task UpdateLeaderLinesAsync()
+        => await JS.InvokeVoidAsync("updateLeaderLines", "chart-pane",
+            _showDependencyLines
+                ? _dependencyPairs.Select(p => new[] { p.PredecessorId, p.SuccessorId })
+                : []);
+
+    /// <summary>先行・後続タスクの矢印表示のON/OFFを切り替える。</summary>
+    private async Task ToggleDependencyLines()
+    {
+        _showDependencyLines = !_showDependencyLines;
+        await UpdateLeaderLinesAsync();
+    }
 
     #endregion
 }

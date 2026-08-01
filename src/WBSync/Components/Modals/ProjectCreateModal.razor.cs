@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using WBSync.Models;
-using WBSync.Repositories;
+using WBSync.Repositories.Interfaces;
 
 namespace WBSync.Components.Modals;
 
@@ -21,8 +21,8 @@ public partial class ProjectCreateModal
 
     private string _name = string.Empty;
     private DateOnly? _startDate = DateOnly.FromDateTime(DateTime.Today);
-    private string? _error;
-    private bool _saving;
+    private StatusMessage? _formStatus;
+    private bool _disableCreate;
 
     /// <summary>モーダルを閉じてフォームをリセットする。</summary>
     private async Task HandleClose()
@@ -34,20 +34,20 @@ public partial class ProjectCreateModal
     /// <summary>フォームを検証してプロジェクトを作成する。</summary>
     private async Task HandleSubmit()
     {
-        _error = null;
+        _formStatus = null;
 
         if (string.IsNullOrWhiteSpace(_name))
         {
-            _error = "プロジェクト名を入力してください";
+            _formStatus = StatusMessage.Error("プロジェクト名を入力してください");
             return;
         }
         if (_startDate is null)
         {
-            _error = "開始日を入力してください";
+            _formStatus = StatusMessage.Error("開始日を入力してください");
             return;
         }
 
-        _saving = true;
+        _disableCreate = true;
         try
         {
             var project = await ProjectRepo.CreateAsync(new Project
@@ -60,13 +60,14 @@ public partial class ProjectCreateModal
         }
         catch (Exception ex)
         {
-            _error = ex.InnerException?.Message.Contains("UNIQUE") == true
-                ? "同じ名前のプロジェクトがすでに登録されています"
-                : $"エラーが発生しました: {ex.InnerException?.Message ?? ex.Message}";
+            _formStatus = StatusMessage.Error(
+                ex.InnerException?.Message.Contains("UNIQUE") == true
+                    ? "同じ名前のプロジェクトがすでに登録されています"
+                    : $"エラーが発生しました: {ex.InnerException?.Message ?? ex.Message}");
         }
         finally
         {
-            _saving = false;
+            _disableCreate = false;
         }
     }
 
@@ -75,6 +76,6 @@ public partial class ProjectCreateModal
     {
         _name = string.Empty;
         _startDate = DateOnly.FromDateTime(DateTime.Today);
-        _error = null;
+        _formStatus = null;
     }
 }

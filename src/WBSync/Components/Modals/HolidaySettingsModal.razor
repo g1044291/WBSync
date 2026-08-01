@@ -6,9 +6,17 @@
             <span class="section-title">祝日・特別休日</span>
             @if (!_isAdding)
             {
-                <Button Variant="primary" OnClick="StartAdding">＋ 追加</Button>
+                <div class="header-actions">
+                    <Button Variant="secondary" OnClick="ImportCsv" Disabled="_disableImport">CSVインポート</Button>
+                    <Button Variant="primary" OnClick="StartAdding">＋ 追加</Button>
+                </div>
             }
         </div>
+
+        @if (_importStatus is { } importStatus)
+        {
+            <p class="@(importStatus.IsError ? "error-message" : "import-message")">@importStatus.Message</p>
+        }
 
         @if (_isAdding)
         {
@@ -19,12 +27,12 @@
                 </div>
                 <div class="add-form-actions">
                     <Button Variant="secondary" OnClick="CancelAdding">取消</Button>
-                    <Button Variant="primary" OnClick="AddHoliday" Disabled="_saving">保存</Button>
+                    <Button Variant="primary" OnClick="AddHoliday" Disabled="_disableAdd">保存</Button>
                 </div>
             </div>
-            @if (_error is not null)
+            @if (_addStatus is { } addStatus)
             {
-                <p class="error-message">@_error</p>
+                <p class="error-message">@addStatus.Message</p>
             }
         }
 

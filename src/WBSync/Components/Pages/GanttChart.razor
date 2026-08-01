@@ -17,6 +17,8 @@
             <span class="project-name">@_projectName</span>
         </div>
         <div class="gantt-header-right">
+            <button class="scale-btn @(_showDependencyLines ? "scale-btn-active" : "")"
+                    @onclick="ToggleDependencyLines">矢印</button>
             <Button Variant="secondary" OnClick="GoToAssignees">担当者設定</Button>
             <div class="scale-switcher">
                 <button class="scale-btn @(_scale == ChartScale.Day ? "scale-btn-active" : "")"
@@ -29,11 +31,11 @@
         </div>
     </header>
 
-    @if (_pageError is not null)
+    @if (_pageStatus is { } pageStatus)
     {
         <div class="page-error-banner">
-            <span>@_pageError</span>
-            <button class="page-error-close" @onclick="() => _pageError = null">×</button>
+            <span>@pageStatus.Message</span>
+            <button class="page-error-close" @onclick="() => _pageStatus = null">×</button>
         </div>
     }
 
@@ -147,11 +149,11 @@
                                 {
                                     @if (node.HasChildren)
                                     {
-                                        <div class="task-bar task-bar-parent" style="@barStyle"></div>
+                                        <div id="task-bar-@node.Task.Id" class="task-bar task-bar-parent" style="@barStyle"></div>
                                     }
                                     else
                                     {
-                                        <div class="task-bar task-bar-leaf" style="@barStyle">
+                                        <div id="task-bar-@node.Task.Id" class="task-bar task-bar-leaf" style="@barStyle">
                                             <div class="task-bar-progress" style="width:@(node.Task.Progress)%"></div>
                                         </div>
                                     }

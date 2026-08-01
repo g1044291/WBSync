@@ -1,6 +1,6 @@
 using WBSync.Models;
 
-namespace WBSync.Repositories;
+namespace WBSync.Repositories.Interfaces;
 
 /// <summary>担当者個人休日リポジトリのインターフェース。</summary>
 public interface IAssigneeHolidayRepository

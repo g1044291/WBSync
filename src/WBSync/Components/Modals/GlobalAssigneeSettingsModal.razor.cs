@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using WBSync.Models;
-using WBSync.Repositories;
+using WBSync.Repositories.Interfaces;
 
 namespace WBSync.Components.Modals;
 
@@ -21,14 +21,14 @@ public partial class GlobalAssigneeSettingsModal
     private bool _isAdding;
     private string _newName = string.Empty;
     private decimal _newCoefficient = 1.0m;
-    private bool _addSaving;
-    private string? _addError;
+    private bool _disableAdd;
+    private StatusMessage? _addStatus;
 
     private int? _editingId;
     private string _editName = string.Empty;
     private decimal _editCoefficient = 1.0m;
-    private bool _editSaving;
-    private string? _editError;
+    private bool _disableEdit;
+    private StatusMessage? _editStatus;
 
     /// <summary>モーダルが開かれたときにマスタ一覧を読み込む。</summary>
     protected override async Task OnParametersSetAsync()
@@ -42,8 +42,8 @@ public partial class GlobalAssigneeSettingsModal
     {
         _isAdding = false;
         _editingId = null;
-        _addError = null;
-        _editError = null;
+        _addStatus = null;
+        _editStatus = null;
         await OnClose.InvokeAsync();
     }
 
@@ -54,7 +54,7 @@ public partial class GlobalAssigneeSettingsModal
     {
         _newName = string.Empty;
         _newCoefficient = 1.0m;
-        _addError = null;
+        _addStatus = null;
         _editingId = null;
         _isAdding = true;
     }
@@ -63,17 +63,17 @@ public partial class GlobalAssigneeSettingsModal
     private void CancelAdding()
     {
         _isAdding = false;
-        _addError = null;
+        _addStatus = null;
     }
 
     /// <summary>グローバル担当者を追加する。</summary>
     private async Task AddAssignee()
     {
-        _addError = null;
-        if (string.IsNullOrWhiteSpace(_newName)) { _addError = "担当者名を入力してください"; return; }
-        if (_newCoefficient <= 0) { _addError = "生産性係数は 0 より大きい値を入力してください"; return; }
+        _addStatus = null;
+        if (string.IsNullOrWhiteSpace(_newName)) { _addStatus = StatusMessage.Error("担当者名を入力してください"); return; }
+        if (_newCoefficient <= 0) { _addStatus = StatusMessage.Error("生産性係数は 0 より大きい値を入力してください"); return; }
 
-        _addSaving = true;
+        _disableAdd = true;
         try
         {
             await GlobalAssigneeRepo.CreateAsync(new GlobalAssignee { Name = _newName.Trim(), ProductivityCoefficient = _newCoefficient });
@@ -82,13 +82,14 @@ public partial class GlobalAssigneeSettingsModal
         }
         catch (Exception ex)
         {
-            _addError = ex.InnerException?.Message.Contains("UNIQUE") == true
-                ? "同じ名前の担当者がすでに登録されています"
-                : $"エラー: {ex.InnerException?.Message ?? ex.Message}";
+            _addStatus = StatusMessage.Error(
+                ex.InnerException?.Message.Contains("UNIQUE") == true
+                    ? "同じ名前の担当者がすでに登録されています"
+                    : $"エラー: {ex.InnerException?.Message ?? ex.Message}");
         }
         finally
         {
-            _addSaving = false;
+            _disableAdd = false;
         }
     }
 
@@ -100,28 +101,28 @@ public partial class GlobalAssigneeSettingsModal
     private void StartEditing(GlobalAssignee g)
     {
         _isAdding = false;
-        _addError = null;
+        _addStatus = null;
         _editingId = g.Id;
         _editName = g.Name;
         _editCoefficient = g.ProductivityCoefficient;
-        _editError = null;
+        _editStatus = null;
     }
 
     /// <summary>インライン編集をキャンセルする。</summary>
     private void CancelEditing()
     {
         _editingId = null;
-        _editError = null;
+        _editStatus = null;
     }
 
     /// <summary>グローバル担当者名と生産性係数を保存する。</summary>
     private async Task SaveAssignee(GlobalAssignee g)
     {
-        _editError = null;
-        if (string.IsNullOrWhiteSpace(_editName)) { _editError = "担当者名を入力してください"; return; }
-        if (_editCoefficient <= 0) { _editError = "生産性係数は 0 より大きい値を入力してください"; return; }
+        _editStatus = null;
+        if (string.IsNullOrWhiteSpace(_editName)) { _editStatus = StatusMessage.Error("担当者名を入力してください"); return; }
+        if (_editCoefficient <= 0) { _editStatus = StatusMessage.Error("生産性係数は 0 より大きい値を入力してください"); return; }
 
-        _editSaving = true;
+        _disableEdit = true;
         try
         {
             g.Name = _editName.Trim();
@@ -132,13 +133,14 @@ public partial class GlobalAssigneeSettingsModal
         }
         catch (Exception ex)
         {
-            _editError = ex.InnerException?.Message.Contains("UNIQUE") == true
-                ? "同じ名前の担当者がすでに登録されています"
-                : $"エラー: {ex.InnerException?.Message ?? ex.Message}";
+            _editStatus = StatusMessage.Error(
+                ex.InnerException?.Message.Contains("UNIQUE") == true
+                    ? "同じ名前の担当者がすでに登録されています"
+                    : $"エラー: {ex.InnerException?.Message ?? ex.Message}");
         }
         finally
         {
-            _editSaving = false;
+            _disableEdit = false;
         }
     }
 
@@ -156,7 +158,7 @@ public partial class GlobalAssigneeSettingsModal
         }
         catch (Exception ex)
         {
-            _editError = $"削除に失敗しました: {ex.InnerException?.Message ?? ex.Message}";
+            _editStatus = StatusMessage.Error($"削除に失敗しました: {ex.InnerException?.Message ?? ex.Message}");
         }
     }
 

@@ -15,8 +15,8 @@ public partial class AssigneeDetail
     private Assignee? _assignee;
     private GlobalAssignee? _linkedGlobal;
     private string _editName = string.Empty;
-    private bool _nameSaving;
-    private string? _nameError;
+    private bool _disableSaveName;
+    private StatusMessage? _nameStatus;
     private bool _nameSaved;
 
     private decimal _editCoefficient = 1.0m;
@@ -28,8 +28,8 @@ public partial class AssigneeDetail
     private bool _addHolidayOpen;
     private DateOnly? _newHolidayDate;
     private string _newHolidayMemo = string.Empty;
-    private bool _saving;
-    private string? _holidayError;
+    private bool _disableSaveHoliday;
+    private StatusMessage? _holidayStatus;
 
     private bool _unlinkConfirmOpen;
 
@@ -58,14 +58,14 @@ public partial class AssigneeDetail
     /// <summary>担当者名を保存する。</summary>
     private async Task SaveName()
     {
-        _nameError = null;
+        _nameStatus = null;
         _nameSaved = false;
         if (string.IsNullOrWhiteSpace(_editName))
         {
-            _nameError = "担当者名を入力してください";
+            _nameStatus = StatusMessage.Error("担当者名を入力してください");
             return;
         }
-        _nameSaving = true;
+        _disableSaveName = true;
         try
         {
             _assignee!.Name = _editName.Trim();
@@ -74,11 +74,11 @@ public partial class AssigneeDetail
         }
         catch (Exception ex)
         {
-            _nameError = $"エラーが発生しました: {ex.InnerException?.Message ?? ex.Message}";
+            _nameStatus = StatusMessage.Error($"エラーが発生しました: {ex.InnerException?.Message ?? ex.Message}");
         }
         finally
         {
-            _nameSaving = false;
+            _disableSaveName = false;
         }
     }
 
@@ -130,7 +130,7 @@ public partial class AssigneeDetail
         }
         catch (Exception ex)
         {
-            _nameError = $"連携解除に失敗しました: {ex.InnerException?.Message ?? ex.Message}";
+            _nameStatus = StatusMessage.Error($"連携解除に失敗しました: {ex.InnerException?.Message ?? ex.Message}");
             _unlinkConfirmOpen = false;
         }
     }
@@ -144,7 +144,7 @@ public partial class AssigneeDetail
     {
         _newHolidayDate = null;
         _newHolidayMemo = string.Empty;
-        _holidayError = null;
+        _holidayStatus = null;
         _addHolidayOpen = true;
     }
 
@@ -152,19 +152,19 @@ public partial class AssigneeDetail
     private void CloseAddHoliday()
     {
         _addHolidayOpen = false;
-        _holidayError = null;
+        _holidayStatus = null;
     }
 
     /// <summary>新しい個人休日を作成する。</summary>
     private async Task AddHoliday()
     {
-        _holidayError = null;
+        _holidayStatus = null;
         if (_newHolidayDate is null)
         {
-            _holidayError = "日付を入力してください";
+            _holidayStatus = StatusMessage.Error("日付を入力してください");
             return;
         }
-        _saving = true;
+        _disableSaveHoliday = true;
         try
         {
             await HolidayRepo.CreateAsync(new AssigneeHoliday
@@ -178,13 +178,14 @@ public partial class AssigneeDetail
         }
         catch (Exception ex)
         {
-            _holidayError = ex.InnerException?.Message.Contains("UNIQUE") == true
-                ? "同じ日付がすでに登録されています"
-                : $"エラー: {ex.InnerException?.Message ?? ex.Message}";
+            _holidayStatus = StatusMessage.Error(
+                ex.InnerException?.Message.Contains("UNIQUE") == true
+                    ? "同じ日付がすでに登録されています"
+                    : $"エラー: {ex.InnerException?.Message ?? ex.Message}");
         }
         finally
         {
-            _saving = false;
+            _disableSaveHoliday = false;
         }
     }
 
@@ -198,7 +199,7 @@ public partial class AssigneeDetail
         }
         catch (Exception ex)
         {
-            _holidayError = $"削除に失敗しました: {ex.InnerException?.Message ?? ex.Message}";
+            _holidayStatus = StatusMessage.Error($"削除に失敗しました: {ex.InnerException?.Message ?? ex.Message}");
         }
     }
 

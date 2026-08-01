@@ -1,10 +1,27 @@
 {
   "permissions": {
     "allow": [
+      "mcp__github__issue_read",
       "Bash(dotnet build *)",
       "Bash(dotnet ef *)",
+      "Bash(git *)",
       "PowerShell(dotnet build *)",
-      "PowerShell(dotnet ef *)"
+      "PowerShell(dotnet ef *)",
+      "PowerShell(git *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$cmd = ([Console]::In.ReadToEnd() | ConvertFrom-Json).tool_input.command; if ($cmd -match '&&|\\|\\||;') { Write-Error 'Do not chain commands with &&/||/;'; exit 2 }",
+            "shell": "powershell"
+          }
+        ]
+      }
     ]
   }
 }

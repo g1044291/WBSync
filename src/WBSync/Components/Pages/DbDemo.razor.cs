@@ -14,7 +14,7 @@ public partial class DbDemo
     private List<Project> _projects = [];
     private string _pjName = string.Empty;
     private DateOnly? _pjDate = DateOnly.FromDateTime(DateTime.Today);
-    private string? _pjError;
+    private StatusMessage? _pjStatus;
 
     /// <inheritdoc/>
     protected override async Task OnInitializedAsync()
@@ -27,10 +27,10 @@ public partial class DbDemo
     /// <summary>プロジェクトを作成する。</summary>
     private async Task CreateProject()
     {
-        _pjError = null;
+        _pjStatus = null;
         if (string.IsNullOrWhiteSpace(_pjName) || _pjDate is null)
         {
-            _pjError = "プロジェクト名と開始日を入力してください";
+            _pjStatus = StatusMessage.Error("プロジェクト名と開始日を入力してください");
             return;
         }
         await ProjectRepo.CreateAsync(new Project
@@ -46,7 +46,7 @@ public partial class DbDemo
     private int _asgPjId;
     private List<Assignee> _assignees = [];
     private string _asgName = string.Empty;
-    private string? _asgError;
+    private StatusMessage? _asgStatus;
     private int? _editAsgId;
     private string _editAsgName = string.Empty;
 
@@ -60,8 +60,8 @@ public partial class DbDemo
     /// <summary>担当者を作成する。</summary>
     private async Task CreateAssignee()
     {
-        _asgError = null;
-        if (string.IsNullOrWhiteSpace(_asgName)) { _asgError = "担当者名を入力してください"; return; }
+        _asgStatus = null;
+        if (string.IsNullOrWhiteSpace(_asgName)) { _asgStatus = StatusMessage.Error("担当者名を入力してください"); return; }
         var nextSort = _assignees.Count > 0 ? _assignees.Max(a => a.SortOrder) + 1 : 0;
         await AssigneeRepo.CreateAsync(new Assignee { ProjectId = _asgPjId, Name = _asgName.Trim(), SortOrder = nextSort });
         _asgName = string.Empty;
@@ -141,7 +141,7 @@ public partial class DbDemo
     private DateOnly? _taskStart;
     private DateOnly? _taskEnd;
     private string _taskStatus = "未着手";
-    private string? _taskError;
+    private StatusMessage? _taskAddStatus;
     private int? _editTaskId;
     private string _editTaskName = string.Empty;
     private string _editTaskStatus = "未着手";
@@ -157,8 +157,8 @@ public partial class DbDemo
     /// <summary>タスクを作成する。</summary>
     private async Task CreateTask()
     {
-        _taskError = null;
-        if (string.IsNullOrWhiteSpace(_taskName)) { _taskError = "タスク名を入力してください"; return; }
+        _taskAddStatus = null;
+        if (string.IsNullOrWhiteSpace(_taskName)) { _taskAddStatus = StatusMessage.Error("タスク名を入力してください"); return; }
         var nextSort = _tasks.Count > 0 ? _tasks.Max(t => t.SortOrder) + 1 : 0;
         await TaskRepo.CreateAsync(new WbsTask
         {
@@ -243,13 +243,13 @@ public partial class DbDemo
     private List<GlobalHoliday> _globalHolidays = [];
     private DateOnly? _ghDate = DateOnly.FromDateTime(DateTime.Today);
     private string _ghName = string.Empty;
-    private string? _ghError;
+    private StatusMessage? _ghStatus;
 
     /// <summary>全体休日を作成する。</summary>
     private async Task CreateGlobalHoliday()
     {
-        _ghError = null;
-        if (_ghDate is null) { _ghError = "日付を入力してください"; return; }
+        _ghStatus = null;
+        if (_ghDate is null) { _ghStatus = StatusMessage.Error("日付を入力してください"); return; }
         try
         {
             await GlobalHolidayRepo.CreateAsync(new GlobalHoliday
@@ -263,7 +263,7 @@ public partial class DbDemo
         }
         catch (Exception ex)
         {
-            _ghError = $"エラー: {ex.InnerException?.Message ?? ex.Message}";
+            _ghStatus = StatusMessage.Error($"エラー: {ex.InnerException?.Message ?? ex.Message}");
         }
     }
 
@@ -281,7 +281,7 @@ public partial class DbDemo
     private List<AssigneeHoliday> _assigneeHolidays = [];
     private DateOnly? _ahDate = DateOnly.FromDateTime(DateTime.Today);
     private string _ahMemo = string.Empty;
-    private string? _ahError;
+    private StatusMessage? _ahStatus;
 
     /// <summary>選択中担当者の個人休日一覧を読み込む。</summary>
     private async Task LoadAssigneeHolidays()
@@ -294,8 +294,8 @@ public partial class DbDemo
     /// <summary>個人休日を作成する。</summary>
     private async Task CreateAssigneeHoliday()
     {
-        _ahError = null;
-        if (_ahDate is null) { _ahError = "日付を入力してください"; return; }
+        _ahStatus = null;
+        if (_ahDate is null) { _ahStatus = StatusMessage.Error("日付を入力してください"); return; }
         try
         {
             await AssigneeHolidayRepo.CreateAsync(new AssigneeHoliday
@@ -310,7 +310,7 @@ public partial class DbDemo
         }
         catch (Exception ex)
         {
-            _ahError = $"エラー: {ex.InnerException?.Message ?? ex.Message}";
+            _ahStatus = StatusMessage.Error($"エラー: {ex.InnerException?.Message ?? ex.Message}");
         }
     }
 
