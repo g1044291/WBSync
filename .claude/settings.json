@@ -18,7 +18,8 @@
       "PowerShell(gh issue list *)",
       "PowerShell(gh pr create *)",
       "PowerShell(gh pr view *)",
-      "PowerShell(gh pr list *)"
+      "PowerShell(gh pr list *)",
+      "Bash(gh issue *)"
     ]
   },
   "hooks": {
