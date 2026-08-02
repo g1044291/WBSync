@@ -27,4 +27,18 @@ internal class TaskNode
     public string? DisplayEndDate => HasChildren
         ? Children.Select(c => c.DisplayEndDate).Where(d => d is not null).Max()
         : Task.EndDate;
+
+    /// <summary>直接の子タスクの見積工数（人日）の合計。子タスクを持たない場合は <see langword="null"/>。</summary>
+    public double? DirectChildrenWorkDaysSum => HasChildren
+        ? Children.Sum(c => c.Task.WorkDays ?? 0)
+        : null;
+
+    /// <summary>直接の子タスクの見積工数合計が親タスク自身の見積工数を超えているかどうか。</summary>
+    public bool HasWorkDaysOverflow =>
+        HasChildren && Task.WorkDays.HasValue && DirectChildrenWorkDaysSum > Task.WorkDays.Value;
+
+    /// <summary>見積工数の超過分（人日）。超過していない場合は <see langword="null"/>。</summary>
+    public double? WorkDaysOverflowAmount => HasWorkDaysOverflow
+        ? DirectChildrenWorkDaysSum - Task.WorkDays!.Value
+        : null;
 }

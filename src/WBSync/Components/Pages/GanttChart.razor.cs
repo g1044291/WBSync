@@ -233,6 +233,14 @@ public partial class GanttChart : IAsyncDisposable
         return DateOnly.TryParse(date, out var d) ? d.ToString("M/d") : date;
     }
 
+    /// <summary>子タスクの見積工数合計が親タスクの見積工数を超えている場合の警告ツールチップ文言を返す。</summary>
+    /// <param name="node">対象タスクノード（<see cref="TaskNode.HasWorkDaysOverflow"/> が <see langword="true"/> であること）。</param>
+    /// <returns>具体的な数値差を含む警告メッセージ。</returns>
+    private static string GetWorkDaysOverflowTooltip(TaskNode node)
+        => $"子タスクの見積工数合計（{node.DirectChildrenWorkDaysSum:0.##}人日）が" +
+           $"親タスクの見積工数（{node.Task.WorkDays:0.##}人日）を" +
+           $"{node.WorkDaysOverflowAmount:0.##}人日超過しています";
+
     #endregion
 
     #region D&D 並び替え
