@@ -14,6 +14,12 @@ public class WorkLogRepository(AppDbContext db) : IWorkLogRepository
     public Task<List<WorkLog>> GetByTaskAsync(int taskId)
         => db.WorkLogs.Where(w => w.TaskId == taskId).OrderBy(w => w.Date).ToListAsync();
 
+    /// <summary>指定プロジェクトの全作業実績を取得する（タスク経由で結合）。</summary>
+    /// <param name="projectId">プロジェクトID。</param>
+    /// <returns>作業実績のリスト。</returns>
+    public Task<List<WorkLog>> GetByProjectAsync(int projectId)
+        => db.WorkLogs.AsNoTracking().Where(w => w.Task.ProjectId == projectId).ToListAsync();
+
     /// <summary>作業実績を新規作成する。</summary>
     /// <param name="workLog">作成する作業実績。</param>
     /// <returns>DB に保存された作業実績。</returns>

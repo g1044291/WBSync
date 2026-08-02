@@ -121,4 +121,35 @@ internal static class WorkdayHelper
             current = current.AddDays(1);
         }
     }
+
+    /// <summary>
+    /// 開始日から終了日までの稼働日数を数える（両端含む）。
+    /// </summary>
+    /// <param name="start">開始日。</param>
+    /// <param name="end">終了日。<paramref name="start"/> より前の場合は 0 を返す。</param>
+    /// <param name="globalHolidays">全体休日の日付セット。</param>
+    /// <param name="assigneeHolidays">担当者IDをキーとした個人休日の日付セット。</param>
+    /// <param name="assigneeId">個人休日を考慮する担当者ID。<see langword="null"/> の場合は個人休日を無視する。</param>
+    /// <returns>稼働日数。</returns>
+    internal static int CountWorkdays(
+        DateOnly start,
+        DateOnly end,
+        IReadOnlySet<DateOnly> globalHolidays,
+        IReadOnlyDictionary<int, IReadOnlySet<DateOnly>> assigneeHolidays,
+        int? assigneeId = null)
+    {
+        if (end < start) return 0;
+
+        var current = start;
+        var count = 0;
+
+        while (current <= end)
+        {
+            if (!IsHoliday(current, globalHolidays, assigneeHolidays, assigneeId))
+                count++;
+            current = current.AddDays(1);
+        }
+
+        return count;
+    }
 }
