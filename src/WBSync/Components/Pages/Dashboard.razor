@@ -1,0 +1,41 @@
+@page "/dashboard/{ProjectId:int}"
+@inject IProjectRepository ProjectRepo
+@inject ITaskRepository TaskRepo
+@inject IAssigneeRepository AssigneeRepo
+@inject IWorkLogRepository WorkLogRepo
+@inject NavigationManager Nav
+
+<div class="dashboard-page">
+    <header class="dashboard-header">
+        <div class="dashboard-header-left">
+            <button class="back-btn" @onclick="GoBack">← 戻る</button>
+            <span class="project-name">@_projectName - ダッシュボード</span>
+        </div>
+    </header>
+
+    <div class="dashboard-table">
+        <div class="dashboard-row dashboard-header-row">
+            <div class="col col-assignee">担当者</div>
+            <div class="col col-planned">予定工数</div>
+            <div class="col col-actual">実績</div>
+            <div class="col col-delay">遅れ</div>
+        </div>
+
+        @foreach (var summary in _summaries)
+        {
+            <div @key="summary.AssigneeName" class="dashboard-row">
+                <div class="col col-assignee">@summary.AssigneeName</div>
+                <div class="col col-planned">@FormatWorkDays(summary.PlannedWorkDays)</div>
+                <div class="col col-actual">@FormatWorkDays(summary.ActualPersonDays)</div>
+                <div class="col col-delay @(summary.DelayWorkDays switch { > 0 => "value-positive", < 0 => "value-negative", _ => "" })">
+                    @FormatDelay(summary.DelayWorkDays)
+                </div>
+            </div>
+        }
+
+        @if (!_summaries.Any())
+        {
+            <p class="empty-summaries">集計対象のタスクがありません</p>
+        }
+    </div>
+</div>
