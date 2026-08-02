@@ -1,7 +1,6 @@
 {
   "permissions": {
     "allow": [
-      "mcp__github__issue_read",
       "Bash(dotnet build *)",
       "Bash(dotnet ef *)",
       "Bash(git *)",
@@ -9,7 +8,17 @@
       "PowerShell(dotnet ef *)",
       "PowerShell(git *)",
       "Bash(git checkout *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(gh issue view *)",
+      "Bash(gh issue list *)",
+      "Bash(gh pr create *)",
+      "Bash(gh pr view *)",
+      "Bash(gh pr list *)",
+      "PowerShell(gh issue view *)",
+      "PowerShell(gh issue list *)",
+      "PowerShell(gh pr create *)",
+      "PowerShell(gh pr view *)",
+      "PowerShell(gh pr list *)"
     ]
   },
   "hooks": {
