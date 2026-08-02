@@ -10,6 +10,11 @@ public interface IAssigneeRepository
     /// <returns>担当者のリスト。</returns>
     Task<List<Assignee>> GetByProjectAsync(int projectId);
 
+    /// <summary>指定した複数プロジェクトの担当者をプロジェクトID・表示順で取得する。</summary>
+    /// <param name="projectIds">対象プロジェクトIDのコレクション。</param>
+    /// <returns>担当者のリスト。</returns>
+    Task<List<Assignee>> GetByProjectsAsync(IEnumerable<int> projectIds);
+
     /// <summary>担当者を新規作成する。</summary>
     /// <param name="assignee">作成する担当者。</param>
     /// <returns>DB に保存された担当者。</returns>

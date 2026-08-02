@@ -14,6 +14,17 @@ public class AssigneeRepository(AppDbContext db) : IAssigneeRepository
     public Task<List<Assignee>> GetByProjectAsync(int projectId)
         => db.Assignees.AsNoTracking().Where(a => a.ProjectId == projectId).OrderBy(a => a.SortOrder).ToListAsync();
 
+    /// <summary>指定した複数プロジェクトの担当者をプロジェクトID・表示順で取得する。</summary>
+    /// <param name="projectIds">対象プロジェクトIDのコレクション。</param>
+    /// <returns>担当者のリスト。</returns>
+    public Task<List<Assignee>> GetByProjectsAsync(IEnumerable<int> projectIds)
+        => db.Assignees
+             .AsNoTracking()
+             .Where(a => projectIds.Contains(a.ProjectId))
+             .OrderBy(a => a.ProjectId)
+             .ThenBy(a => a.SortOrder)
+             .ToListAsync();
+
     /// <summary>担当者を新規作成する。</summary>
     /// <param name="assignee">作成する担当者。</param>
     /// <returns>DB に保存された担当者。</returns>

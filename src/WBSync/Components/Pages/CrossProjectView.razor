@@ -1,0 +1,193 @@
+@page "/cross-project"
+@inject IProjectRepository ProjectRepo
+@inject ITaskRepository TaskRepo
+@inject IAssigneeRepository AssigneeRepo
+@inject IGlobalHolidayRepository GlobalHolidayRepo
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+@{ var displayRows = BuildDisplayRows(); }
+
+<div class="cross-project-page">
+    <header class="cross-project-header">
+        <div class="cross-project-header-left">
+            <button class="back-btn" @onclick="GoBack">← 戻る</button>
+            <span class="page-title">横断ビュー</span>
+        </div>
+        <div class="cross-project-header-right">
+            <div class="scale-switcher">
+                <button class="scale-btn @(_scale == ChartScale.Day ? "scale-btn-active" : "")"
+                        @onclick='() => SetScale(ChartScale.Day)'>日</button>
+                <button class="scale-btn @(_scale == ChartScale.Week ? "scale-btn-active" : "")"
+                        @onclick='() => SetScale(ChartScale.Week)'>週</button>
+                <button class="scale-btn @(_scale == ChartScale.Month ? "scale-btn-active" : "")"
+                        @onclick='() => SetScale(ChartScale.Month)'>月</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="project-filter">
+        <span class="project-filter-label">表示するプロジェクト:</span>
+        @foreach (var project in _allProjects)
+        {
+            <label class="project-filter-item">
+                <input type="checkbox"
+                       checked="@_selectedProjectIds.Contains(project.Id)"
+                       @onchange="() => ToggleProject(project.Id)" />
+                @project.Name
+            </label>
+        }
+        <label class="project-filter-item assignee-filter">
+            担当者
+            <Dropdown TValue="string" Items="_assigneeFilterOptions" DisplayText="name => name"
+                      Value="_filterAssigneeName" ValueChanged="OnFilterAssigneeChanged"
+                      AllowEmpty="true" EmptyLabel="すべて" />
+        </label>
+    </div>
+
+    @if (_allProjects.Count == 0)
+    {
+        <p class="empty-message">プロジェクトが登録されていません</p>
+    }
+    else if (_selectedProjectIds.Count == 0)
+    {
+        <p class="empty-message">表示するプロジェクトを選択してください</p>
+    }
+    else
+    {
+        <div class="cross-project-body">
+            <div id="task-pane" class="task-pane">
+                <div class="task-pane-scroll">
+                    <div class="task-pane-header">
+                        <div class="col col-name">
+                            タスク名
+                            <div class="col-name-resize-handle" id="col-name-resize"></div>
+                        </div>
+                        <div class="col col-assignee">担当者</div>
+                        <div class="col col-workdays">工数</div>
+                        <div class="col col-start">開始日</div>
+                        <div class="col col-end">終了日</div>
+                        <div class="col col-status">ステータス</div>
+                        <div class="col col-progress">進捗</div>
+                    </div>
+                    <div class="task-pane-rows" id="task-pane-rows">
+                        @foreach (var row in displayRows)
+                        {
+                            if (row is ProjectHeaderRow header)
+                            {
+                                <div @key="@("header-" + header.Project.Id)" class="project-group-row">@header.Project.Name</div>
+                            }
+                            else if (row is EmptyMessageRow empty)
+                            {
+                                <div @key="@("empty-" + empty.Project.Id)" class="task-row empty-task-row">
+                                    <span class="empty-tasks-text">@(empty.IsFilterEmpty ? "該当するタスクがありません" : "タスクが登録されていません")</span>
+                                </div>
+                            }
+                            else if (row is TaskRowItem item)
+                            {
+                                var node = item.Node;
+                                <div @key="node.Task.Id" class="task-row">
+                                    <div class="col col-name">
+                                        <div class="name-indent" style="padding-left: @(8 + node.Level * 20)px">
+                                            @if (node.HasChildren)
+                                            {
+                                                <button class="expand-btn" @onclick="() => ToggleExpand(node)">
+                                                    @(node.IsExpanded ? "▼" : "▶")
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <span class="expand-spacer"></span>
+                                            }
+                                            <span class="task-name-text">@node.Task.Name</span>
+                                        </div>
+                                    </div>
+                                    <div class="col col-assignee">
+                                        @(node.HasChildren ? "-" : GetAssigneeName(node.Task.AssigneeId))
+                                    </div>
+                                    <div class="col col-workdays">
+                                        @(node.HasChildren ? "-" : node.Task.WorkDays?.ToString("0.##") ?? "-")
+                                    </div>
+                                    <div class="col col-start">@FormatDate(node.DisplayStartDate)</div>
+                                    <div class="col col-end">@FormatDate(node.DisplayEndDate)</div>
+                                    <div class="col col-status">
+                                        @if (!node.HasChildren)
+                                        {
+                                            <Badge Status="@node.Task.Status" />
+                                        }
+                                    </div>
+                                    <div class="col col-progress">
+                                        @(node.HasChildren ? "" : $"{node.Task.Progress}%")
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div id="gantt-splitter" class="pane-splitter"></div>
+
+            <div class="chart-pane" id="chart-pane">
+                @if (_chartColumns.Count > 0)
+                {
+                    <div class="chart-inner scale-@(_scale.ToString().ToLower())">
+                        <div class="chart-time-header">
+                            @foreach (var col in _chartColumns)
+                            {
+                                <div class="chart-col-header @GetTimelineCellClass(col)">@col.Label</div>
+                            }
+                        </div>
+                        <div class="chart-rows-area">
+                            @foreach (var row in displayRows)
+                            {
+                                if (row is ProjectHeaderRow)
+                                {
+                                    <div class="chart-group-row">
+                                        @foreach (var col in _chartColumns)
+                                        {
+                                            <div class="chart-col-cell chart-col-cell-group @GetTimelineCellClass(col)"></div>
+                                        }
+                                    </div>
+                                }
+                                else if (row is EmptyMessageRow)
+                                {
+                                    <div class="chart-task-row">
+                                        @foreach (var col in _chartColumns)
+                                        {
+                                            <div class="chart-col-cell @GetTimelineCellClass(col)"></div>
+                                        }
+                                    </div>
+                                }
+                                else if (row is TaskRowItem item)
+                                {
+                                    var node = item.Node;
+                                    var barStyle = GetBarStyle(node);
+                                    <div class="chart-task-row">
+                                        @foreach (var col in _chartColumns)
+                                        {
+                                            <div class="chart-col-cell @GetTimelineCellClass(col)"></div>
+                                        }
+                                        @if (barStyle is not null)
+                                        {
+                                            if (node.HasChildren)
+                                            {
+                                                <div class="task-bar task-bar-parent" style="@barStyle"></div>
+                                            }
+                                            else
+                                            {
+                                                <div class="task-bar task-bar-leaf" style="@barStyle">
+                                                    <div class="task-bar-progress" style="width:@(node.Task.Progress)%"></div>
+                                                </div>
+                                            }
+                                        }
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>

@@ -26,6 +26,9 @@ public partial class ProjectList
     /// <summary>ガントチャート画面に遷移する。</summary>
     private void GoToGantt(int projectId) => Nav.NavigateTo($"/gantt/{projectId}");
 
+    /// <summary>複数プロジェクトを横断して表示するWBS画面に遷移する。</summary>
+    private void GoToCrossProjectView() => Nav.NavigateTo("/cross-project");
+
     /// <summary>プロジェクト作成モーダルを開く。</summary>
     private void OpenCreateModal() => _createModalOpen = true;
 

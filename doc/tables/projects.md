@@ -32,5 +32,5 @@ CREATE TABLE IF NOT EXISTS projects (
 
 * 子テーブル: [assignees](assignees.md)（`project_id` で参照、ON DELETE CASCADE）, [tasks](tasks.md)（`project_id` で参照、ON DELETE CASCADE）
 * 要件: [../requirements/project-management.md](../requirements/project-management.md)
-* 画面: [プロジェクト一覧](../screens/project-list.md), [プロジェクト作成モーダル](../screens/project-create-modal.md)
+* 画面: [プロジェクト一覧](../screens/project-list.md), [プロジェクト作成モーダル](../screens/project-create-modal.md), [横断ビュー](../screens/cross-project-view.md)
 * DDL・ER図: [index.md](index.md)
