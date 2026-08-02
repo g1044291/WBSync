@@ -56,9 +56,35 @@ tags: [requirements, task, worklog]
 
 親タスク自身の担当者・開始日・終了日は[工数管理画面](../screens/effort-management.md)では編集不可（[tasks.md](../tables/tasks.md)参照）。
 
+## 担当者別集計（ダッシュボード）
+
+[ダッシュボード画面](../screens/dashboard.md)で、担当者ごとに工数の予実・遅れを集計して表示する。
+
+### 集計対象タスク
+
+以下をすべて満たすリーフタスク（子タスクを持たないタスク）のみを対象とする。ステータスは問わない。
+
+* 担当者が設定されている
+* 実績（[work_logs](../tables/work_logs.md)）が1件以上記録されている（**実績の入っていないタスクは集計対象外**）
+
+実績の有無のみで判定することで、記録した実績が担当者集計に反映されない、という分かりにくさを避ける（ステータスで絞ると「実績を入れたのに集計に出てこない」ケースが発生しうるため）。
+
+### 集計項目
+
+担当者ごとに、対象タスクを合算して以下を算出する。
+
+| 項目 | 算出方法 |
+|------|---------|
+| 予定工数合計（人日） | 対象タスクの `planned_work_days` の合計（未設定は0扱い） |
+| 実績合計（人日） | 対象タスクの実績（人日換算は前述の[人日換算](#人日換算)と同じ、`合計分 ÷ 480`）の合計 |
+| 遅れ（人日） | 予定工数合計 − 実績合計 |
+
+* 遅れがプラス：予定より実績が少ない状態（「前倒し」と表示）
+* 遅れがマイナス：予定より実績が多い状態（「遅れ」と表示）
+
 ## 関連
 
 * テーブル: [tasks](../tables/tasks.md), [work_logs](../tables/work_logs.md)
-* 画面: [工数管理](../screens/effort-management.md)
+* 画面: [工数管理](../screens/effort-management.md), [ダッシュボード](../screens/dashboard.md)
 * 稼働日判定: [holiday-settings.md](holiday-settings.md)
 * 工数と期間の考え方: [schedule-calculation.md](schedule-calculation.md)

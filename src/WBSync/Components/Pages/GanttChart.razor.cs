@@ -273,6 +273,9 @@ public partial class GanttChart : IAsyncDisposable
     /// <summary>工数管理画面に遷移する。</summary>
     private void GoToEffort() => Nav.NavigateTo($"/effort/{ProjectId}");
 
+    /// <summary>ダッシュボード画面に遷移する。</summary>
+    private void GoToDashboard() => Nav.NavigateTo($"/dashboard/{ProjectId}");
+
     /// <summary>ルートへのタスク追加モーダルを開く。</summary>
     private void AddTask()
     {
