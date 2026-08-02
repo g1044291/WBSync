@@ -29,6 +29,7 @@ resource: ../../src/WBSync/Data/AppDbContext.cs
 | [tasks](tasks.md) | タスク（階層構造・依存関係を含む） |
 | [global_holidays](global_holidays.md) | アプリ全体の休日（祝日等） |
 | [assignee_holidays](assignee_holidays.md) | 担当者個人の休日 |
+| [work_logs](work_logs.md) | タスクへの日々の作業実績 |
 
 ## ER図
 
@@ -41,6 +42,8 @@ erDiagram
     tasks    |o--o| tasks : "predecessor_id / FS dependency"
     assignees ||--o{ tasks : "assigned to"
     assignees ||--o{ assignee_holidays : "has"
+    tasks    ||--o{ work_logs : "has"
+    assignees |o--o{ work_logs : "recorded by"
 ```
 
 ## アプリケーション実装メモ

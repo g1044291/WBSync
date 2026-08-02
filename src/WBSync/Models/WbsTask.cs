@@ -87,4 +87,7 @@ public class WbsTask
 
     /// <summary>子タスクのコレクション。</summary>
     public ICollection<WbsTask> Children { get; set; } = [];
+
+    /// <summary>このタスクの作業実績コレクション。</summary>
+    public ICollection<WorkLog> WorkLogs { get; set; } = [];
 }

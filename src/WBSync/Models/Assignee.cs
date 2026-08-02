@@ -51,4 +51,7 @@ public class Assignee
 
     /// <summary>この担当者の個人休日コレクション。</summary>
     public ICollection<AssigneeHoliday> Holidays { get; set; } = [];
+
+    /// <summary>この担当者の作業実績コレクション。</summary>
+    public ICollection<WorkLog> WorkLogs { get; set; } = [];
 }

@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS assignees (
 ## 関連
 
 * 親テーブル: [projects](projects.md), [global_assignees](global_assignees.md)
-* 参照元: [tasks](tasks.md)（`assignee_id` で参照）, [assignee_holidays](assignee_holidays.md)（`assignee_id` で参照）
+* 参照元: [tasks](tasks.md)（`assignee_id` で参照）, [assignee_holidays](assignee_holidays.md)（`assignee_id` で参照）, [work_logs](work_logs.md)（`assignee_id` で参照）
 * 要件: [../requirements/assignee-management.md](../requirements/assignee-management.md)
 * 画面: [担当者一覧](../screens/assignee-list.md), [担当者詳細](../screens/assignee-detail.md)
 * DDL・ER図: [index.md](index.md)
