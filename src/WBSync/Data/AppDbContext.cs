@@ -24,6 +24,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     /// <summary>担当者個人休日テーブル。</summary>
     public DbSet<AssigneeHoliday> AssigneeHolidays => Set<AssigneeHoliday>();
 
+    /// <summary>日々の作業実績テーブル。</summary>
+    public DbSet<WorkLog> WorkLogs => Set<WorkLog>();
+
     /// <inheritdoc/>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -127,6 +130,25 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
             entity.HasIndex(e => e.AssigneeId)
                   .HasDatabaseName("idx_assignee_holidays_assignee_id");
+        });
+
+        modelBuilder.Entity<WorkLog>(entity =>
+        {
+            entity.HasOne(e => e.Task)
+                  .WithMany(t => t.WorkLogs)
+                  .HasForeignKey(e => e.TaskId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Assignee)
+                  .WithMany(a => a.WorkLogs)
+                  .HasForeignKey(e => e.AssigneeId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(e => e.TaskId)
+                  .HasDatabaseName("idx_work_logs_task_id");
+
+            entity.HasIndex(e => e.AssigneeId)
+                  .HasDatabaseName("idx_work_logs_assignee_id");
         });
     }
 }

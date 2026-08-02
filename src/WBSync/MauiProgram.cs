@@ -39,6 +39,7 @@ namespace WBSync
             builder.Services.AddScoped<ITaskRepository, TaskRepository>();
             builder.Services.AddScoped<IGlobalHolidayRepository, GlobalHolidayRepository>();
             builder.Services.AddScoped<IAssigneeHolidayRepository, AssigneeHolidayRepository>();
+            builder.Services.AddScoped<IWorkLogRepository, WorkLogRepository>();
             builder.Services.AddScoped<IScheduleService, ScheduleService>();
 
 #if DEBUG

@@ -100,6 +100,7 @@ CREATE TABLE IF NOT EXISTS tasks (
 
 * 親テーブル: [projects](projects.md), [assignees](assignees.md)
 * 自己参照: `parent_id`（階層構造）, `predecessor_id`（FS依存関係）
+* 参照元: [work_logs](work_logs.md)（`task_id` で参照）
 * 要件: [../requirements/task-management.md](../requirements/task-management.md), [../requirements/schedule-calculation.md](../requirements/schedule-calculation.md)
 * 画面: [ガントチャート](../screens/gantt-chart.md), [タスク編集モーダル](../screens/task-edit-modal.md)
 * DDL・ER図・インデックス: [index.md](index.md)
