@@ -87,6 +87,10 @@
                                     {
                                         <span class="warn-icon" title="同一担当者の別タスクと稼働日が重複しています">⚠</span>
                                     }
+                                    @if (node.HasWorkDaysOverflow)
+                                    {
+                                        <span class="warn-icon" title="@GetWorkDaysOverflowTooltip(node)">⚠</span>
+                                    }
                                 </div>
                             </div>
                             <div class="col col-assignee">
