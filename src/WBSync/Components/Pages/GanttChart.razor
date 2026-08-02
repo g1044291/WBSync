@@ -20,6 +20,7 @@
             <button class="scale-btn @(_showDependencyLines ? "scale-btn-active" : "")"
                     @onclick="ToggleDependencyLines">矢印</button>
             <Button Variant="secondary" OnClick="GoToAssignees">担当者設定</Button>
+            <Button Variant="secondary" OnClick="GoToEffort">工数管理</Button>
             <div class="scale-switcher">
                 <button class="scale-btn @(_scale == ChartScale.Day ? "scale-btn-active" : "")"
                         @onclick='() => SetScale(ChartScale.Day)'>日</button>

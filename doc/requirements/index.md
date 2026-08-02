@@ -25,6 +25,7 @@ tags: [requirements]
 | [schedule-calculation.md](schedule-calculation.md) | スケジュール計算・依存関係・再計算 |
 | [assignee-management.md](assignee-management.md) | 担当者管理 |
 | [holiday-settings.md](holiday-settings.md) | 休日設定 |
+| [effort-management.md](effort-management.md) | 工数管理（実績記録・残工数・スケジュール遅延） |
 
 ## 非機能要件
 

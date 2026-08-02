@@ -1,0 +1,204 @@
+@page "/effort/{ProjectId:int}"
+@inject IProjectRepository ProjectRepo
+@inject ITaskRepository TaskRepo
+@inject IAssigneeRepository AssigneeRepo
+@inject IWorkLogRepository WorkLogRepo
+@inject IGlobalHolidayRepository GlobalHolidayRepo
+@inject IAssigneeHolidayRepository AssigneeHolidayRepo
+@inject IScheduleService ScheduleService
+@inject NavigationManager Nav
+
+@{
+    var keepSet = EffortTreeHelper.BuildFilterKeepSet(_allTasks, _taskRoots, _aggregates, _filterAssignee?.Id, _filterDelay);
+    var visibleNodes = EffortTreeHelper.GetVisibleSortedFilteredNodes(_taskRoots, _aggregates, _assigneeNames, _sortMode, _collapsedTaskIds, keepSet);
+}
+
+<div class="effort-page">
+    <header class="effort-header">
+        <div class="effort-header-left">
+            <button class="back-btn" @onclick="GoBack">← 戻る</button>
+            <span class="project-name">@_projectName - 工数管理</span>
+        </div>
+    </header>
+
+    @if (_pageStatus is { } pageStatus)
+    {
+        <div class="page-error-banner">
+            <span>@pageStatus.Message</span>
+            <button class="page-error-close" @onclick="() => _pageStatus = null">×</button>
+        </div>
+    }
+
+    <div class="filter-bar">
+        <label class="filter-label">
+            担当者
+            <Dropdown TValue="Assignee" Items="_allAssignees" DisplayText="a => a.Name"
+                      Value="_filterAssignee" ValueChanged="a => _filterAssignee = a"
+                      AllowEmpty="true" EmptyLabel="すべて" />
+        </label>
+        <label class="filter-label">
+            遅れ
+            <Dropdown TValue="DelayFilter" Items="_delayFilterOptions" DisplayText="DisplayDelayFilter"
+                      Value="_filterDelay" ValueChanged="f => _filterDelay = f" />
+        </label>
+        <label class="filter-label filter-label-sort">
+            並び替え
+            <Dropdown TValue="SortMode" Items="_sortModeOptions" DisplayText="DisplaySortMode"
+                      Value="_sortMode" ValueChanged="m => _sortMode = m" />
+        </label>
+    </div>
+
+    <div class="effort-table">
+        <div class="effort-row effort-header-row">
+            <div class="col col-name">タスク名</div>
+            <div class="col col-assignee">担当者</div>
+            <div class="col col-start">開始日</div>
+            <div class="col col-end">終了日</div>
+            <div class="col col-estimate">見積工数</div>
+            <div class="col col-planned">予定工数</div>
+            <div class="col col-actual">実績</div>
+            <div class="col col-remaining">残工数</div>
+            <div class="col col-delay">前倒し/遅れ</div>
+        </div>
+
+        @foreach (var node in visibleNodes)
+        {
+            var agg = _aggregates.GetValueOrDefault(node.Task.Id);
+            <div @key="node.Task.Id" class="effort-row">
+                <div class="col col-name">
+                    <div class="name-indent" style="padding-left: @(8 + node.Level * 20)px">
+                        @if (node.HasChildren)
+                        {
+                            <button class="expand-btn" @onclick="() => ToggleCollapse(node)">
+                                @(_collapsedTaskIds.Contains(node.Task.Id) ? "▶" : "▼")
+                            </button>
+                        }
+                        else
+                        {
+                            <span class="expand-spacer"></span>
+                        }
+                        @if (!node.HasChildren)
+                        {
+                            <button class="row-expand-btn" @onclick="() => ToggleRowExpand(node.Task)">
+                                @(_expandedRowIds.Contains(node.Task.Id) ? "▽" : "▷")
+                            </button>
+                        }
+                        else
+                        {
+                            <span class="expand-spacer"></span>
+                        }
+                        <span class="task-name-text" @onclick="() => OpenEditModal(node.Task)">@node.Task.Name</span>
+                        @if (agg?.DelayDays is > 0)
+                        {
+                            <span class="warn-icon" title="スケジュールが遅れています">⚠</span>
+                        }
+                    </div>
+                </div>
+                <div class="col col-assignee">@(node.HasChildren ? "-" : GetAssigneeName(node.Task.AssigneeId))</div>
+                <div class="col col-start">
+                    @if (node.HasChildren)
+                    {
+                        @FormatDate(node.DisplayStartDate)
+                    }
+                    else
+                    {
+                        <DatePicker Value="ParseDate(node.Task.StartDate)" ValueChanged="d => HandleDateChanged(node.Task, true, d)" />
+                    }
+                </div>
+                <div class="col col-end">
+                    @if (node.HasChildren)
+                    {
+                        @FormatDate(node.DisplayEndDate)
+                    }
+                    else
+                    {
+                        <DatePicker Value="ParseDate(node.Task.EndDate)" ValueChanged="d => HandleDateChanged(node.Task, false, d)" />
+                    }
+                </div>
+                <div class="col col-estimate">@FormatWorkDays(agg?.EstimateWorkDays ?? 0)</div>
+                <div class="col col-planned">@FormatWorkDays(agg?.PlannedWorkDays ?? 0)</div>
+                <div class="col col-actual">@FormatWorkDays(agg?.ActualPersonDays ?? 0)</div>
+                <div class="col col-remaining @(agg?.RemainingWorkDays is < 0 ? "value-negative" : "")">
+                    @(agg?.RemainingWorkDays.HasValue == true ? FormatWorkDays(agg.RemainingWorkDays.Value) : "-")
+                </div>
+                <div class="col col-delay @(agg?.DelayDays is > 0 ? "value-negative" : "")">
+                    @FormatDelayDays(agg?.DelayDays)
+                </div>
+            </div>
+
+            @if (!node.HasChildren && _expandedRowIds.Contains(node.Task.Id))
+            {
+                <div class="log-panel">
+                    @foreach (var log in _allWorkLogs.Where(w => w.TaskId == node.Task.Id).OrderBy(w => w.Date))
+                    {
+                        if (_editingLogId == log.Id)
+                        {
+                            <div class="log-row log-row-editing">
+                                <DatePicker Value="_editLogDate" ValueChanged="d => _editLogDate = d" />
+                                <Dropdown TValue="Assignee" Items="_allAssignees" DisplayText="a => a.Name"
+                                          Value="_editLogAssignee" ValueChanged="a => _editLogAssignee = a"
+                                          AllowEmpty="true" EmptyLabel="（なし）" />
+                                <input class="minutes-input" type="number" min="1" step="1" placeholder="分"
+                                       value="@_editLogMinutesStr" @onchange="e => _editLogMinutesStr = e.Value?.ToString() ?? string.Empty" />
+                                <span class="minutes-unit">分</span>
+                                <Button Variant="secondary" OnClick="CancelEditingLog">キャンセル</Button>
+                                <Button Variant="primary" OnClick="() => SaveLog(log)" Disabled="_disableEditLog">保存</Button>
+                            </div>
+                            @if (_editLogStatus is { } editLogStatus)
+                            {
+                                <p class="form-error">@editLogStatus.Message</p>
+                            }
+                        }
+                        else
+                        {
+                            <div class="log-row">
+                                <span class="log-date">@FormatDate(log.Date)</span>
+                                <span class="log-assignee">@GetAssigneeName(log.AssigneeId)</span>
+                                <span class="log-minutes">@(log.Minutes)分</span>
+                                <Button Variant="secondary" OnClick="() => StartEditingLog(log)">編集</Button>
+                                <Button Variant="danger" OnClick="() => DeleteLog(log)">削除</Button>
+                            </div>
+                        }
+                    }
+                    @if (!_allWorkLogs.Any(w => w.TaskId == node.Task.Id))
+                    {
+                        <p class="empty-message">実績ログが登録されていません</p>
+                    }
+
+                    @if (_newLogForms.TryGetValue(node.Task.Id, out var form))
+                    {
+                        <div class="log-row log-row-new">
+                            <DatePicker Value="form.Date" ValueChanged="d => form.Date = d" />
+                            <Dropdown TValue="Assignee" Items="_allAssignees" DisplayText="a => a.Name"
+                                      Value="form.Assignee" ValueChanged="a => form.Assignee = a"
+                                      AllowEmpty="true" EmptyLabel="（なし）" />
+                            <input class="minutes-input" type="number" min="1" step="1" placeholder="分"
+                                   value="@form.MinutesStr" @onchange="e => form.MinutesStr = e.Value?.ToString() ?? string.Empty" />
+                            <span class="minutes-unit">分</span>
+                            <Button Variant="primary" OnClick="() => AddLog(node.Task)" Disabled="form.DisableAdd">＋ 追加</Button>
+                        </div>
+                        @if (form.Status is { } formStatus)
+                        {
+                            <p class="form-error">@formStatus.Message</p>
+                        }
+                    }
+                </div>
+            }
+        }
+
+        @if (!visibleNodes.Any())
+        {
+            <p class="empty-tasks">該当するタスクがありません</p>
+        }
+    </div>
+</div>
+
+<TaskEditModal IsOpen="_isTaskModalOpen"
+               Task="_taskModalTask"
+               ProjectId="ProjectId"
+               ParentId="null"
+               Assignees="_allAssignees"
+               AllTasks="_allTasksWbsOrdered"
+               OnClose="HandleTaskModalClose"
+               OnSaved="HandleTaskSaved"
+               OnDeleted="HandleTaskDeleted" />
