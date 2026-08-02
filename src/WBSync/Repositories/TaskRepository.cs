@@ -18,6 +18,17 @@ public class TaskRepository(AppDbContext db) : ITaskRepository
              .OrderBy(t => t.SortOrder)
              .ToListAsync();
 
+    /// <summary>指定した複数プロジェクトのタスクをプロジェクトID・表示順で取得する。</summary>
+    /// <param name="projectIds">対象プロジェクトIDのコレクション。</param>
+    /// <returns>タスクのリスト。</returns>
+    public Task<List<WbsTask>> GetByProjectsAsync(IEnumerable<int> projectIds)
+        => db.Tasks
+             .AsNoTracking()
+             .Where(t => projectIds.Contains(t.ProjectId))
+             .OrderBy(t => t.ProjectId)
+             .ThenBy(t => t.SortOrder)
+             .ToListAsync();
+
     /// <summary>タスクを新規作成する。</summary>
     /// <param name="task">作成するタスク。</param>
     /// <returns>DB に保存されたタスク。</returns>

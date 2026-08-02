@@ -12,7 +12,7 @@ resource: ../../src/WBSync/Components/Pages/ProjectList.razor
 
 ```
 ┌─────────────────────────────────────────────┐
-│  WBSync                    [休日設定] [新規登録] │  ← ヘッダー
+│  WBSync          [横断ビュー] [休日設定] [新規登録] │  ← ヘッダー
 ├─────────────────────────────────────────────┤
 │                                               │
 │  ┌───────────────────────────────────────┐   │
@@ -31,6 +31,7 @@ resource: ../../src/WBSync/Components/Pages/ProjectList.razor
 | 要素 | 説明 |
 |------|------|
 | プロジェクト一覧 | プロジェクト名のみ表示。クリックで [ガントチャート](gantt-chart.md) へ遷移 |
+| 横断ビューボタン | クリックで [横断ビュー](cross-project-view.md) へ遷移 |
 | 新規登録ボタン | クリックで [プロジェクト作成モーダル](project-create-modal.md) を開く |
 | 休日設定ボタン | クリックで [休日設定モーダル](holiday-settings-modal.md) を開く |
 

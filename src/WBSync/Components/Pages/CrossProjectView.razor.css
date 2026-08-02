@@ -1,0 +1,453 @@
+.cross-project-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    font-family: sans-serif;
+    background: #fff;
+}
+
+/* ===== Header ===== */
+
+.cross-project-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    height: 52px;
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0;
+}
+
+.cross-project-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.back-btn {
+    background: none;
+    border: none;
+    color: #3b82f6;
+    font-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    padding: 4px 0;
+}
+
+.back-btn:hover {
+    text-decoration: underline;
+}
+
+.page-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.cross-project-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.scale-switcher {
+    display: flex;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.scale-btn {
+    padding: 5px 14px;
+    font-size: 13px;
+    background: #fff;
+    border: none;
+    border-right: 1px solid #d1d5db;
+    cursor: pointer;
+    color: #374151;
+}
+
+.scale-btn:last-child {
+    border-right: none;
+}
+
+.scale-btn:hover {
+    background: #f3f4f6;
+}
+
+.scale-btn-active {
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-weight: 600;
+}
+
+/* ===== Project filter ===== */
+
+.project-filter {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 10px 16px;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0;
+}
+
+.project-filter-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.project-filter-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: #374151;
+    cursor: pointer;
+}
+
+.assignee-filter {
+    margin-left: auto;
+    gap: 8px;
+}
+
+.empty-message {
+    padding: 24px;
+    font-size: 13px;
+    color: #9ca3af;
+    text-align: center;
+}
+
+/* ===== Body (split panes) ===== */
+
+.cross-project-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* ===== Left pane ===== */
+
+.task-pane {
+    display: flex;
+    flex-direction: column;
+    width: 592px;
+    min-width: 320px;
+    border-right: 2px solid #e5e7eb;
+    position: relative;
+    z-index: 1;
+    background: #fff;
+}
+
+.task-pane-scroll {
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.task-pane-header {
+    display: flex;
+    align-items: center;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0;
+    height: 36px;
+    min-width: max-content;
+}
+
+.col {
+    box-sizing: border-box;
+    padding: 0 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-right: 1px solid #e5e7eb;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.col:last-child {
+    border-right: none;
+}
+
+.col-name { flex: none; width: var(--col-name-width, 192px); min-width: 120px; }
+
+.task-pane-header .col-name {
+    position: relative;
+    overflow: visible;
+}
+
+.col-name-resize-handle {
+    position: absolute;
+    right: -3px;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    cursor: col-resize;
+    background: transparent;
+    z-index: 2;
+}
+
+.col-name-resize-handle:hover {
+    background: rgba(59, 130, 246, 0.4);
+}
+
+.col-assignee { width: 72px; flex-shrink: 0; justify-content: center; }
+.col-workdays { width: 44px; flex-shrink: 0; justify-content: center; }
+.col-start { width: 76px; flex-shrink: 0; justify-content: center; }
+.col-end { width: 76px; flex-shrink: 0; justify-content: center; }
+.col-status { width: 80px; flex-shrink: 0; justify-content: center; }
+.col-progress { width: 52px; flex-shrink: 0; justify-content: center; }
+
+.task-pane-rows {
+    flex: 1;
+    overflow-y: auto;
+    min-width: max-content;
+}
+
+/* ===== Project group rows ===== */
+
+.project-group-row {
+    display: flex;
+    align-items: center;
+    height: 32px;
+    padding: 0 12px;
+    background: #f3f4f6;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 13px;
+    font-weight: 600;
+    color: #111827;
+    min-width: max-content;
+}
+
+.chart-group-row {
+    display: flex;
+    height: 32px;
+    background: #f3f4f6;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.chart-col-cell-group {
+    border-right-color: #e5e7eb;
+}
+
+/* ===== Task rows ===== */
+
+.task-row {
+    display: flex;
+    align-items: center;
+    height: 36px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.task-row:hover {
+    background: #eff6ff;
+}
+
+.task-row .col {
+    font-size: 13px;
+    font-weight: 400;
+    color: #111827;
+}
+
+.task-row .col-name {
+    padding: 0;
+}
+
+.empty-task-row {
+    padding: 0 12px;
+}
+
+.empty-tasks-text {
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+.name-indent {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-right: 8px;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+.expand-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 10px;
+    color: #6b7280;
+    padding: 0;
+    width: 16px;
+    flex-shrink: 0;
+    text-align: center;
+}
+
+.expand-btn:hover {
+    color: #111827;
+}
+
+.expand-spacer {
+    width: 16px;
+    flex-shrink: 0;
+}
+
+.task-name-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+/* ===== Splitter ===== */
+
+.pane-splitter {
+    width: 5px;
+    background: #e5e7eb;
+    cursor: col-resize;
+    flex-shrink: 0;
+    transition: background-color 0.15s;
+}
+
+.pane-splitter:hover,
+.pane-splitter:active {
+    background: #3b82f6;
+}
+
+/* ===== Right pane ===== */
+
+.chart-pane {
+    flex: 1;
+    overflow: auto;
+    background: #fafafa;
+}
+
+.chart-inner {
+    display: flex;
+    flex-direction: column;
+    min-width: max-content;
+}
+
+.chart-time-header {
+    display: flex;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0;
+    height: 36px;
+}
+
+.chart-col-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: #6b7280;
+    border-right: 1px solid #e5e7eb;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.chart-col-header:last-child {
+    border-right: none;
+}
+
+.chart-rows-area {
+    flex: 1;
+}
+
+.chart-task-row {
+    display: flex;
+    height: 36px;
+    border-bottom: 1px solid #f3f4f6;
+    position: relative;
+}
+
+.chart-col-cell {
+    border-right: 1px solid #f0f0f0;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+.chart-col-cell:last-child {
+    border-right: none;
+}
+
+/* Today highlight */
+.col-today {
+    background-color: #fef9c3;
+}
+
+/* Weekend / global holiday highlight */
+.col-weekend {
+    background-color: #fef2f2;
+}
+
+/* ===== Task bars ===== */
+
+.task-bar {
+    position: absolute;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.task-bar-leaf {
+    top: 9px;
+    height: 18px;
+    border-radius: 4px;
+    background: #bfdbfe;
+    border: 1px solid #60a5fa;
+    box-sizing: border-box;
+}
+
+.task-bar-progress {
+    height: 100%;
+    background: #3b82f6;
+}
+
+.task-bar-parent {
+    top: 14px;
+    height: 8px;
+    border-radius: 1px;
+    background: #374151;
+}
+
+/* Scale-specific column widths */
+.chart-inner.scale-day .chart-col-header,
+.chart-inner.scale-day .chart-col-cell {
+    width: 32px;
+    min-width: 32px;
+}
+
+.chart-inner.scale-week .chart-col-header,
+.chart-inner.scale-week .chart-col-cell {
+    width: 80px;
+    min-width: 80px;
+}
+
+.chart-inner.scale-month .chart-col-header,
+.chart-inner.scale-month .chart-col-cell {
+    width: 90px;
+    min-width: 90px;
+}

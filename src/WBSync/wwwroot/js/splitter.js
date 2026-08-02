@@ -83,6 +83,12 @@ window.initColNameResize = (handleId, taskPaneId, minWidth) => {
     });
 };
 
+window.centerHorizontalScroll = (elementId, targetPx) => {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.scrollLeft = Math.max(0, targetPx - el.clientWidth / 2);
+};
+
 window.initSplitter = (splitterId, leftPaneId, minWidth, maxWidth) => {
     const splitter = document.getElementById(splitterId);
     const leftPane = document.getElementById(leftPaneId);

@@ -10,6 +10,11 @@ public interface ITaskRepository
     /// <returns>タスクのリスト。</returns>
     Task<List<WbsTask>> GetByProjectAsync(int projectId);
 
+    /// <summary>指定した複数プロジェクトのタスクをプロジェクトID・表示順で取得する。</summary>
+    /// <param name="projectIds">対象プロジェクトIDのコレクション。</param>
+    /// <returns>タスクのリスト。</returns>
+    Task<List<WbsTask>> GetByProjectsAsync(IEnumerable<int> projectIds);
+
     /// <summary>タスクを新規作成する。</summary>
     /// <param name="task">作成するタスク。</param>
     /// <returns>DB に保存されたタスク。</returns>
