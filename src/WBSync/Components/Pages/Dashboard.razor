@@ -23,14 +23,42 @@
 
         @foreach (var summary in _summaries)
         {
-            <div @key="summary.AssigneeName" class="dashboard-row">
-                <div class="col col-assignee">@summary.AssigneeName</div>
+            <div @key="summary.AssigneeId" class="dashboard-row">
+                <div class="col col-assignee">
+                    <button class="row-expand-btn" @onclick="() => ToggleExpand(summary)">
+                        @(_expandedAssigneeIds.Contains(summary.AssigneeId) ? "▽" : "▷")
+                    </button>
+                    @summary.AssigneeName
+                </div>
                 <div class="col col-planned">@FormatWorkDays(summary.PlannedWorkDays)</div>
                 <div class="col col-actual">@FormatWorkDays(summary.ActualPersonDays)</div>
                 <div class="col col-delay @(summary.DelayWorkDays switch { > 0 => "value-positive", < 0 => "value-negative", _ => "" })">
                     @FormatDelay(summary.DelayWorkDays)
                 </div>
             </div>
+
+            @if (_expandedAssigneeIds.Contains(summary.AssigneeId) && _taskRowsByAssigneeId.TryGetValue(summary.AssigneeId, out var taskRows))
+            {
+                <div class="task-tree-panel">
+                    @foreach (var row in taskRows)
+                    {
+                        <div @key="row.TaskId" class="task-tree-row">
+                            <span class="task-tree-name" style="padding-left: @(row.Level * 20)px">
+                                @row.Name
+                                @if (!row.HasChildren && !row.IsOwned)
+                                {
+                                    <span class="not-owned-badge" title="現在の担当ではありません">実績のみ</span>
+                                }
+                            </span>
+                            <span class="task-tree-planned">@FormatWorkDays(row.PlannedWorkDays)</span>
+                            <span class="task-tree-actual">@FormatWorkDays(row.ActualPersonDays)</span>
+                            <span class="task-tree-delay @(row.DelayWorkDays switch { > 0 => "value-positive", < 0 => "value-negative", _ => "" })">
+                                @FormatDelay(row.DelayWorkDays)
+                            </span>
+                        </div>
+                    }
+                </div>
+            }
         }
 
         @if (!_summaries.Any())

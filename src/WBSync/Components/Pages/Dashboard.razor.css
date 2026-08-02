@@ -88,11 +88,25 @@
 .col-assignee {
     flex: 1 1 auto;
     min-width: 120px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .col-planned { width: 100px; text-align: right; }
 .col-actual { width: 100px; text-align: right; }
 .col-delay { width: 160px; text-align: right; }
+
+.row-expand-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 11px;
+    color: #6b7280;
+    width: 16px;
+    flex-shrink: 0;
+    padding: 0;
+}
 
 .value-negative {
     color: #dc2626;
@@ -109,4 +123,53 @@
     font-size: 13px;
     color: #9ca3af;
     text-align: center;
+}
+
+/* ===== タスクツリー展開パネル ===== */
+
+.task-tree-panel {
+    padding: 4px 16px 8px 40px;
+    background: #f9fafb;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.task-tree-row {
+    display: flex;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 13px;
+    color: #374151;
+}
+
+.task-tree-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.not-owned-badge {
+    flex-shrink: 0;
+    font-size: 11px;
+    color: #6b7280;
+    background: #e5e7eb;
+    border-radius: 3px;
+    padding: 1px 5px;
+}
+
+.task-tree-planned,
+.task-tree-actual {
+    width: 100px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.task-tree-delay {
+    width: 160px;
+    text-align: right;
+    flex-shrink: 0;
 }
