@@ -115,11 +115,11 @@
                         <DatePicker Value="ParseDate(node.Task.EndDate)" ValueChanged="d => HandleDateChanged(node.Task, false, d)" />
                     }
                 </div>
-                <div class="col col-estimate">@FormatWorkDays(agg?.EstimateWorkDays ?? 0)</div>
-                <div class="col col-planned">@FormatWorkDays(agg?.PlannedWorkDays ?? 0)</div>
-                <div class="col col-actual">@FormatWorkDays(agg?.ActualPersonDays ?? 0)</div>
+                <div class="col col-estimate">@PersonDayHelper.FormatWorkDays(agg?.EstimateWorkDays ?? 0)</div>
+                <div class="col col-planned">@PersonDayHelper.FormatWorkDays(agg?.PlannedWorkDays ?? 0)</div>
+                <div class="col col-actual">@PersonDayHelper.FormatWorkDays(agg?.ActualPersonDays ?? 0)</div>
                 <div class="col col-remaining @(agg?.RemainingWorkDays is < 0 ? "value-negative" : "")">
-                    @(agg?.RemainingWorkDays.HasValue == true ? FormatWorkDays(agg.RemainingWorkDays.Value) : "-")
+                    @(agg?.RemainingWorkDays.HasValue == true ? PersonDayHelper.FormatWorkDays(agg.RemainingWorkDays.Value) : "-")
                 </div>
                 <div class="col col-delay @(agg?.DelayDays is > 0 ? "value-negative" : "")">
                     @FormatDelayDays(agg?.DelayDays)

@@ -21,7 +21,7 @@ internal static class AssigneeSummaryHelper
         var leafTasks = TaskTreeHelper.GetAllLeafNodes(TaskTreeHelper.BuildTree(allTasks)).Select(n => n.Task);
         var actualByTaskId = allWorkLogs
             .GroupBy(w => w.TaskId)
-            .ToDictionary(g => g.Key, g => g.Sum(w => w.Minutes) / 480.0);
+            .ToDictionary(g => g.Key, g => PersonDayHelper.ToPersonDays(g.Sum(w => w.Minutes)));
         var assigneeNames = allAssignees.ToDictionary(a => a.Id, a => a.Name);
 
         var targetTasks = leafTasks.Where(t =>
@@ -60,11 +60,11 @@ internal static class AssigneeSummaryHelper
 
         var actualTotalByTaskId = allWorkLogs
             .GroupBy(w => w.TaskId)
-            .ToDictionary(g => g.Key, g => g.Sum(w => w.Minutes) / 480.0);
+            .ToDictionary(g => g.Key, g => PersonDayHelper.ToPersonDays(g.Sum(w => w.Minutes)));
         var actualByAssigneeByTaskId = allWorkLogs
             .Where(w => w.AssigneeId == assigneeId)
             .GroupBy(w => w.TaskId)
-            .ToDictionary(g => g.Key, g => g.Sum(w => w.Minutes) / 480.0);
+            .ToDictionary(g => g.Key, g => PersonDayHelper.ToPersonDays(g.Sum(w => w.Minutes)));
 
         var ownedLeafIds = leafTasks
             .Where(t => t.AssigneeId == assigneeId && actualTotalByTaskId.ContainsKey(t.Id))
