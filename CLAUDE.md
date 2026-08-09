@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## プロジェクト概要
 
-WBSync は工数（人日）ベースでスケジュールを自動生成するWBSデスクトップアプリ。  
+WBSync は、工数（人日）ベースでスケジュールを自動生成するWBS作成機能と、日々の実績（work_logs）を記録して予定との差分・遅延を可視化する工数管理機能を併せ持つデスクトップアプリ。  
 **単一ユーザー、Windows専用、〜100タスク規模**を前提とした軽量ツール。
 
 ## ビルド・実行
