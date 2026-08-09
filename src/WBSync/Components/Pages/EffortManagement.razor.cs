@@ -162,8 +162,8 @@ public partial class EffortManagement
 
     /// <summary>工数（人日）を表示用にフォーマットする。</summary>
     /// <param name="value">工数（人日）。</param>
-    /// <returns>小数第2位までの文字列。</returns>
-    private static string FormatWorkDays(double value) => value.ToString("0.##");
+    /// <returns>小数第4位までの文字列。</returns>
+    private static string FormatWorkDays(double value) => value.ToString("0.####");
 
     /// <summary>遅れ日数を表示用にフォーマットする。</summary>
     /// <param name="delayDays">遅れ日数。算出不可の場合は <see langword="null"/>。</param>

@@ -48,8 +48,8 @@ public partial class Dashboard
 
     /// <summary>工数（人日）を表示用にフォーマットする。</summary>
     /// <param name="value">工数（人日）。<see langword="null"/> の場合は "-"。</param>
-    /// <returns>小数第2位までの文字列。</returns>
-    private static string FormatWorkDays(double? value) => value.HasValue ? value.Value.ToString("0.##") : "-";
+    /// <returns>小数第4位までの文字列。</returns>
+    private static string FormatWorkDays(double? value) => value.HasValue ? value.Value.ToString("0.####") : "-";
 
     /// <summary>遅れ（人日）を表示用にフォーマットする。</summary>
     /// <param name="delayWorkDays">遅れ（予定工数合計 − 実績合計）。<see langword="null"/> の場合は "-"。</param>
