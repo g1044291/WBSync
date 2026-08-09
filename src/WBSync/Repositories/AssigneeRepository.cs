@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using WBSync.Data;
+using WBSync.Helpers;
 using WBSync.Models;
 using WBSync.Repositories.Interfaces;
 
@@ -30,7 +31,7 @@ public class AssigneeRepository(AppDbContext db) : IAssigneeRepository
     /// <returns>DB に保存された担当者。</returns>
     public async Task<Assignee> CreateAsync(Assignee assignee)
     {
-        var now = Now();
+        var now = DateTimeHelper.Now();
         assignee.CreatedAt = now;
         assignee.UpdatedAt = now;
         db.Assignees.Add(assignee);
@@ -51,7 +52,7 @@ public class AssigneeRepository(AppDbContext db) : IAssigneeRepository
     /// <returns>更新後の担当者。</returns>
     public async Task<Assignee> UpdateAsync(Assignee assignee)
     {
-        assignee.UpdatedAt = Now();
+        assignee.UpdatedAt = DateTimeHelper.Now();
         var tracked = db.ChangeTracker.Entries<Assignee>()
             .FirstOrDefault(e => e.Entity.Id == assignee.Id);
         if (tracked != null)
@@ -77,9 +78,6 @@ public class AssigneeRepository(AppDbContext db) : IAssigneeRepository
             .Where(a => a.Id == id)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(a => a.SortOrder, sortOrder)
-                .SetProperty(a => a.UpdatedAt, Now()));
+                .SetProperty(a => a.UpdatedAt, DateTimeHelper.Now()));
     }
-
-    /// <summary>現在時刻を yyyy-MM-dd HH:mm:ss 形式の文字列で返す。</summary>
-    private static string Now() => DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 }

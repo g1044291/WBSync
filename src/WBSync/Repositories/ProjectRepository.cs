@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using WBSync.Data;
+using WBSync.Helpers;
 using WBSync.Models;
 using WBSync.Repositories.Interfaces;
 
@@ -18,7 +19,7 @@ public class ProjectRepository(AppDbContext db) : IProjectRepository
     /// <returns>DB に保存されたプロジェクト。</returns>
     public async Task<Project> CreateAsync(Project project)
     {
-        var now = Now();
+        var now = DateTimeHelper.Now();
         project.CreatedAt = now;
         project.UpdatedAt = now;
         db.Projects.Add(project);
@@ -33,7 +34,4 @@ public class ProjectRepository(AppDbContext db) : IProjectRepository
             throw;
         }
     }
-
-    /// <summary>現在時刻を yyyy-MM-dd HH:mm:ss 形式の文字列で返す。</summary>
-    private static string Now() => DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 }

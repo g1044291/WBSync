@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using WBSync.Data;
+using WBSync.Helpers;
 using WBSync.Models;
 using WBSync.Repositories.Interfaces;
 
@@ -34,7 +35,7 @@ public class TaskRepository(AppDbContext db) : ITaskRepository
     /// <returns>DB に保存されたタスク。</returns>
     public async Task<WbsTask> CreateAsync(WbsTask task)
     {
-        var now = Now();
+        var now = DateTimeHelper.Now();
         task.CreatedAt = now;
         task.UpdatedAt = now;
         db.Tasks.Add(task);
@@ -55,7 +56,7 @@ public class TaskRepository(AppDbContext db) : ITaskRepository
     /// <returns>更新後のタスク。</returns>
     public async Task<WbsTask> UpdateAsync(WbsTask task)
     {
-        task.UpdatedAt = Now();
+        task.UpdatedAt = DateTimeHelper.Now();
         var tracked = db.ChangeTracker.Entries<WbsTask>()
             .FirstOrDefault(e => e.Entity.Id == task.Id);
         if (tracked != null)
@@ -81,9 +82,6 @@ public class TaskRepository(AppDbContext db) : ITaskRepository
             .Where(t => t.Id == id)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(t => t.SortOrder, sortOrder)
-                .SetProperty(t => t.UpdatedAt, Now()));
+                .SetProperty(t => t.UpdatedAt, DateTimeHelper.Now()));
     }
-
-    /// <summary>現在時刻を yyyy-MM-dd HH:mm:ss 形式の文字列で返す。</summary>
-    private static string Now() => DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 }
