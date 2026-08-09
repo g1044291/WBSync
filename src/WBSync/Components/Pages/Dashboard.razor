@@ -30,8 +30,8 @@
                     </button>
                     @summary.AssigneeName
                 </div>
-                <div class="col col-planned">@FormatWorkDays(summary.PlannedWorkDays)</div>
-                <div class="col col-actual">@FormatWorkDays(summary.ActualPersonDays)</div>
+                <div class="col col-planned">@PersonDayHelper.FormatWorkDays(summary.PlannedWorkDays)</div>
+                <div class="col col-actual">@PersonDayHelper.FormatWorkDays(summary.ActualPersonDays)</div>
                 <div class="col col-delay @(summary.DelayWorkDays switch { > 0 => "value-positive", < 0 => "value-negative", _ => "" })">
                     @FormatDelay(summary.DelayWorkDays)
                 </div>
@@ -50,8 +50,8 @@
                                     <span class="not-owned-badge" title="現在の担当ではありません">実績のみ</span>
                                 }
                             </span>
-                            <span class="task-tree-planned">@FormatWorkDays(row.PlannedWorkDays)</span>
-                            <span class="task-tree-actual">@FormatWorkDays(row.ActualPersonDays)</span>
+                            <span class="task-tree-planned">@PersonDayHelper.FormatWorkDays(row.PlannedWorkDays)</span>
+                            <span class="task-tree-actual">@PersonDayHelper.FormatWorkDays(row.ActualPersonDays)</span>
                             <span class="task-tree-delay @(row.DelayWorkDays switch { > 0 => "value-positive", < 0 => "value-negative", _ => "" })">
                                 @FormatDelay(row.DelayWorkDays)
                             </span>

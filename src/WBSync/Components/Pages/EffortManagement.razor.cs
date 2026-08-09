@@ -129,7 +129,7 @@ public partial class EffortManagement
         _allWorkLogs = await WorkLogRepo.GetByProjectAsync(ProjectId);
         var actualByTaskId = _allWorkLogs
             .GroupBy(w => w.TaskId)
-            .ToDictionary(g => g.Key, g => g.Sum(w => w.Minutes) / 480.0);
+            .ToDictionary(g => g.Key, g => PersonDayHelper.ToPersonDays(g.Sum(w => w.Minutes)));
 
         var delayByTaskId = await ScheduleService.CalcDelayDaysAsync(ProjectId, _allTasks);
 
@@ -159,11 +159,6 @@ public partial class EffortManagement
     /// <param name="date">日付文字列。</param>
     /// <returns>パース成功時は日付、失敗時は <see langword="null"/>。</returns>
     private static DateOnly? ParseDate(string? date) => DateOnly.TryParse(date, out var d) ? d : null;
-
-    /// <summary>工数（人日）を表示用にフォーマットする。</summary>
-    /// <param name="value">工数（人日）。</param>
-    /// <returns>小数第4位までの文字列。</returns>
-    private static string FormatWorkDays(double value) => value.ToString("0.####");
 
     /// <summary>遅れ日数を表示用にフォーマットする。</summary>
     /// <param name="delayDays">遅れ日数。算出不可の場合は <see langword="null"/>。</param>
