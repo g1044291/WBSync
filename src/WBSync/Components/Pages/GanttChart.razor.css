@@ -217,6 +217,8 @@
     border-bottom: 1px solid #f3f4f6;
     cursor: grab;
     transition: background-color 0.1s;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 /* SortableJS fallback モードでドラッグ中に付くクラス */
