@@ -72,4 +72,11 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.9" />
     </ItemGroup>
 
+    <ItemGroup>
+        <!-- SQLitePCLRaw.lib.e_sqlite3 2.1.11 (Microsoft.EntityFrameworkCore.Sqlite 10.0.9 の推移的依存) の既知の脆弱性。
+             Microsoft.Data.Sqlite が SQLitePCLRaw 3.x 系に追従するまでの暫定抑制。
+             解消時期の目安: dotnet/efcore#38257 (Microsoft.EntityFrameworkCore.Sqlite 10.0.11 で修正予定) -->
+        <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-2m69-gcr7-jv3q" />
+    </ItemGroup>
+
 </Project>
