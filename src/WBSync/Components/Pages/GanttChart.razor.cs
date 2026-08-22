@@ -30,7 +30,7 @@ public partial class GanttChart : IAsyncDisposable
     private DotNetObjectReference<GanttChart>? _dotNetRef;
     private List<(int PredecessorId, int SuccessorId)> _dependencyPairs = [];
     private bool _linesDirty;
-    private bool _showDependencyLines = true;
+    private bool _showDependencyLines;
 
     #region モーダル状態
 
@@ -108,6 +108,12 @@ public partial class GanttChart : IAsyncDisposable
             await JS.InvokeVoidAsync("initSortable", "task-pane-rows", _dotNetRef);
             await JS.InvokeVoidAsync("initLeaderLineSync", "chart-pane", "task-pane-rows");
             await UpdateLeaderLinesAsync();
+
+            if (_chartColumns.Count > 0)
+            {
+                var todayOffset = GanttChartLayoutHelper.GetPixelOffset(_scale, _chartStart, _today) + GetColumnWidth() / 2;
+                await JS.InvokeVoidAsync("centerHorizontalScroll", "chart-pane", todayOffset);
+            }
         }
         else if (_linesDirty)
         {
@@ -216,6 +222,15 @@ public partial class GanttChart : IAsyncDisposable
         ChartScale.Week => col.Date <= _today && _today < col.Date.AddDays(7),
         ChartScale.Month => col.Date.Year == _today.Year && col.Date.Month == _today.Month,
         _ => false
+    };
+
+    /// <summary>現在のスケールにおける1列分のピクセル幅を返す（CSS の列幅と一致させる）。</summary>
+    private double GetColumnWidth() => _scale switch
+    {
+        ChartScale.Day => 32.0,
+        ChartScale.Week => 80.0,
+        ChartScale.Month => 90.0,
+        _ => 32.0
     };
 
     /// <summary>担当者IDから担当者名を取得する。</summary>
