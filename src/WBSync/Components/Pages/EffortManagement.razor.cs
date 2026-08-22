@@ -146,6 +146,12 @@ public partial class EffortManagement
     private string GetAssigneeName(int? assigneeId)
         => assigneeId.HasValue && _assigneeNames.TryGetValue(assigneeId.Value, out var name) ? name : "-";
 
+    /// <summary>工数（人日）を表示用にフォーマットする。単位「人日」を付与する。</summary>
+    /// <param name="value">工数（人日）。<see langword="null"/> の場合は "-"。</param>
+    /// <returns>「n人日」形式の文字列。算出不可の場合は "-"。</returns>
+    private static string FormatWorkDays(double? value)
+        => value.HasValue ? $"{PersonDayHelper.FormatWorkDays(value)}人日" : "-";
+
     /// <summary>日付文字列を表示用にフォーマットする。</summary>
     /// <param name="date">yyyy-MM-dd 形式の日付文字列。</param>
     /// <returns>M/d 形式の文字列。空の場合は "-"。</returns>
@@ -160,14 +166,14 @@ public partial class EffortManagement
     /// <returns>パース成功時は日付、失敗時は <see langword="null"/>。</returns>
     private static DateOnly? ParseDate(string? date) => DateOnly.TryParse(date, out var d) ? d : null;
 
-    /// <summary>遅れ日数を表示用にフォーマットする。</summary>
+    /// <summary>遅れ日数を表示用にフォーマットする。単位「日」を付与する。</summary>
     /// <param name="delayDays">遅れ日数。算出不可の場合は <see langword="null"/>。</param>
-    /// <returns>プラスは "+n"、マイナスはそのまま、算出不可は "-"。</returns>
+    /// <returns>プラスは "+n日"、マイナスは "n日"、算出不可は "-"。</returns>
     private static string FormatDelayDays(int? delayDays) => delayDays switch
     {
         null => "-",
-        > 0 => $"+{delayDays}",
-        _ => delayDays.Value.ToString()
+        > 0 => $"+{delayDays}日",
+        _ => $"{delayDays}日"
     };
 
     /// <summary>遅れフィルターの表示名を返す。</summary>

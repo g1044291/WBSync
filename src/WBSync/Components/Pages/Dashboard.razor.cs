@@ -46,15 +46,21 @@ public partial class Dashboard
             _taskRowsByAssigneeId[summary.AssigneeId] = AssigneeSummaryHelper.BuildAssigneeTaskRows(_allTasks, _allWorkLogs, summary.AssigneeId);
     }
 
+    /// <summary>工数（人日）を表示用にフォーマットする。単位「人日」を付与する。</summary>
+    /// <param name="value">工数（人日）。<see langword="null"/> の場合は "-"。</param>
+    /// <returns>「n人日」形式の文字列。算出不可の場合は "-"。</returns>
+    private static string FormatWorkDays(double? value)
+        => value.HasValue ? $"{PersonDayHelper.FormatWorkDays(value)}人日" : "-";
+
     /// <summary>遅れ（人日）を表示用にフォーマットする。</summary>
     /// <param name="delayWorkDays">遅れ（予定工数合計 − 実績合計）。<see langword="null"/> の場合は "-"。</param>
-    /// <returns>プラスは「+n（前倒し）」、マイナスは「n（遅れ）」、0は「0」、算出不可は「-」。</returns>
+    /// <returns>プラスは「+n人日（前倒し）」、マイナスは「n人日（遅れ）」、0は「0人日」、算出不可は「-」。</returns>
     private static string FormatDelay(double? delayWorkDays) => delayWorkDays switch
     {
         null => "-",
-        > 0 => $"+{PersonDayHelper.FormatWorkDays(delayWorkDays)}（前倒し）",
-        < 0 => $"{PersonDayHelper.FormatWorkDays(delayWorkDays)}（遅れ）",
-        _ => "0"
+        > 0 => $"+{PersonDayHelper.FormatWorkDays(delayWorkDays)}人日（前倒し）",
+        < 0 => $"{PersonDayHelper.FormatWorkDays(delayWorkDays)}人日（遅れ）",
+        _ => "0人日"
     };
 
     /// <summary>ガントチャート画面に戻る。</summary>
