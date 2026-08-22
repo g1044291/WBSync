@@ -95,26 +95,8 @@
                     </div>
                 </div>
                 <div class="col col-assignee">@(node.HasChildren ? "-" : GetAssigneeName(node.Task.AssigneeId))</div>
-                <div class="col col-start">
-                    @if (node.HasChildren)
-                    {
-                        @FormatDate(node.DisplayStartDate)
-                    }
-                    else
-                    {
-                        <DatePicker Value="ParseDate(node.Task.StartDate)" ValueChanged="d => HandleDateChanged(node.Task, true, d)" />
-                    }
-                </div>
-                <div class="col col-end">
-                    @if (node.HasChildren)
-                    {
-                        @FormatDate(node.DisplayEndDate)
-                    }
-                    else
-                    {
-                        <DatePicker Value="ParseDate(node.Task.EndDate)" ValueChanged="d => HandleDateChanged(node.Task, false, d)" />
-                    }
-                </div>
+                <div class="col col-start">@FormatDate(node.DisplayStartDate)</div>
+                <div class="col col-end">@FormatDate(node.DisplayEndDate)</div>
                 <div class="col col-estimate">@FormatWorkDays(agg?.EstimateWorkDays ?? 0)</div>
                 <div class="col col-planned">@FormatWorkDays(agg?.PlannedWorkDays ?? 0)</div>
                 <div class="col col-actual">@FormatWorkDays(agg?.ActualPersonDays ?? 0)</div>

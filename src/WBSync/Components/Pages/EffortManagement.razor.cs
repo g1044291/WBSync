@@ -215,36 +215,6 @@ public partial class EffortManagement
 
     #endregion
 
-    #region 日付インライン編集
-
-    /// <summary>
-    /// リーフタスクの開始日・終了日をインライン編集で保存し、後続タスクへの再計算伝播を行う。
-    /// </summary>
-    /// <param name="task">編集対象タスク。</param>
-    /// <param name="isStart">開始日の変更なら <see langword="true"/>、終了日の変更なら <see langword="false"/>。</param>
-    /// <param name="newDate">新しい日付。</param>
-    private async Task HandleDateChanged(WbsTask task, bool isStart, DateOnly? newDate)
-    {
-        var oldEndDate = task.EndDate;
-        if (isStart)
-            task.StartDate = newDate?.ToString("yyyy-MM-dd");
-        else
-            task.EndDate = newDate?.ToString("yyyy-MM-dd");
-
-        try
-        {
-            var saved = await TaskRepo.UpdateAsync(task);
-            await ScheduleService.PropagateSuccessorsAsync(ProjectId, saved, oldEndDate);
-            await ReloadAllAsync();
-        }
-        catch (Exception ex)
-        {
-            _pageStatus = StatusMessage.Error($"更新に失敗しました: {ex.InnerException?.Message ?? ex.Message}");
-        }
-    }
-
-    #endregion
-
     #region タスク編集モーダル
 
     /// <summary>タスク編集モーダルを開く。</summary>
