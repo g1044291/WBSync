@@ -28,6 +28,10 @@ public class WorkLog
     [Column("minutes")]
     public int Minutes { get; set; }
 
+    /// <summary>備忘用の任意コメント。</summary>
+    [Column("comment")]
+    public string? Comment { get; set; }
+
     /// <summary>対象タスク。</summary>
     public WbsTask Task { get; set; } = null!;
 

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using WBSync.Helpers;
 using WBSync.Models;
 
@@ -53,6 +54,7 @@ public partial class EffortManagement
     private DateOnly? _editLogDate;
     private Assignee? _editLogAssignee;
     private string _editLogMinutesStr = string.Empty;
+    private string _editLogComment = string.Empty;
     private bool _disableEditLog;
     private StatusMessage? _editLogStatus;
 
@@ -64,6 +66,7 @@ public partial class EffortManagement
         public DateOnly? Date;
         public Assignee? Assignee;
         public string MinutesStr = string.Empty;
+        public string Comment = string.Empty;
         public bool DisableAdd;
         public StatusMessage? Status;
     }
@@ -152,6 +155,12 @@ public partial class EffortManagement
     private static string FormatWorkDays(double? value)
         => value.HasValue ? $"{PersonDayHelper.FormatWorkDays(value)}人日" : "-";
 
+    /// <summary>実績ログの作業時間を分表示に時間換算の参考値を併記してフォーマットする。</summary>
+    /// <param name="minutes">作業時間（分）。</param>
+    /// <returns>「n分（h.hh）」形式の文字列（例: "480分（8.0h）"）。</returns>
+    private static string FormatMinutesWithHours(int minutes)
+        => $"{minutes}分（{(minutes / 60.0).ToString("0.0")}h）";
+
     /// <summary>日付文字列を表示用にフォーマットする。</summary>
     /// <param name="date">yyyy-MM-dd 形式の日付文字列。</param>
     /// <returns>M/d 形式の文字列。空の場合は "-"。</returns>
@@ -204,36 +213,6 @@ public partial class EffortManagement
     {
         if (!_collapsedTaskIds.Add(node.Task.Id))
             _collapsedTaskIds.Remove(node.Task.Id);
-    }
-
-    #endregion
-
-    #region 日付インライン編集
-
-    /// <summary>
-    /// リーフタスクの開始日・終了日をインライン編集で保存し、後続タスクへの再計算伝播を行う。
-    /// </summary>
-    /// <param name="task">編集対象タスク。</param>
-    /// <param name="isStart">開始日の変更なら <see langword="true"/>、終了日の変更なら <see langword="false"/>。</param>
-    /// <param name="newDate">新しい日付。</param>
-    private async Task HandleDateChanged(WbsTask task, bool isStart, DateOnly? newDate)
-    {
-        var oldEndDate = task.EndDate;
-        if (isStart)
-            task.StartDate = newDate?.ToString("yyyy-MM-dd");
-        else
-            task.EndDate = newDate?.ToString("yyyy-MM-dd");
-
-        try
-        {
-            var saved = await TaskRepo.UpdateAsync(task);
-            await ScheduleService.PropagateSuccessorsAsync(ProjectId, saved, oldEndDate);
-            await ReloadAllAsync();
-        }
-        catch (Exception ex)
-        {
-            _pageStatus = StatusMessage.Error($"更新に失敗しました: {ex.InnerException?.Message ?? ex.Message}");
-        }
     }
 
     #endregion
@@ -313,6 +292,15 @@ public partial class EffortManagement
         return ParseDate(task.StartDate);
     }
 
+    /// <summary>実績ログ追加フォームの分入力欄でEnterキーが押されたとき、「追加」ボタンと同じ処理を実行する。</summary>
+    /// <param name="e">キーボードイベント引数。</param>
+    /// <param name="task">対象タスク。</param>
+    private async Task HandleMinutesKeyDown(KeyboardEventArgs e, WbsTask task)
+    {
+        if (e.Key == "Enter")
+            await AddLog(task);
+    }
+
     /// <summary>実績ログを追加する。</summary>
     /// <param name="task">対象タスク。</param>
     private async Task AddLog(WbsTask task)
@@ -321,6 +309,7 @@ public partial class EffortManagement
         form.Status = null;
 
         if (form.Date is null) { form.Status = StatusMessage.Error("日付を入力してください"); return; }
+        if (form.Assignee is null) { form.Status = StatusMessage.Error("担当者を選択してください"); return; }
         if (!int.TryParse(form.MinutesStr, out var minutes) || minutes <= 0)
         {
             form.Status = StatusMessage.Error("作業時間は1以上の整数（分）で入力してください");
@@ -335,9 +324,11 @@ public partial class EffortManagement
                 TaskId = task.Id,
                 AssigneeId = form.Assignee?.Id,
                 Date = form.Date.Value.ToString("yyyy-MM-dd"),
-                Minutes = minutes
+                Minutes = minutes,
+                Comment = string.IsNullOrWhiteSpace(form.Comment) ? null : form.Comment
             });
             form.MinutesStr = string.Empty;
+            form.Comment = string.Empty;
             await ReloadWorkLogsAndAggregatesAsync();
             form.Date = ComputeDefaultLogDate(task);
         }
@@ -359,6 +350,7 @@ public partial class EffortManagement
         _editLogDate = ParseDate(log.Date);
         _editLogAssignee = _allAssignees.FirstOrDefault(a => a.Id == log.AssigneeId);
         _editLogMinutesStr = log.Minutes.ToString();
+        _editLogComment = log.Comment ?? string.Empty;
         _editLogStatus = null;
     }
 
@@ -375,6 +367,7 @@ public partial class EffortManagement
     {
         _editLogStatus = null;
         if (_editLogDate is null) { _editLogStatus = StatusMessage.Error("日付を入力してください"); return; }
+        if (_editLogAssignee is null) { _editLogStatus = StatusMessage.Error("担当者を選択してください"); return; }
         if (!int.TryParse(_editLogMinutesStr, out var minutes) || minutes <= 0)
         {
             _editLogStatus = StatusMessage.Error("作業時間は1以上の整数（分）で入力してください");
@@ -387,6 +380,7 @@ public partial class EffortManagement
             log.Date = _editLogDate.Value.ToString("yyyy-MM-dd");
             log.AssigneeId = _editLogAssignee?.Id;
             log.Minutes = minutes;
+            log.Comment = string.IsNullOrWhiteSpace(_editLogComment) ? null : _editLogComment;
             await WorkLogRepo.UpdateAsync(log);
             _editingLogId = null;
             await ReloadWorkLogsAndAggregatesAsync();
