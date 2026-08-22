@@ -118,6 +118,14 @@
     font-weight: 600;
 }
 
+.dashboard-total-row {
+    position: sticky;
+    bottom: 0;
+    background: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+    font-weight: 600;
+}
+
 .empty-summaries {
     padding: 16px;
     font-size: 13px;

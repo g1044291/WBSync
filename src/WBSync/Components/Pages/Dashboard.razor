@@ -61,9 +61,20 @@
             }
         }
 
-        @if (!_summaries.Any())
+        @if (_summaries.Any())
         {
-            <p class="empty-summaries">集計対象のタスクがありません</p>
+            <div class="dashboard-row dashboard-total-row">
+                <div class="col col-assignee">合計</div>
+                <div class="col col-planned">@FormatWorkDays(_total.PlannedWorkDays)</div>
+                <div class="col col-actual">@FormatWorkDays(_total.ActualPersonDays)</div>
+                <div class="col col-delay @(_total.DelayWorkDays switch { > 0 => "value-positive", < 0 => "value-negative", _ => "" })">
+                    @FormatDelay(_total.DelayWorkDays)
+                </div>
+            </div>
+        }
+        else
+        {
+            <p class="empty-summaries">担当者が登録されていません</p>
         }
     </div>
 </div>

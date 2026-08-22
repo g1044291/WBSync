@@ -6,8 +6,14 @@ namespace WBSync.Helpers;
 internal static class AssigneeSummaryHelper
 {
     /// <summary>
-    /// 担当者が設定されたリーフタスクのうち、実績が1件以上記録されているタスクを対象に、
-    /// 担当者別の工数集計を行う（ステータスは問わない）。
+    /// プロジェクトの全担当者を対象に、担当者別の工数集計を行う（ステータスは問わない）。
+    /// 予定工数は現在の担当者（<see cref="WbsTask.AssigneeId"/>）基準で、担当者が設定されたリーフタスクすべて
+    /// （実績の有無は問わない）を対象に集計する。
+    /// 実績は実績記録時点の担当者（<see cref="WorkLog.AssigneeId"/>）基準で集計する（タスクの担当が変わっても、
+    /// 実績はそれを記録した本人の実績として扱うため。担当者削除により <see langword="null"/> になった実績は集計対象外）。
+    /// この結果、あるタスクの現在の担当者と実績記録者が異なる場合、両者がそれぞれ一覧に表示されうる
+    /// （記録者側は予定工数0・実績のみの合計になる）。
+    /// 実績・担当タスクがない担当者も、予定工数0・実績0・遅れ0として一覧に含める。
     /// </summary>
     /// <param name="allTasks">プロジェクト内の全タスク。</param>
     /// <param name="allWorkLogs">プロジェクト内の全実績ログ。</param>
@@ -19,30 +25,41 @@ internal static class AssigneeSummaryHelper
         List<Assignee> allAssignees)
     {
         var leafTasks = TaskTreeHelper.GetAllLeafNodes(TaskTreeHelper.BuildTree(allTasks)).Select(n => n.Task);
-        var actualByTaskId = allWorkLogs
-            .GroupBy(w => w.TaskId)
-            .ToDictionary(g => g.Key, g => PersonDayHelper.ToPersonDays(g.Sum(w => w.Minutes)));
-        var assigneeNames = allAssignees.ToDictionary(a => a.Id, a => a.Name);
 
-        var targetTasks = leafTasks.Where(t =>
-            t.AssigneeId.HasValue
-            && actualByTaskId.ContainsKey(t.Id));
-
-        return targetTasks
+        var plannedByAssigneeId = leafTasks
+            .Where(t => t.AssigneeId.HasValue)
             .GroupBy(t => t.AssigneeId!.Value)
-            .Select(g =>
+            .ToDictionary(g => g.Key, g => g.Sum(t => t.PlannedWorkDays ?? 0));
+
+        var actualByAssigneeId = allWorkLogs
+            .Where(w => w.AssigneeId.HasValue)
+            .GroupBy(w => w.AssigneeId!.Value)
+            .ToDictionary(g => g.Key, g => PersonDayHelper.ToPersonDays(g.Sum(w => w.Minutes)));
+
+        return allAssignees
+            .Select(a =>
             {
-                var planned = g.Sum(t => t.PlannedWorkDays ?? 0);
-                var actual = g.Sum(t => actualByTaskId.GetValueOrDefault(t.Id));
-                return new AssigneeSummary(g.Key, assigneeNames.GetValueOrDefault(g.Key, "-"), planned, actual, planned - actual);
+                var planned = plannedByAssigneeId.GetValueOrDefault(a.Id);
+                var actual = actualByAssigneeId.GetValueOrDefault(a.Id);
+                return new AssigneeSummary(a.Id, a.Name, planned, actual, planned - actual);
             })
             .OrderBy(s => s.AssigneeName, StringComparer.Ordinal)
             .ToList();
     }
 
+    /// <summary>担当者別集計一覧の合計行を算出する。</summary>
+    /// <param name="summaries">担当者別集計結果の一覧。</param>
+    /// <returns>全担当者の予定工数・実績・遅れの合計。</returns>
+    internal static AssigneeSummaryTotal BuildTotal(List<AssigneeSummary> summaries)
+    {
+        var planned = summaries.Sum(s => s.PlannedWorkDays);
+        var actual = summaries.Sum(s => s.ActualPersonDays);
+        return new AssigneeSummaryTotal(planned, actual, planned - actual);
+    }
+
     /// <summary>
     /// 指定担当者が関わったタスクのツリーを構築する。「関わった」は次のいずれかを満たすリーフタスクを指す。
-    /// (1) 現在この担当者が割り当てられ、実績が記録されている（<see cref="BuildSummaries"/> の集計対象と同じ）、
+    /// (1) 現在この担当者が割り当てられている（<see cref="BuildSummaries"/> の予定工数集計対象と同じ）、
     /// (2) 現在の担当者に関わらず、この担当者自身の実績ログ（<see cref="WorkLog.AssigneeId"/>）が記録されている。
     /// 対象リーフタスクの祖先タスクも、ツリー構造を保つために含める。
     /// </summary>
@@ -67,7 +84,7 @@ internal static class AssigneeSummaryHelper
             .ToDictionary(g => g.Key, g => PersonDayHelper.ToPersonDays(g.Sum(w => w.Minutes)));
 
         var ownedLeafIds = leafTasks
-            .Where(t => t.AssigneeId == assigneeId && actualTotalByTaskId.ContainsKey(t.Id))
+            .Where(t => t.AssigneeId == assigneeId)
             .Select(t => t.Id)
             .ToHashSet();
         var loggedLeafIds = actualByAssigneeByTaskId.Keys.ToHashSet();
