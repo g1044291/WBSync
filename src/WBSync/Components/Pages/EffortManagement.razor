@@ -122,6 +122,8 @@
                                 <input class="minutes-input" type="number" min="1" step="1" placeholder="分"
                                        value="@_editLogMinutesStr" @onchange="e => _editLogMinutesStr = e.Value?.ToString() ?? string.Empty" />
                                 <span class="minutes-unit">分</span>
+                                <input class="comment-input" type="text" placeholder="コメント（任意）"
+                                       value="@_editLogComment" @onchange="e => _editLogComment = e.Value?.ToString() ?? string.Empty" />
                                 <Button Variant="secondary" OnClick="CancelEditingLog">キャンセル</Button>
                                 <Button Variant="primary" OnClick="() => SaveLog(log)" Disabled="_disableEditLog">保存</Button>
                             </div>
@@ -136,6 +138,7 @@
                                 <span class="log-date">@FormatDate(log.Date)</span>
                                 <span class="log-assignee">@GetAssigneeName(log.AssigneeId)</span>
                                 <span class="log-minutes">@FormatMinutesWithHours(log.Minutes)</span>
+                                <span class="log-comment">@log.Comment</span>
                                 <Button Variant="secondary" OnClick="() => StartEditingLog(log)">編集</Button>
                                 <Button Variant="danger" OnClick="() => DeleteLog(log)">削除</Button>
                             </div>
@@ -156,6 +159,8 @@
                                    value="@form.MinutesStr" @oninput="e => form.MinutesStr = e.Value?.ToString() ?? string.Empty"
                                    @onkeydown="e => HandleMinutesKeyDown(e, node.Task)" />
                             <span class="minutes-unit">分</span>
+                            <input class="comment-input" type="text" placeholder="コメント（任意）"
+                                   value="@form.Comment" @onchange="e => form.Comment = e.Value?.ToString() ?? string.Empty" />
                             <Button Variant="primary" OnClick="() => AddLog(node.Task)" Disabled="form.DisableAdd">＋ 追加</Button>
                         </div>
                         @if (form.Status is { } formStatus)

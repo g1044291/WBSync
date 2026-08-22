@@ -15,6 +15,7 @@ resource: ../../src/WBSync/Models/WorkLog.cs
 | assignee_id | INTEGER | NULL | - | FK → [assignees](assignees.md).id。作業時点の担当者が変わる場合を考慮 |
 | date | TEXT | NOT NULL | - | 作業日（YYYY-MM-DD） |
 | minutes | INTEGER | NOT NULL | - | 作業時間（分単位） |
+| comment | TEXT | NULL | - | 備忘用の任意コメント |
 
 ## 制約
 
@@ -29,7 +30,8 @@ CREATE TABLE IF NOT EXISTS work_logs (
     task_id     INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
     assignee_id INTEGER REFERENCES assignees(id) ON DELETE SET NULL,
     date        TEXT    NOT NULL,
-    minutes     INTEGER NOT NULL
+    minutes     INTEGER NOT NULL,
+    comment     TEXT
 );
 ```
 

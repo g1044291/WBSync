@@ -54,6 +54,7 @@ public partial class EffortManagement
     private DateOnly? _editLogDate;
     private Assignee? _editLogAssignee;
     private string _editLogMinutesStr = string.Empty;
+    private string _editLogComment = string.Empty;
     private bool _disableEditLog;
     private StatusMessage? _editLogStatus;
 
@@ -65,6 +66,7 @@ public partial class EffortManagement
         public DateOnly? Date;
         public Assignee? Assignee;
         public string MinutesStr = string.Empty;
+        public string Comment = string.Empty;
         public bool DisableAdd;
         public StatusMessage? Status;
     }
@@ -322,9 +324,11 @@ public partial class EffortManagement
                 TaskId = task.Id,
                 AssigneeId = form.Assignee?.Id,
                 Date = form.Date.Value.ToString("yyyy-MM-dd"),
-                Minutes = minutes
+                Minutes = minutes,
+                Comment = string.IsNullOrWhiteSpace(form.Comment) ? null : form.Comment
             });
             form.MinutesStr = string.Empty;
+            form.Comment = string.Empty;
             await ReloadWorkLogsAndAggregatesAsync();
             form.Date = ComputeDefaultLogDate(task);
         }
@@ -346,6 +350,7 @@ public partial class EffortManagement
         _editLogDate = ParseDate(log.Date);
         _editLogAssignee = _allAssignees.FirstOrDefault(a => a.Id == log.AssigneeId);
         _editLogMinutesStr = log.Minutes.ToString();
+        _editLogComment = log.Comment ?? string.Empty;
         _editLogStatus = null;
     }
 
@@ -375,6 +380,7 @@ public partial class EffortManagement
             log.Date = _editLogDate.Value.ToString("yyyy-MM-dd");
             log.AssigneeId = _editLogAssignee?.Id;
             log.Minutes = minutes;
+            log.Comment = string.IsNullOrWhiteSpace(_editLogComment) ? null : _editLogComment;
             await WorkLogRepo.UpdateAsync(log);
             _editingLogId = null;
             await ReloadWorkLogsAndAggregatesAsync();
