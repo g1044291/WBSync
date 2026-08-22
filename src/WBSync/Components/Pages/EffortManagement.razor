@@ -136,8 +136,7 @@
                             <div class="log-row log-row-editing">
                                 <DatePicker Value="_editLogDate" ValueChanged="d => _editLogDate = d" />
                                 <Dropdown TValue="Assignee" Items="_allAssignees" DisplayText="a => a.Name"
-                                          Value="_editLogAssignee" ValueChanged="a => _editLogAssignee = a"
-                                          AllowEmpty="true" EmptyLabel="（なし）" />
+                                          Value="_editLogAssignee" ValueChanged="a => _editLogAssignee = a" />
                                 <input class="minutes-input" type="number" min="1" step="1" placeholder="分"
                                        value="@_editLogMinutesStr" @onchange="e => _editLogMinutesStr = e.Value?.ToString() ?? string.Empty" />
                                 <span class="minutes-unit">分</span>
@@ -154,7 +153,7 @@
                             <div class="log-row">
                                 <span class="log-date">@FormatDate(log.Date)</span>
                                 <span class="log-assignee">@GetAssigneeName(log.AssigneeId)</span>
-                                <span class="log-minutes">@(log.Minutes)分</span>
+                                <span class="log-minutes">@FormatMinutesWithHours(log.Minutes)</span>
                                 <Button Variant="secondary" OnClick="() => StartEditingLog(log)">編集</Button>
                                 <Button Variant="danger" OnClick="() => DeleteLog(log)">削除</Button>
                             </div>
@@ -170,10 +169,10 @@
                         <div class="log-row log-row-new">
                             <DatePicker Value="form.Date" ValueChanged="d => form.Date = d" />
                             <Dropdown TValue="Assignee" Items="_allAssignees" DisplayText="a => a.Name"
-                                      Value="form.Assignee" ValueChanged="a => form.Assignee = a"
-                                      AllowEmpty="true" EmptyLabel="（なし）" />
+                                      Value="form.Assignee" ValueChanged="a => form.Assignee = a" />
                             <input class="minutes-input" type="number" min="1" step="1" placeholder="分"
-                                   value="@form.MinutesStr" @onchange="e => form.MinutesStr = e.Value?.ToString() ?? string.Empty" />
+                                   value="@form.MinutesStr" @oninput="e => form.MinutesStr = e.Value?.ToString() ?? string.Empty"
+                                   @onkeydown="e => HandleMinutesKeyDown(e, node.Task)" />
                             <span class="minutes-unit">分</span>
                             <Button Variant="primary" OnClick="() => AddLog(node.Task)" Disabled="form.DisableAdd">＋ 追加</Button>
                         </div>

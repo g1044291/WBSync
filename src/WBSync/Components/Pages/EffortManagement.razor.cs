@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using WBSync.Helpers;
 using WBSync.Models;
 
@@ -151,6 +152,12 @@ public partial class EffortManagement
     /// <returns>「n人日」形式の文字列。算出不可の場合は "-"。</returns>
     private static string FormatWorkDays(double? value)
         => value.HasValue ? $"{PersonDayHelper.FormatWorkDays(value)}人日" : "-";
+
+    /// <summary>実績ログの作業時間を分表示に時間換算の参考値を併記してフォーマットする。</summary>
+    /// <param name="minutes">作業時間（分）。</param>
+    /// <returns>「n分（h.hh）」形式の文字列（例: "480分（8.0h）"）。</returns>
+    private static string FormatMinutesWithHours(int minutes)
+        => $"{minutes}分（{(minutes / 60.0).ToString("0.0")}h）";
 
     /// <summary>日付文字列を表示用にフォーマットする。</summary>
     /// <param name="date">yyyy-MM-dd 形式の日付文字列。</param>
@@ -313,6 +320,15 @@ public partial class EffortManagement
         return ParseDate(task.StartDate);
     }
 
+    /// <summary>実績ログ追加フォームの分入力欄でEnterキーが押されたとき、「追加」ボタンと同じ処理を実行する。</summary>
+    /// <param name="e">キーボードイベント引数。</param>
+    /// <param name="task">対象タスク。</param>
+    private async Task HandleMinutesKeyDown(KeyboardEventArgs e, WbsTask task)
+    {
+        if (e.Key == "Enter")
+            await AddLog(task);
+    }
+
     /// <summary>実績ログを追加する。</summary>
     /// <param name="task">対象タスク。</param>
     private async Task AddLog(WbsTask task)
@@ -321,6 +337,7 @@ public partial class EffortManagement
         form.Status = null;
 
         if (form.Date is null) { form.Status = StatusMessage.Error("日付を入力してください"); return; }
+        if (form.Assignee is null) { form.Status = StatusMessage.Error("担当者を選択してください"); return; }
         if (!int.TryParse(form.MinutesStr, out var minutes) || minutes <= 0)
         {
             form.Status = StatusMessage.Error("作業時間は1以上の整数（分）で入力してください");
@@ -375,6 +392,7 @@ public partial class EffortManagement
     {
         _editLogStatus = null;
         if (_editLogDate is null) { _editLogStatus = StatusMessage.Error("日付を入力してください"); return; }
+        if (_editLogAssignee is null) { _editLogStatus = StatusMessage.Error("担当者を選択してください"); return; }
         if (!int.TryParse(_editLogMinutesStr, out var minutes) || minutes <= 0)
         {
             _editLogStatus = StatusMessage.Error("作業時間は1以上の整数（分）で入力してください");
