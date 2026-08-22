@@ -1,0 +1,45 @@
+@page "/workload-calendar/{ProjectId:int}"
+@inject IProjectRepository ProjectRepo
+@inject ITaskRepository TaskRepo
+@inject IAssigneeRepository AssigneeRepo
+@inject IWorkLogRepository WorkLogRepo
+@inject NavigationManager Nav
+
+<div class="workload-calendar-page">
+    <header class="workload-calendar-header">
+        <div class="workload-calendar-header-left">
+            <button class="back-btn" @onclick="GoBack">← 戻る</button>
+            <span class="project-name">@_projectName - 稼働時間カレンダー</span>
+            <span class="unit-note">（各セルは実績時間の合計・分）</span>
+        </div>
+    </header>
+
+    <div class="calendar-scroll">
+        <div class="calendar-table">
+            <div class="calendar-row calendar-header-row">
+                <div class="cell cell-corner cell-assignee">担当者</div>
+                @foreach (var day in _days)
+                {
+                    <div class="cell cell-day-header">@day.ToString("M/d")</div>
+                }
+            </div>
+
+            @foreach (var assignee in _allAssignees)
+            {
+                <div @key="assignee.Id" class="calendar-row">
+                    <div class="cell cell-assignee">@assignee.Name</div>
+                    @foreach (var day in _days)
+                    {
+                        var minutes = GetMinutes(assignee.Id, day);
+                        <div class="cell cell-value">@(minutes > 0 ? minutes.ToString() : "")</div>
+                    }
+                </div>
+            }
+
+            @if (!_allAssignees.Any())
+            {
+                <p class="empty-assignees">担当者が登録されていません</p>
+            }
+        </div>
+    </div>
+</div>

@@ -44,5 +44,5 @@ CREATE TABLE IF NOT EXISTS work_logs (
 
 * 親テーブル: [tasks](tasks.md), [assignees](assignees.md)
 * 要件: [../requirements/effort-management.md](../requirements/effort-management.md)
-* 画面: [工数管理](../screens/effort-management.md), [ダッシュボード](../screens/dashboard.md)
+* 画面: [工数管理](../screens/effort-management.md), [ダッシュボード](../screens/dashboard.md), [担当者別稼働時間カレンダー](../screens/assignee-workload-calendar.md)
 * DDL・ER図: [index.md](index.md)

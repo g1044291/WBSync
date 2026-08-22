@@ -103,9 +103,18 @@ tags: [requirements, task, worklog]
 | (1) 現在の担当タスク | `planned_work_days` | タスクの実績合計（[人日換算](#人日換算)） | 予定工数 − 実績 |
 | (2) 実績のみ（現在の担当ではない） | - | この担当者自身が記録した実績ログの合計のみ（他担当者分は含まない） | - |
 
+## 担当者別稼働時間カレンダー
+
+[担当者別稼働時間カレンダー画面](../screens/assignee-workload-calendar.md)で、担当者×日付のマトリクス形式で日々の実績を一覧表示する。タスク単位の[工数管理画面](../screens/effort-management.md)では担当者ごとの入力漏れが把握しづらいため、日付を横軸にした一覧で補う。
+
+* 行はプロジェクトに登録された全担当者（実績の有無に関わらず表示。入力漏れの把握が目的のため、[担当者別集計](#担当者別集計ダッシュボード)のような「実績1件以上」の絞り込みは行わない）
+* 列は日単位の日付（ガントチャートと同様に日付を横軸に並べる）
+* 各セルは、当該担当者・当該日の [work_logs](../tables/work_logs.md) の `minutes` 合計を分単位で表示する（人日換算は行わない）
+* 稼働日/休日による色分けなどの強調表示は行わない（数値表示のみ）
+
 ## 関連
 
 * テーブル: [tasks](../tables/tasks.md), [work_logs](../tables/work_logs.md)
-* 画面: [工数管理](../screens/effort-management.md), [ダッシュボード](../screens/dashboard.md)
+* 画面: [工数管理](../screens/effort-management.md), [ダッシュボード](../screens/dashboard.md), [担当者別稼働時間カレンダー](../screens/assignee-workload-calendar.md)
 * 稼働日判定: [holiday-settings.md](holiday-settings.md)
 * 工数と期間の考え方: [schedule-calculation.md](schedule-calculation.md)

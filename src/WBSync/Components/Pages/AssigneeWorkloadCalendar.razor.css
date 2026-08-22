@@ -1,0 +1,138 @@
+.workload-calendar-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    font-family: sans-serif;
+    background: #fff;
+}
+
+/* ===== Header ===== */
+
+.workload-calendar-header {
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    height: 52px;
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0;
+}
+
+.workload-calendar-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.back-btn {
+    background: none;
+    border: none;
+    color: #3b82f6;
+    font-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    padding: 4px 0;
+}
+
+.back-btn:hover {
+    text-decoration: underline;
+}
+
+.project-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #111827;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.unit-note {
+    font-size: 12px;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+/* ===== Calendar grid ===== */
+
+.calendar-scroll {
+    flex: 1;
+    overflow: auto;
+    background: #fafafa;
+}
+
+.calendar-table {
+    display: flex;
+    flex-direction: column;
+    min-width: max-content;
+}
+
+.calendar-row {
+    display: flex;
+}
+
+/* セルの区切りをガントチャートより濃い目の罫線で見やすくする */
+.cell {
+    box-sizing: border-box;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid #cbd5e1;
+    border-bottom: 1px solid #cbd5e1;
+    font-size: 12px;
+}
+
+.cell-assignee {
+    width: 110px;
+    justify-content: flex-start;
+    padding: 0 10px;
+    font-weight: 600;
+    color: #111827;
+    background: #fff;
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    border-right: 2px solid #94a3b8;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cell-day-header,
+.cell-value {
+    width: 44px;
+    height: 32px;
+}
+
+.calendar-header-row {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.calendar-header-row .cell {
+    background: #f1f5f9;
+    color: #374151;
+    font-weight: 600;
+    border-bottom: 2px solid #94a3b8;
+}
+
+.calendar-header-row .cell-corner {
+    z-index: 3;
+    border-right: 2px solid #94a3b8;
+}
+
+.cell-value {
+    color: #111827;
+}
+
+.empty-assignees {
+    font-size: 13px;
+    color: #9ca3af;
+    text-align: center;
+    padding: 24px;
+    margin: 0;
+}
