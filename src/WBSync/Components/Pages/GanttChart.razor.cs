@@ -30,7 +30,7 @@ public partial class GanttChart : IAsyncDisposable
     private DotNetObjectReference<GanttChart>? _dotNetRef;
     private List<(int PredecessorId, int SuccessorId)> _dependencyPairs = [];
     private bool _linesDirty;
-    private bool _showDependencyLines = true;
+    private bool _showDependencyLines;
 
     #region モーダル状態
 
