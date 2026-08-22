@@ -14,6 +14,7 @@ public partial class Dashboard
     private List<WbsTask> _allTasks = [];
     private List<WorkLog> _allWorkLogs = [];
     private List<AssigneeSummary> _summaries = [];
+    private AssigneeSummaryTotal _total = new(0, 0, 0);
     private readonly Dictionary<int, List<AssigneeTaskRow>> _taskRowsByAssigneeId = [];
     private readonly HashSet<int> _expandedAssigneeIds = [];
 
@@ -30,6 +31,7 @@ public partial class Dashboard
         var allAssignees = await AssigneeRepo.GetByProjectAsync(ProjectId);
 
         _summaries = AssigneeSummaryHelper.BuildSummaries(_allTasks, _allWorkLogs, allAssignees);
+        _total = AssigneeSummaryHelper.BuildTotal(_summaries);
     }
 
     /// <summary>担当者行のタスクツリー展開状態を切り替える。初回展開時はタスクツリーを構築する。</summary>

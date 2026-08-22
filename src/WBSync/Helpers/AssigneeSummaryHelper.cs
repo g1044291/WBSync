@@ -6,8 +6,9 @@ namespace WBSync.Helpers;
 internal static class AssigneeSummaryHelper
 {
     /// <summary>
-    /// 担当者が設定されたリーフタスクのうち、実績が1件以上記録されているタスクを対象に、
-    /// 担当者別の工数集計を行う（ステータスは問わない）。
+    /// プロジェクトの全担当者を対象に、担当者別の工数集計を行う（ステータスは問わない）。
+    /// 集計対象タスクは、担当者が設定されたリーフタスクすべて（実績の有無は問わない）。
+    /// 実績・担当タスクがない担当者も、予定工数0・実績0・遅れ0として一覧に含める。
     /// </summary>
     /// <param name="allTasks">プロジェクト内の全タスク。</param>
     /// <param name="allWorkLogs">プロジェクト内の全実績ログ。</param>
@@ -22,22 +23,36 @@ internal static class AssigneeSummaryHelper
         var actualByTaskId = allWorkLogs
             .GroupBy(w => w.TaskId)
             .ToDictionary(g => g.Key, g => PersonDayHelper.ToPersonDays(g.Sum(w => w.Minutes)));
-        var assigneeNames = allAssignees.ToDictionary(a => a.Id, a => a.Name);
 
-        var targetTasks = leafTasks.Where(t =>
-            t.AssigneeId.HasValue
-            && actualByTaskId.ContainsKey(t.Id));
+        var targetTasks = leafTasks.Where(t => t.AssigneeId.HasValue);
 
-        return targetTasks
+        var totalsByAssigneeId = targetTasks
             .GroupBy(t => t.AssigneeId!.Value)
-            .Select(g =>
+            .ToDictionary(g => g.Key, g =>
             {
                 var planned = g.Sum(t => t.PlannedWorkDays ?? 0);
                 var actual = g.Sum(t => actualByTaskId.GetValueOrDefault(t.Id));
-                return new AssigneeSummary(g.Key, assigneeNames.GetValueOrDefault(g.Key, "-"), planned, actual, planned - actual);
+                return (Planned: planned, Actual: actual);
+            });
+
+        return allAssignees
+            .Select(a =>
+            {
+                var (planned, actual) = totalsByAssigneeId.GetValueOrDefault(a.Id);
+                return new AssigneeSummary(a.Id, a.Name, planned, actual, planned - actual);
             })
             .OrderBy(s => s.AssigneeName, StringComparer.Ordinal)
             .ToList();
+    }
+
+    /// <summary>担当者別集計一覧の合計行を算出する。</summary>
+    /// <param name="summaries">担当者別集計結果の一覧。</param>
+    /// <returns>全担当者の予定工数・実績・遅れの合計。</returns>
+    internal static AssigneeSummaryTotal BuildTotal(List<AssigneeSummary> summaries)
+    {
+        var planned = summaries.Sum(s => s.PlannedWorkDays);
+        var actual = summaries.Sum(s => s.ActualPersonDays);
+        return new AssigneeSummaryTotal(planned, actual, planned - actual);
     }
 
     /// <summary>
