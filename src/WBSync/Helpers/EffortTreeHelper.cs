@@ -8,6 +8,7 @@ internal static class EffortTreeHelper
     /// <summary>
     /// タスクツリー全体の見積工数・予定工数・実績・残工数・遅れ日数を集計する。
     /// リーフタスクは自身の値、親タスクは全子孫タスクからの動的集計値を持つ。
+    /// ただし親タスク自身に見積工数・予定工数が設定されている場合は、その値を集計値より優先する。
     /// </summary>
     /// <param name="roots">ルートノード群。</param>
     /// <param name="actualPersonDaysByTaskId">タスクIDをキーとした実績（人日）の辞書。</param>
@@ -24,7 +25,11 @@ internal static class EffortTreeHelper
         return result;
     }
 
-    /// <summary>1ノード分の集計値をボトムアップで算出し、結果辞書に格納する。</summary>
+    /// <summary>
+    /// 1ノード分の集計値をボトムアップで算出し、結果辞書に格納する。
+    /// 親タスクの見積工数・予定工数は、そのタスク自身に値が設定されていればその値、未設定なら子孫タスクの合計を用いる。
+    /// 残工数は表示される予定工数（自身の値 or 集計値）と実績集計値から算出する。
+    /// </summary>
     /// <param name="node">対象ノード。</param>
     /// <param name="actualPersonDaysByTaskId">タスクIDをキーとした実績（人日）の辞書。</param>
     /// <param name="delayDaysByTaskId">タスクIDをキーとした遅れ日数の辞書。</param>
@@ -49,18 +54,22 @@ internal static class EffortTreeHelper
         }
         else
         {
-            double estimate = 0, planned = 0, actual = 0;
+            double childEstimate = 0, childPlanned = 0, actual = 0;
             int? maxDelay = null;
 
             foreach (var child in node.Children)
             {
                 var childAggregate = BuildNodeAggregate(child, actualPersonDaysByTaskId, delayDaysByTaskId, result);
-                estimate += childAggregate.EstimateWorkDays;
-                planned += childAggregate.PlannedWorkDays;
+                childEstimate += childAggregate.EstimateWorkDays;
+                childPlanned += childAggregate.PlannedWorkDays;
                 actual += childAggregate.ActualPersonDays;
                 if (childAggregate.DelayDays.HasValue)
                     maxDelay = maxDelay.HasValue ? Math.Max(maxDelay.Value, childAggregate.DelayDays.Value) : childAggregate.DelayDays.Value;
             }
+
+            // 親タスク自身に値が設定されていればそれを優先し、未設定なら子孫タスクの合計を用いる。
+            var estimate = node.Task.WorkDays ?? childEstimate;
+            var planned = node.Task.PlannedWorkDays ?? childPlanned;
 
             aggregate = new EffortAggregate(estimate, planned, actual, planned - actual, maxDelay);
         }

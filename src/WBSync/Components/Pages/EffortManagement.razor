@@ -94,7 +94,7 @@
                         }
                     </div>
                 </div>
-                <div class="col col-assignee">@(node.HasChildren ? "-" : GetAssigneeName(node.Task.AssigneeId))</div>
+                <div class="col col-assignee">@GetAssigneeName(node.Task.AssigneeId)</div>
                 <div class="col col-start">
                     @if (node.HasChildren)
                     {
