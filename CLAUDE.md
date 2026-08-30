@@ -78,6 +78,10 @@ C#コーディング規約は `.claude/rules/csharp-style.md` を参照。
 
 ブランチ作成・コミット・PR作成時は [CONTRIBUTING.md](CONTRIBUTING.md) を参照。
 
+**チケット（Issue）対応を始めるときは、原則リモートの最新 `main` からブランチを切る。**
+`git fetch` してから `origin/main` を基点に作業ブランチを作成すること（例: `git fetch origin` → `git switch -c feature/xxx origin/main`）。
+ただし「同じブランチで作業して」など明示的な指示がある場合はそれに従う。
+
 ## 設計ドキュメント
 
 [doc/index.md](doc/index.md) を起点とする。[Open Knowledge Format](https://cloud.google.com/blog/ja/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing/) を参考に、YAMLフロントマター付きMarkdownファイルの集合として構成する（1ファイル1トピック、相互リンクで関連付け）。
