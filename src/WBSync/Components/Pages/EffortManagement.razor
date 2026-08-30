@@ -94,7 +94,7 @@
                         }
                     </div>
                 </div>
-                <div class="col col-assignee">@(node.HasChildren ? "-" : GetAssigneeName(node.Task.AssigneeId))</div>
+                <div class="col col-assignee">@GetAssigneeName(node.Task.AssigneeId)</div>
                 <div class="col col-start">@FormatDate(node.DisplayStartDate)</div>
                 <div class="col col-end">@FormatDate(node.DisplayEndDate)</div>
                 <div class="col col-estimate">@FormatWorkDays(agg?.EstimateWorkDays ?? 0)</div>

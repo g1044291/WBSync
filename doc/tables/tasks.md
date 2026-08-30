@@ -14,9 +14,9 @@ resource: ../../src/WBSync/Models/WbsTask.cs
 | project_id | INTEGER | NOT NULL | - | FK → [projects](projects.md).id |
 | parent_id | INTEGER | NULL | - | FK → tasks.id。NULL = ルートタスク |
 | predecessor_id | INTEGER | NULL | - | FK → tasks.id。依存タスク（FS）。NULL = 依存なし |
-| assignee_id | INTEGER | NULL | - | FK → [assignees](assignees.md).id。親タスクは NULL |
+| assignee_id | INTEGER | NULL | - | FK → [assignees](assignees.md).id。親タスクにも設定可（未設定時のみ NULL、後述） |
 | name | TEXT | NOT NULL | - | タスク名 |
-| work_days | REAL | NULL | - | 工数（人日）。親タスクは NULL |
+| work_days | REAL | NULL | - | 工数（人日）。親タスクにも設定可（未設定時のみ NULL、後述） |
 | start_date | TEXT | NULL | - | 開始日（YYYY-MM-DD）。親タスクは NULL（後述） |
 | end_date | TEXT | NULL | - | 終了日（YYYY-MM-DD）。親タスクは NULL（後述） |
 | status | TEXT | NOT NULL | '未着手' | ステータス（後述のCHECK制約参照） |
@@ -76,6 +76,13 @@ CREATE TABLE IF NOT EXISTS tasks (
 |------|-------------|
 | 親タスクの開始日 | 直接の子タスクの `start_date` の最小値 |
 | 親タスクの終了日 | 直接の子タスクの `end_date` の最大値 |
+
+## 親タスク自身の工数・担当者について
+
+`start_date` / `end_date` と異なり、`work_days`（見積工数）・`planned_work_days`（予定工数）・`assignee_id`（担当者）は親タスクでも DB に保存できる（[タスク編集モーダル](../screens/task-edit-modal.md)から入力可能）。
+
+* 未設定（NULL）の親タスクは、従来通り子孫タスクからの動的集計値を表示する
+* 値が設定されている親タスクは、[工数管理画面](../screens/effort-management.md)で集計値ではなく自身の値を優先表示する（[../requirements/effort-management.md](../requirements/effort-management.md) 参照）
 
 ## 親タスクの見積工数超過の警告
 
