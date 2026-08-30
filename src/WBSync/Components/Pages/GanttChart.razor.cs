@@ -31,6 +31,7 @@ public partial class GanttChart : IAsyncDisposable
     private List<(int PredecessorId, int SuccessorId)> _dependencyPairs = [];
     private bool _linesDirty;
     private bool _showDependencyLines;
+    private bool _menuOpen;
 
     #region モーダル状態
 
@@ -282,14 +283,38 @@ public partial class GanttChart : IAsyncDisposable
     /// <summary>プロジェクト一覧に戻る。</summary>
     private void GoBack() => Nav.NavigateTo("/");
 
+    /// <summary>ハンバーガーメニューの開閉を切り替える。</summary>
+    private void ToggleMenu() => _menuOpen = !_menuOpen;
+
+    /// <summary>ハンバーガーメニューを閉じる。</summary>
+    private void CloseMenu() => _menuOpen = false;
+
+    /// <summary>メニューからダッシュボード画面へ遷移する。</summary>
+    private void HandleMenuDashboard()
+    {
+        _menuOpen = false;
+        GoToDashboard();
+    }
+
+    /// <summary>メニューから工数管理画面へ遷移する。</summary>
+    private void HandleMenuEffort()
+    {
+        _menuOpen = false;
+        GoToEffort();
+    }
+
+    /// <summary>メニューから担当者設定画面へ遷移する。</summary>
+    private void HandleMenuAssignees()
+    {
+        _menuOpen = false;
+        GoToAssignees();
+    }
+
     /// <summary>担当者設定画面に遷移する。</summary>
     private void GoToAssignees() => Nav.NavigateTo($"/assignees/{ProjectId}");
 
     /// <summary>工数管理画面に遷移する。</summary>
     private void GoToEffort() => Nav.NavigateTo($"/effort/{ProjectId}");
-
-    /// <summary>担当者別稼働時間カレンダー画面に遷移する。</summary>
-    private void GoToWorkloadCalendar() => Nav.NavigateTo($"/workload-calendar/{ProjectId}");
 
     /// <summary>ダッシュボード画面に遷移する。</summary>
     private void GoToDashboard() => Nav.NavigateTo($"/dashboard/{ProjectId}");

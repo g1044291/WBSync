@@ -12,7 +12,7 @@ resource: ../../src/WBSync/Components/Pages/EffortManagement.razor
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────┐
-│ [←戻る]  プロジェクトA - 工数管理                                                 │  ← ヘッダー
+│ [←戻る]  プロジェクトA - 工数管理                                  [稼働カレンダー] │  ← ヘッダー
 ├──────────────────────────────────────────────────────────────────────────────────┤
 │ 担当者 [すべて ▼]  遅れ [すべて ▼]           並び替え [WBS順 ▼]                   │  ← フィルター/ソート
 ├──────────────────────────────────────────────────────────────────────────────────┤
@@ -35,6 +35,7 @@ resource: ../../src/WBSync/Components/Pages/EffortManagement.razor
 | 要素 | 説明 |
 |------|------|
 | 戻るボタン | [ガントチャート](gantt-chart.md) へ戻る |
+| 稼働カレンダーボタン | [担当者別稼働時間カレンダー](assignee-workload-calendar.md) へ遷移 |
 | 担当者フィルター | プロジェクト内の担当者で絞り込み。「すべて」が既定 |
 | 遅れフィルター | 「すべて / 遅れあり / 遅れなし」。前倒し/遅れ工数（実績 − 予定工数、[../requirements/effort-management.md](../requirements/effort-management.md)参照）がプラス＝実績が予定工数を超過しているタスクを「遅れあり」とする（判定条件適用後の値で判定） |
 | 並び替え | 「WBS順（既定） / 担当者順 / 遅れ順」。ツリー構造は維持したまま各階層内の兄弟ノードを並び替える（詳細は後述） |
@@ -96,4 +97,4 @@ resource: ../../src/WBSync/Components/Pages/EffortManagement.razor
 * 要件: [../requirements/effort-management.md](../requirements/effort-management.md)
 * テーブル: [tasks](../tables/tasks.md), [work_logs](../tables/work_logs.md), [assignees](../tables/assignees.md)
 * 呼び出し元: [ガントチャート](gantt-chart.md)
-* 遷移先: [タスク編集モーダル](task-edit-modal.md)
+* 遷移先: [タスク編集モーダル](task-edit-modal.md), [担当者別稼働時間カレンダー](assignee-workload-calendar.md)

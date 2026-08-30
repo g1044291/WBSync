@@ -50,6 +50,13 @@
     min-width: 0;
 }
 
+.effort-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
 .back-btn {
     background: none;
     border: none;

@@ -25,7 +25,7 @@ resource: ../../src/WBSync/Components/Pages/AssigneeWorkloadCalendar.razor
 
 | 要素 | 説明 |
 |------|------|
-| 戻るボタン | [ガントチャート](gantt-chart.md) へ戻る |
+| 戻るボタン | [工数管理](effort-management.md) へ戻る |
 | 担当者列 | プロジェクトに登録された全担当者を [担当者一覧](assignee-list.md) と同じ表示順（`sort_order`）で表示。実績の有無に関わらず全員を表示する（入力漏れの把握が目的のため、[ダッシュボード](dashboard.md)のような「実績1件以上」の絞り込みは行わない） |
 | 日付列 | 日単位（ガントチャートと同様に日付を横軸に並べる）。表示範囲は後述 |
 | セル | 当該担当者・当該日の `work_logs.minutes` 合計を分単位の数値で表示。実績が0の場合は空欄 |
@@ -53,4 +53,4 @@ resource: ../../src/WBSync/Components/Pages/AssigneeWorkloadCalendar.razor
 
 * 要件: [../requirements/effort-management.md](../requirements/effort-management.md#担当者別稼働時間カレンダー)
 * テーブル: [work_logs](../tables/work_logs.md), [assignees](../tables/assignees.md), [tasks](../tables/tasks.md)
-* 呼び出し元: [ガントチャート](gantt-chart.md)
+* 呼び出し元: [工数管理](effort-management.md)

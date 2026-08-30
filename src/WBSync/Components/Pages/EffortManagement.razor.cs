@@ -415,5 +415,8 @@ public partial class EffortManagement
     /// <summary>ガントチャート画面に戻る。</summary>
     private void GoBack() => Nav.NavigateTo($"/gantt/{ProjectId}");
 
+    /// <summary>担当者別稼働時間カレンダー画面に遷移する。</summary>
+    private void GoToWorkloadCalendar() => Nav.NavigateTo($"/workload-calendar/{ProjectId}");
+
     #endregion
 }
