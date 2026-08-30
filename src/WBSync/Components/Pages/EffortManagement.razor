@@ -19,6 +19,9 @@
             <button class="back-btn" @onclick="GoBack">← 戻る</button>
             <span class="project-name">@_projectName - 工数管理</span>
         </div>
+        <div class="effort-header-right">
+            <Button Variant="secondary" OnClick="GoToWorkloadCalendar">稼働カレンダー</Button>
+        </div>
     </header>
 
     @if (_pageStatus is { } pageStatus)
