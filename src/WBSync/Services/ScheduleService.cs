@@ -169,37 +169,6 @@ public class ScheduleService(
         return warningIds;
     }
 
-    /// <summary>
-    /// 各タスクのスケジュール遅延日数（前倒し/遅れ日数）を算出する。
-    /// 遅れ日数 = ROUND(経過稼働日数 − 全稼働日数 × 進捗率 ÷ 100)。プラスは遅れ、マイナスは前倒し。
-    /// 開始日・終了日が未設定・不正なタスク（親タスクを含む）は結果に含めない。
-    /// </summary>
-    /// <param name="projectId">対象プロジェクトID。</param>
-    /// <param name="allTasks">プロジェクト内の全タスク。</param>
-    /// <returns>タスクIDをキーとした遅延日数の辞書。</returns>
-    public async Task<Dictionary<int, int>> CalcDelayDaysAsync(int projectId, List<WbsTask> allTasks)
-    {
-        var (globalHolidays, assigneeHolidays) = await LoadHolidaysForProjectAsync(allTasks);
-        var today = DateOnly.FromDateTime(DateTime.Today);
-
-        var result = new Dictionary<int, int>();
-
-        foreach (var task in allTasks)
-        {
-            if (!DateOnly.TryParse(task.StartDate, out var start)) continue;
-            if (!DateOnly.TryParse(task.EndDate, out var end)) continue;
-
-            var total = WorkdayHelper.CountWorkdays(start, end, globalHolidays, assigneeHolidays, task.AssigneeId);
-            var elapsedEnd = today < end ? today : end;
-            var elapsed = WorkdayHelper.CountWorkdays(start, elapsedEnd, globalHolidays, assigneeHolidays, task.AssigneeId);
-            var expected = total * task.Progress / 100.0;
-
-            result[task.Id] = (int)Math.Round(elapsed - expected, MidpointRounding.AwayFromZero);
-        }
-
-        return result;
-    }
-
     /// <summary>単一担当者の休日のみを含む休日データを DB から読み込む。</summary>
     /// <param name="assigneeId">個人休日を読み込む担当者ID。<see langword="null"/> の場合は個人休日を読み込まない。</param>
     /// <returns>全体休日のセットと、担当者IDをキーとした個人休日のセット。</returns>

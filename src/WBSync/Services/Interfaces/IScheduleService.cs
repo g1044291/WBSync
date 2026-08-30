@@ -47,14 +47,4 @@ public interface IScheduleService
     /// <param name="projectId">対象プロジェクトID。</param>
     /// <returns>重複警告対象タスクIDのセット。</returns>
     Task<HashSet<int>> GetOverlappingTaskIdsAsync(int projectId);
-
-    /// <summary>
-    /// 各タスクのスケジュール遅延日数（前倒し/遅れ日数）を算出する。
-    /// 遅れ日数 = ROUND(経過稼働日数 − 全稼働日数 × 進捗率 ÷ 100)。プラスは遅れ、マイナスは前倒し。
-    /// 開始日・終了日が未設定・不正なタスク（親タスクを含む）は結果に含めない。
-    /// </summary>
-    /// <param name="projectId">対象プロジェクトID。</param>
-    /// <param name="allTasks">プロジェクト内の全タスク。</param>
-    /// <returns>タスクIDをキーとした遅延日数の辞書。</returns>
-    Task<Dictionary<int, int>> CalcDelayDaysAsync(int projectId, List<WbsTask> allTasks);
 }
