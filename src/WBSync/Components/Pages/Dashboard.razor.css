@@ -104,18 +104,19 @@
 
 .dashboard-table {
     flex: 1;
-    overflow: auto;
+    overflow-y: auto;
 }
 
+/* 担当者行・ヘッダー行・合計行と、展開したタスクツリー行は同じ列クラス（.col-*）を
+   使ってレンダリングし、列幅・パディング・box-sizing を完全に一致させて桁を揃える。 */
+
 .dashboard-row,
-.task-tree-panel,
 .task-tree-row {
-    min-width: max-content;
+    display: flex;
+    align-items: center;
 }
 
 .dashboard-row {
-    display: flex;
-    align-items: center;
     border-bottom: 1px solid #f3f4f6;
     min-height: 40px;
     padding-right: 16px;
@@ -133,6 +134,7 @@
 }
 
 .col {
+    box-sizing: border-box;
     padding: 6px 8px;
     font-size: 13px;
     color: #374151;
@@ -142,12 +144,24 @@
     white-space: nowrap;
 }
 
-.col-assignee {
+.col-assignee,
+.col-task-name {
     flex: 1 1 auto;
-    min-width: 120px;
     display: flex;
     align-items: center;
     gap: 4px;
+}
+
+/* 担当者名セルとタスク名セルの最小幅の差（120 − 80 = 40px）は、タスクツリーパネルの
+   左パディング 40px と一致させる。これにより横幅が詰まって伸縮できなくなっても
+   期間以降の固定列の右端が担当者行とタスク行で揃う。 */
+.col-assignee { min-width: 120px; }
+.col-task-name { min-width: 80px; gap: 6px; }
+
+.col-task-name .task-name-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .col-period { width: 100px; text-align: center; }
@@ -202,23 +216,9 @@
     border-bottom: 1px solid #f3f4f6;
 }
 
-.task-tree-row {
-    display: flex;
-    align-items: center;
-    padding: 4px 0;
-    font-size: 13px;
-    color: #374151;
-}
-
-.task-tree-name {
-    flex: 1 1 auto;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+.task-tree-row .col {
+    padding-top: 4px;
+    padding-bottom: 4px;
 }
 
 .not-owned-badge {
@@ -228,31 +228,4 @@
     background: #e5e7eb;
     border-radius: 3px;
     padding: 1px 5px;
-}
-
-.task-tree-period {
-    width: 100px;
-    text-align: center;
-    flex-shrink: 0;
-}
-
-.task-tree-status {
-    width: 84px;
-    text-align: center;
-    flex-shrink: 0;
-}
-
-.task-tree-estimate,
-.task-tree-planned,
-.task-tree-actual,
-.task-tree-remaining {
-    width: 88px;
-    text-align: right;
-    flex-shrink: 0;
-}
-
-.task-tree-delay {
-    width: 150px;
-    text-align: right;
-    flex-shrink: 0;
 }

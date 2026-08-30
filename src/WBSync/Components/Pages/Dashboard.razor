@@ -87,25 +87,25 @@
                     @foreach (var row in taskRows)
                     {
                         <div @key="row.TaskId" class="task-tree-row">
-                            <span class="task-tree-name" style="padding-left: @(row.Level * 20)px">
-                                @row.Name
+                            <span class="col col-task-name" style="padding-left: @(8 + row.Level * 20)px">
+                                <span class="task-name-text">@row.Name</span>
                                 @if (!row.HasChildren && !row.IsOwned)
                                 {
                                     <span class="not-owned-badge" title="現在の担当ではありません">実績のみ</span>
                                 }
                             </span>
-                            <span class="task-tree-period">@FormatPeriod(row.StartDate, row.EndDate)</span>
-                            <span class="task-tree-status">@row.Status</span>
+                            <span class="col col-period">@FormatPeriod(row.StartDate, row.EndDate)</span>
+                            <span class="col col-status">@row.Status</span>
                             @if (!PeriodSpecified)
                             {
-                                <span class="task-tree-estimate">@FormatWorkDays(row.EstimateWorkDays)</span>
-                                <span class="task-tree-planned">@FormatWorkDays(row.PlannedWorkDays)</span>
+                                <span class="col col-estimate">@FormatWorkDays(row.EstimateWorkDays)</span>
+                                <span class="col col-planned">@FormatWorkDays(row.PlannedWorkDays)</span>
                             }
-                            <span class="task-tree-actual">@FormatWorkDays(row.ActualPersonDays)</span>
+                            <span class="col col-actual">@FormatWorkDays(row.ActualPersonDays)</span>
                             @if (!PeriodSpecified)
                             {
-                                <span class="task-tree-remaining @(row.RemainingWorkDays is < 0 ? "value-negative" : "")">@FormatWorkDays(row.RemainingWorkDays)</span>
-                                <span class="task-tree-delay @(row.DelayWorkDays switch { > 0 => "value-positive", < 0 => "value-negative", _ => "" })">
+                                <span class="col col-remaining @(row.RemainingWorkDays is < 0 ? "value-negative" : "")">@FormatWorkDays(row.RemainingWorkDays)</span>
+                                <span class="col col-delay @(row.DelayWorkDays switch { > 0 => "value-positive", < 0 => "value-negative", _ => "" })">
                                     @FormatDelay(row.DelayWorkDays)
                                 </span>
                             }
