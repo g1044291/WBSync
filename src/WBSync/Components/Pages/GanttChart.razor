@@ -19,9 +19,6 @@
         <div class="gantt-header-right">
             <button class="scale-btn @(_showDependencyLines ? "scale-btn-active" : "")"
                     @onclick="ToggleDependencyLines">矢印</button>
-            <Button Variant="secondary" OnClick="GoToAssignees">担当者設定</Button>
-            <Button Variant="secondary" OnClick="GoToEffort">工数管理</Button>
-            <Button Variant="secondary" OnClick="GoToDashboard">ダッシュボード</Button>
             <div class="scale-switcher">
                 <button class="scale-btn @(_scale == ChartScale.Day ? "scale-btn-active" : "")"
                         @onclick='() => SetScale(ChartScale.Day)'>日</button>
@@ -30,8 +27,20 @@
                 <button class="scale-btn @(_scale == ChartScale.Month ? "scale-btn-active" : "")"
                         @onclick='() => SetScale(ChartScale.Month)'>月</button>
             </div>
+            <button class="hamburger-btn" @onclick="ToggleMenu" aria-label="メニュー"
+                    aria-expanded="@(_menuOpen ? "true" : "false")">☰</button>
         </div>
     </header>
+
+    @if (_menuOpen)
+    {
+        <div class="menu-overlay" @onclick="CloseMenu"></div>
+        <div class="menu-panel">
+            <button class="menu-item" @onclick="HandleMenuDashboard">ダッシュボード</button>
+            <button class="menu-item" @onclick="HandleMenuEffort">工数管理</button>
+            <button class="menu-item" @onclick="HandleMenuAssignees">担当者設定</button>
+        </div>
+    }
 
     @if (_pageStatus is { } pageStatus)
     {
