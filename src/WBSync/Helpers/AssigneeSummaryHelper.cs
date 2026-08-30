@@ -34,14 +34,16 @@ internal static class AssigneeSummaryHelper
     /// 実績はそれを記録した本人の実績として扱うため。担当者削除により <see langword="null"/> になった実績は集計対象外）。
     /// この結果、あるタスクの現在の担当者と実績記録者が異なる場合、両者がそれぞれ一覧に表示されうる
     /// （記録者側は予定工数0・実績のみの合計になる）。
-    /// 実績・担当タスクがない担当者も、予定工数0・実績0・遅れ0として一覧に含める。
-    /// <paramref name="includePlanned"/> が <see langword="false"/> の場合（集計期間指定時）は予定工数・遅れを算出せず
+    /// 実績・担当タスクがない担当者も、予定工数0・実績0・前倒し/遅れ0として一覧に含める。
+    /// 前倒し/遅れは予定工数合計 − 実績合計で求めるが、前倒し（プラス）はこの担当者の現在の担当リーフタスクが
+    /// すべて「完了」の場合のみ算出し、未完了タスクがあれば 0 とする（遅れ＝マイナスは常に算出する）。
+    /// <paramref name="includePlanned"/> が <see langword="false"/> の場合（集計期間指定時）は予定工数・前倒し/遅れを算出せず
     /// <see langword="null"/> とし、期間で絞り込み済みの <paramref name="allWorkLogs"/> による実績のみを集計する。
     /// </summary>
     /// <param name="allTasks">プロジェクト内の全タスク。</param>
     /// <param name="allWorkLogs">集計対象の実績ログ（集計期間指定時は<see cref="FilterByPeriod"/>で絞り込み済みを渡す）。</param>
     /// <param name="allAssignees">プロジェクト内の全担当者。</param>
-    /// <param name="includePlanned">予定工数・遅れを算出する場合は <see langword="true"/>（既定）。集計期間指定時は <see langword="false"/>。</param>
+    /// <param name="includePlanned">予定工数・前倒し/遅れを算出する場合は <see langword="true"/>（既定）。集計期間指定時は <see langword="false"/>。</param>
     /// <returns>担当者名の五十音順に並んだ集計結果の一覧。</returns>
     internal static List<AssigneeSummary> BuildSummaries(
         List<WbsTask> allTasks,
@@ -49,13 +51,11 @@ internal static class AssigneeSummaryHelper
         List<Assignee> allAssignees,
         bool includePlanned = true)
     {
-        var plannedByAssigneeId = includePlanned
-            ? TaskTreeHelper.GetAllLeafNodes(TaskTreeHelper.BuildTree(allTasks))
-                .Select(n => n.Task)
-                .Where(t => t.AssigneeId.HasValue)
-                .GroupBy(t => t.AssigneeId!.Value)
-                .ToDictionary(g => g.Key, g => g.Sum(t => t.PlannedWorkDays ?? 0))
-            : null;
+        var ownedLeafTasksByAssigneeId = TaskTreeHelper.GetAllLeafNodes(TaskTreeHelper.BuildTree(allTasks))
+            .Select(n => n.Task)
+            .Where(t => t.AssigneeId.HasValue)
+            .GroupBy(t => t.AssigneeId!.Value)
+            .ToDictionary(g => g.Key, g => g.ToList());
 
         var actualByAssigneeId = allWorkLogs
             .Where(w => w.AssigneeId.HasValue)
@@ -66,26 +66,46 @@ internal static class AssigneeSummaryHelper
             .Select(a =>
             {
                 var actual = actualByAssigneeId.GetValueOrDefault(a.Id);
-                if (plannedByAssigneeId is null)
+                if (!includePlanned)
                     return new AssigneeSummary(a.Id, a.Name, null, actual, null);
-                var planned = plannedByAssigneeId.GetValueOrDefault(a.Id);
-                return new AssigneeSummary(a.Id, a.Name, planned, actual, planned - actual);
+
+                var ownedLeafTasks = ownedLeafTasksByAssigneeId.GetValueOrDefault(a.Id) ?? [];
+                var planned = ownedLeafTasks.Sum(t => t.PlannedWorkDays ?? 0);
+                var allOwnedCompleted = ownedLeafTasks.Count > 0 && ownedLeafTasks.All(t => t.Status == "完了");
+                return new AssigneeSummary(a.Id, a.Name, planned, actual, GateDelayWorkDays(planned - actual, allOwnedCompleted));
             })
             .OrderBy(s => s.AssigneeName, StringComparer.Ordinal)
             .ToList();
     }
 
-    /// <summary>担当者別集計一覧の合計行を算出する。</summary>
+    /// <summary>
+    /// 担当者別集計一覧の合計行を算出する。前倒し/遅れは各担当者の（ゲート済み）値の単純合計とし、
+    /// 予定工数合計 − 実績合計とは一致しない場合がある（前倒しゲートで 0 に落ちた担当者があるため）。
+    /// </summary>
     /// <param name="summaries">担当者別集計結果の一覧。</param>
-    /// <param name="includePlanned">予定工数・遅れを合算する場合は <see langword="true"/>（既定）。集計期間指定時は <see langword="false"/>（予定工数・遅れは <see langword="null"/>）。</param>
-    /// <returns>全担当者の予定工数・実績・遅れの合計。</returns>
+    /// <param name="includePlanned">予定工数・前倒し/遅れを合算する場合は <see langword="true"/>（既定）。集計期間指定時は <see langword="false"/>（予定工数・前倒し/遅れは <see langword="null"/>）。</param>
+    /// <returns>全担当者の予定工数・実績・前倒し/遅れの合計。</returns>
     internal static AssigneeSummaryTotal BuildTotal(List<AssigneeSummary> summaries, bool includePlanned = true)
     {
         var actual = summaries.Sum(s => s.ActualPersonDays);
         if (!includePlanned) return new AssigneeSummaryTotal(null, actual, null);
         var planned = summaries.Sum(s => s.PlannedWorkDays ?? 0);
-        return new AssigneeSummaryTotal(planned, actual, planned - actual);
+        var delay = summaries.Sum(s => s.DelayWorkDays ?? 0);
+        return new AssigneeSummaryTotal(planned, actual, delay);
     }
+
+    /// <summary>
+    /// 前倒し/遅れ工数（予定工数 − 実績）にダッシュボードの判定条件を適用する。
+    /// マイナス（実績が予定を超過＝遅れ）はそのまま、プラス（前倒し）は <paramref name="aheadAllowed"/> が
+    /// <see langword="true"/> の場合のみそのまま、それ以外は 0 とする。
+    /// </summary>
+    /// <param name="delayWorkDays">予定工数 − 実績（人日）。</param>
+    /// <param name="aheadAllowed">前倒し（プラス）を算出してよい場合は <see langword="true"/>。</param>
+    /// <returns>判定条件適用後の前倒し/遅れ工数（人日）。</returns>
+    private static double GateDelayWorkDays(double delayWorkDays, bool aheadAllowed)
+        => delayWorkDays < 0 ? delayWorkDays
+         : delayWorkDays > 0 && aheadAllowed ? delayWorkDays
+         : 0;
 
     /// <summary>
     /// 指定担当者が関わったタスクのツリーを構築する。「関わった」は次のいずれかを満たすリーフタスクを指す。
@@ -96,7 +116,7 @@ internal static class AssigneeSummaryHelper
     /// <param name="allTasks">プロジェクト内の全タスク。</param>
     /// <param name="allWorkLogs">集計対象の実績ログ（集計期間指定時は<see cref="FilterByPeriod"/>で絞り込み済みを渡す）。</param>
     /// <param name="assigneeId">対象担当者ID。</param>
-    /// <param name="includePlanned">現在の担当タスク行に予定工数・遅れを表示する場合は <see langword="true"/>（既定）。集計期間指定時は <see langword="false"/> とし、全行で実績のみを表示する。</param>
+    /// <param name="includePlanned">現在の担当タスク行に予定工数・前倒し/遅れを表示する場合は <see langword="true"/>（既定）。集計期間指定時は <see langword="false"/> とし、全行で実績のみを表示する。</param>
     /// <returns>WBS表示順に並んだタスクツリーの行一覧。関わったタスクが1件もない場合は空リスト。</returns>
     internal static List<AssigneeTaskRow> BuildAssigneeTaskRows(
         List<WbsTask> allTasks,
@@ -154,7 +174,8 @@ internal static class AssigneeSummaryHelper
                 if (includePlanned)
                 {
                     var planned = node.Task.PlannedWorkDays ?? 0;
-                    rows.Add(new AssigneeTaskRow(node.Task.Id, node.Task.Name, node.Level, false, true, planned, actual, planned - actual));
+                    var delay = GateDelayWorkDays(planned - actual, node.Task.Status == "完了");
+                    rows.Add(new AssigneeTaskRow(node.Task.Id, node.Task.Name, node.Level, false, true, planned, actual, delay));
                 }
                 else
                 {

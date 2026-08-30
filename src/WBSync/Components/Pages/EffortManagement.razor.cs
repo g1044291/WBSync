@@ -134,9 +134,7 @@ public partial class EffortManagement
             .GroupBy(w => w.TaskId)
             .ToDictionary(g => g.Key, g => PersonDayHelper.ToPersonDays(g.Sum(w => w.Minutes)));
 
-        var delayByTaskId = await ScheduleService.CalcDelayDaysAsync(ProjectId, _allTasks);
-
-        _aggregates = EffortTreeHelper.BuildAggregates(_taskRoots, actualByTaskId, delayByTaskId);
+        _aggregates = EffortTreeHelper.BuildAggregates(_taskRoots, actualByTaskId);
     }
 
     #endregion
@@ -175,14 +173,14 @@ public partial class EffortManagement
     /// <returns>パース成功時は日付、失敗時は <see langword="null"/>。</returns>
     private static DateOnly? ParseDate(string? date) => DateOnly.TryParse(date, out var d) ? d : null;
 
-    /// <summary>遅れ日数を表示用にフォーマットする。単位「日」を付与する。</summary>
-    /// <param name="delayDays">遅れ日数。算出不可の場合は <see langword="null"/>。</param>
-    /// <returns>プラスは "+n日"、マイナスは "n日"、算出不可は "-"。</returns>
-    private static string FormatDelayDays(int? delayDays) => delayDays switch
+    /// <summary>前倒し/遅れ工数を表示用にフォーマットする。単位「人日」を付与する。</summary>
+    /// <param name="delayWorkDays">前倒し/遅れ工数（人日、実績－予定工数）。算出不可の場合は <see langword="null"/>。</param>
+    /// <returns>プラス（遅れ）は "+n人日"、マイナス（前倒し）は "n人日"、0は "0人日"、算出不可は "-"。</returns>
+    private static string FormatDelayWorkDays(double? delayWorkDays) => delayWorkDays switch
     {
         null => "-",
-        > 0 => $"+{delayDays}日",
-        _ => $"{delayDays}日"
+        > 0 => $"+{PersonDayHelper.FormatWorkDays(delayWorkDays)}人日",
+        _ => $"{PersonDayHelper.FormatWorkDays(delayWorkDays)}人日"
     };
 
     /// <summary>遅れフィルターの表示名を返す。</summary>
@@ -416,6 +414,9 @@ public partial class EffortManagement
 
     /// <summary>ガントチャート画面に戻る。</summary>
     private void GoBack() => Nav.NavigateTo($"/gantt/{ProjectId}");
+
+    /// <summary>担当者別稼働時間カレンダー画面に遷移する。</summary>
+    private void GoToWorkloadCalendar() => Nav.NavigateTo($"/workload-calendar/{ProjectId}");
 
     #endregion
 }

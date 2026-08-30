@@ -21,12 +21,19 @@
     <header class="page-header">
         <span class="app-title">WBSync</span>
         <div class="header-actions">
-            <Button Variant="secondary" OnClick="GoToCrossProjectView">横断ビュー</Button>
-            <Button Variant="secondary" OnClick="OpenHolidayModal">休日設定</Button>
-            <Button Variant="secondary" OnClick="OpenAssigneeModal">担当者設定</Button>
-            <Button Variant="primary" OnClick="OpenCreateModal">新規登録</Button>
+            <button class="hamburger-btn" @onclick="ToggleMenu" aria-label="メニュー" aria-expanded="@(_menuOpen ? "true" : "false")">☰</button>
         </div>
     </header>
+
+    @if (_menuOpen)
+    {
+        <div class="menu-overlay" @onclick="CloseMenu"></div>
+        <div class="menu-panel">
+            <button class="menu-item" @onclick="HandleMenuCrossProjectView">横断ビュー</button>
+            <button class="menu-item" @onclick="HandleMenuHoliday">休日設定</button>
+            <button class="menu-item" @onclick="HandleMenuAssignee">担当者設定</button>
+        </div>
+    }
 
     <main class="page-main">
         @if (_projects.Count == 0)
@@ -46,10 +53,11 @@
         }
     </main>
 
-    @if (_isDebug)
-    {
-        <footer class="debug-footer">
+    <footer class="page-footer">
+        <Button Variant="primary" OnClick="OpenCreateModal">新規登録</Button>
+        @if (_isDebug)
+        {
             <Button Variant="secondary" OnClick="GoToDev">開発メニュー</Button>
-        </footer>
-    }
+        }
+    </footer>
 </div>

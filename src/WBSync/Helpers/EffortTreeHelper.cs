@@ -6,22 +6,20 @@ namespace WBSync.Helpers;
 internal static class EffortTreeHelper
 {
     /// <summary>
-    /// タスクツリー全体の見積工数・予定工数・実績・残工数・遅れ日数を集計する。
+    /// タスクツリー全体の見積工数・予定工数・実績・残工数・前倒し/遅れ工数を集計する。
     /// リーフタスクは自身の値、親タスクは全子孫タスクからの動的集計値を持つ。
     /// ただし親タスク自身に見積工数・予定工数が設定されている場合は、その値を集計値より優先する。
     /// </summary>
     /// <param name="roots">ルートノード群。</param>
     /// <param name="actualPersonDaysByTaskId">タスクIDをキーとした実績（人日）の辞書。</param>
-    /// <param name="delayDaysByTaskId">タスクIDをキーとした遅れ日数の辞書。</param>
     /// <returns>タスクIDをキーとした集計結果の辞書。</returns>
     internal static Dictionary<int, EffortAggregate> BuildAggregates(
         List<TaskNode> roots,
-        IReadOnlyDictionary<int, double> actualPersonDaysByTaskId,
-        IReadOnlyDictionary<int, int> delayDaysByTaskId)
+        IReadOnlyDictionary<int, double> actualPersonDaysByTaskId)
     {
         var result = new Dictionary<int, EffortAggregate>();
         foreach (var root in roots)
-            BuildNodeAggregate(root, actualPersonDaysByTaskId, delayDaysByTaskId, result);
+            BuildNodeAggregate(root, actualPersonDaysByTaskId, result);
         return result;
     }
 
@@ -32,13 +30,11 @@ internal static class EffortTreeHelper
     /// </summary>
     /// <param name="node">対象ノード。</param>
     /// <param name="actualPersonDaysByTaskId">タスクIDをキーとした実績（人日）の辞書。</param>
-    /// <param name="delayDaysByTaskId">タスクIDをキーとした遅れ日数の辞書。</param>
     /// <param name="result">集計結果を格納する辞書。</param>
     /// <returns>このノードの集計結果。</returns>
     private static EffortAggregate BuildNodeAggregate(
         TaskNode node,
         IReadOnlyDictionary<int, double> actualPersonDaysByTaskId,
-        IReadOnlyDictionary<int, int> delayDaysByTaskId,
         Dictionary<int, EffortAggregate> result)
     {
         EffortAggregate aggregate;
@@ -49,22 +45,22 @@ internal static class EffortTreeHelper
             var planned = node.Task.PlannedWorkDays ?? 0;
             var actual = actualPersonDaysByTaskId.GetValueOrDefault(node.Task.Id);
             var remaining = node.Task.PlannedWorkDays.HasValue ? planned - actual : (double?)null;
-            var delay = delayDaysByTaskId.TryGetValue(node.Task.Id, out var d) ? d : (int?)null;
+            var delay = CalcDelayWorkDays(node.Task.PlannedWorkDays, actual, node.Task.Status);
             aggregate = new EffortAggregate(estimate, planned, actual, remaining, delay);
         }
         else
         {
             double childEstimate = 0, childPlanned = 0, actual = 0;
-            int? maxDelay = null;
+            double? maxDelay = null;
 
             foreach (var child in node.Children)
             {
-                var childAggregate = BuildNodeAggregate(child, actualPersonDaysByTaskId, delayDaysByTaskId, result);
+                var childAggregate = BuildNodeAggregate(child, actualPersonDaysByTaskId, result);
                 childEstimate += childAggregate.EstimateWorkDays;
                 childPlanned += childAggregate.PlannedWorkDays;
                 actual += childAggregate.ActualPersonDays;
-                if (childAggregate.DelayDays.HasValue)
-                    maxDelay = maxDelay.HasValue ? Math.Max(maxDelay.Value, childAggregate.DelayDays.Value) : childAggregate.DelayDays.Value;
+                if (childAggregate.DelayWorkDays.HasValue)
+                    maxDelay = maxDelay.HasValue ? Math.Max(maxDelay.Value, childAggregate.DelayWorkDays.Value) : childAggregate.DelayWorkDays.Value;
             }
 
             // 親タスク自身に値が設定されていればそれを優先し、未設定なら子孫タスクの合計を用いる。
@@ -76,6 +72,25 @@ internal static class EffortTreeHelper
 
         result[node.Task.Id] = aggregate;
         return aggregate;
+    }
+
+    /// <summary>
+    /// リーフタスクの前倒し/遅れ工数（人日、実績－予定工数）を算出する。
+    /// 実績が予定工数を超過した場合はその超過分（プラス＝遅れ）、
+    /// 超過しておらずステータスが「完了」の場合はその差（マイナス＝前倒し）、
+    /// いずれにも該当しない場合は 0 とする。
+    /// </summary>
+    /// <param name="plannedWorkDays">タスク自身の予定工数（人日）。未設定の場合は算出不可。</param>
+    /// <param name="actualPersonDays">タスクの実績合計（人日）。</param>
+    /// <param name="status">タスクのステータス（未着手 / 進行中 / 完了 / 保留）。</param>
+    /// <returns>前倒し/遅れ工数（人日）。予定工数が未設定の場合は <see langword="null"/>。</returns>
+    private static double? CalcDelayWorkDays(double? plannedWorkDays, double actualPersonDays, string status)
+    {
+        if (!plannedWorkDays.HasValue) return null;
+
+        var diff = actualPersonDays - plannedWorkDays.Value;
+        if (diff > 0) return diff;              // 実績が予定工数を超過＝遅れ
+        return status == "完了" ? diff : 0;     // 前倒しは完了タスクのみ算出
     }
 
     /// <summary>
@@ -102,11 +117,11 @@ internal static class EffortTreeHelper
         {
             if (filterAssigneeId.HasValue && leaf.Task.AssigneeId != filterAssigneeId.Value) continue;
 
-            var delayDays = aggregates.TryGetValue(leaf.Task.Id, out var agg) ? agg.DelayDays : null;
+            var delayWorkDays = aggregates.TryGetValue(leaf.Task.Id, out var agg) ? agg.DelayWorkDays : null;
             var matchesDelay = filterDelay switch
             {
-                DelayFilter.Delayed => delayDays is > 0,
-                DelayFilter.NotDelayed => delayDays is null or <= 0,
+                DelayFilter.Delayed => delayWorkDays is > 0,
+                DelayFilter.NotDelayed => delayWorkDays is null or <= 0,
                 _ => true
             };
             if (!matchesDelay) continue;
@@ -180,8 +195,8 @@ internal static class EffortTreeHelper
                 .OrderBy(n => n.Task.AssigneeId is null)
                 .ThenBy(n => n.Task.AssigneeId.HasValue ? assigneeNames.GetValueOrDefault(n.Task.AssigneeId.Value, string.Empty) : string.Empty, StringComparer.Ordinal),
             SortMode.DelayDays => nodes
-                .OrderBy(n => !(aggregates.TryGetValue(n.Task.Id, out var agg) && agg.DelayDays.HasValue))
-                .ThenByDescending(n => aggregates.TryGetValue(n.Task.Id, out var agg) ? agg.DelayDays ?? int.MinValue : int.MinValue),
+                .OrderBy(n => !(aggregates.TryGetValue(n.Task.Id, out var agg) && agg.DelayWorkDays.HasValue))
+                .ThenByDescending(n => aggregates.TryGetValue(n.Task.Id, out var agg) ? agg.DelayWorkDays ?? double.MinValue : double.MinValue),
             _ => nodes
         };
 }

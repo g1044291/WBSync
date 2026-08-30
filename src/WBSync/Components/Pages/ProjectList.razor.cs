@@ -16,6 +16,7 @@ public partial class ProjectList
     private bool _createModalOpen;
     private bool _holidayModalOpen;
     private bool _assigneeModalOpen;
+    private bool _menuOpen;
 
     /// <inheritdoc/>
     protected override async Task OnInitializedAsync()
@@ -25,6 +26,33 @@ public partial class ProjectList
 
     /// <summary>ガントチャート画面に遷移する。</summary>
     private void GoToGantt(int projectId) => Nav.NavigateTo($"/gantt/{projectId}");
+
+    /// <summary>ハンバーガーメニューの開閉を切り替える。</summary>
+    private void ToggleMenu() => _menuOpen = !_menuOpen;
+
+    /// <summary>ハンバーガーメニューを閉じる。</summary>
+    private void CloseMenu() => _menuOpen = false;
+
+    /// <summary>メニューから横断ビュー画面へ遷移する。</summary>
+    private void HandleMenuCrossProjectView()
+    {
+        _menuOpen = false;
+        GoToCrossProjectView();
+    }
+
+    /// <summary>メニューから休日設定モーダルを開く。</summary>
+    private void HandleMenuHoliday()
+    {
+        _menuOpen = false;
+        OpenHolidayModal();
+    }
+
+    /// <summary>メニューから担当者設定モーダルを開く。</summary>
+    private void HandleMenuAssignee()
+    {
+        _menuOpen = false;
+        OpenAssigneeModal();
+    }
 
     /// <summary>複数プロジェクトを横断して表示するWBS画面に遷移する。</summary>
     private void GoToCrossProjectView() => Nav.NavigateTo("/cross-project");

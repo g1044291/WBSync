@@ -106,8 +106,8 @@ public partial class AssigneeWorkloadCalendar
 
     #region ナビゲーション
 
-    /// <summary>ガントチャート画面に戻る。</summary>
-    private void GoBack() => Nav.NavigateTo($"/gantt/{ProjectId}");
+    /// <summary>工数管理画面に戻る。</summary>
+    private void GoBack() => Nav.NavigateTo($"/effort/{ProjectId}");
 
     #endregion
 }

@@ -8,7 +8,11 @@ namespace WBSync.Models;
 /// <param name="IsOwned">現在このタスクの担当者である場合は <see langword="true"/>。<see langword="false"/> の場合、実績のみ（この担当者が記録した分のみ）を表示する。</param>
 /// <param name="PlannedWorkDays">予定工数（人日）。<see cref="IsOwned"/> が <see langword="false"/>、または <see cref="HasChildren"/> が <see langword="true"/> の場合は <see langword="null"/>。</param>
 /// <param name="ActualPersonDays">実績（人日）。<see cref="IsOwned"/> が <see langword="true"/> の場合はタスクの実績合計、<see langword="false"/> の場合はこの担当者が記録した分のみ。<see cref="HasChildren"/> が <see langword="true"/> の場合は <see langword="null"/>。</param>
-/// <param name="DelayWorkDays">遅れ（予定工数 − 実績）。<see cref="IsOwned"/> が <see langword="false"/>、または <see cref="HasChildren"/> が <see langword="true"/> の場合は <see langword="null"/>。</param>
+/// <param name="DelayWorkDays">
+/// 前倒し/遅れ（予定工数 − 実績）。マイナス（実績が予定を超過）は遅れとして常に算出する。
+/// プラス（前倒し）はタスクのステータスが「完了」の場合のみ算出し、それ以外は 0。
+/// <see cref="IsOwned"/> が <see langword="false"/>、または <see cref="HasChildren"/> が <see langword="true"/> の場合は <see langword="null"/>。
+/// </param>
 internal sealed record AssigneeTaskRow(
     int TaskId,
     string Name,
