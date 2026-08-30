@@ -13,12 +13,40 @@
         </div>
     </header>
 
+    <div class="dashboard-toolbar">
+        <span class="toolbar-label">集計期間</span>
+        <DatePicker Value="_periodStart" ValueChanged="OnPeriodStartChanged" />
+        <span class="toolbar-sep">〜</span>
+        <DatePicker Value="_periodEnd" ValueChanged="OnPeriodEndChanged" />
+        @if (PeriodSpecified)
+        {
+            <button class="period-clear-btn" @onclick="ClearPeriod">全期間に戻す</button>
+        }
+        else
+        {
+            <span class="toolbar-hint">未指定の場合は全期間を集計します</span>
+        }
+    </div>
+
+    @if (PeriodSpecified)
+    {
+        <div class="period-note">
+            @PeriodRangeText に記録された実績のみを集計しています（予定工数・遅れは表示しません）。
+        </div>
+    }
+
     <div class="dashboard-table">
         <div class="dashboard-row dashboard-header-row">
             <div class="col col-assignee">担当者</div>
-            <div class="col col-planned">予定工数</div>
+            @if (!PeriodSpecified)
+            {
+                <div class="col col-planned">予定工数</div>
+            }
             <div class="col col-actual">実績</div>
-            <div class="col col-delay">遅れ</div>
+            @if (!PeriodSpecified)
+            {
+                <div class="col col-delay">遅れ</div>
+            }
         </div>
 
         @foreach (var summary in _summaries)
@@ -30,11 +58,17 @@
                     </button>
                     @summary.AssigneeName
                 </div>
-                <div class="col col-planned">@FormatWorkDays(summary.PlannedWorkDays)</div>
+                @if (!PeriodSpecified)
+                {
+                    <div class="col col-planned">@FormatWorkDays(summary.PlannedWorkDays)</div>
+                }
                 <div class="col col-actual">@FormatWorkDays(summary.ActualPersonDays)</div>
-                <div class="col col-delay @(summary.DelayWorkDays switch { > 0 => "value-positive", < 0 => "value-negative", _ => "" })">
-                    @FormatDelay(summary.DelayWorkDays)
-                </div>
+                @if (!PeriodSpecified)
+                {
+                    <div class="col col-delay @(summary.DelayWorkDays switch { > 0 => "value-positive", < 0 => "value-negative", _ => "" })">
+                        @FormatDelay(summary.DelayWorkDays)
+                    </div>
+                }
             </div>
 
             @if (_expandedAssigneeIds.Contains(summary.AssigneeId) && _taskRowsByAssigneeId.TryGetValue(summary.AssigneeId, out var taskRows))
@@ -50,11 +84,17 @@
                                     <span class="not-owned-badge" title="現在の担当ではありません">実績のみ</span>
                                 }
                             </span>
-                            <span class="task-tree-planned">@FormatWorkDays(row.PlannedWorkDays)</span>
+                            @if (!PeriodSpecified)
+                            {
+                                <span class="task-tree-planned">@FormatWorkDays(row.PlannedWorkDays)</span>
+                            }
                             <span class="task-tree-actual">@FormatWorkDays(row.ActualPersonDays)</span>
-                            <span class="task-tree-delay @(row.DelayWorkDays switch { > 0 => "value-positive", < 0 => "value-negative", _ => "" })">
-                                @FormatDelay(row.DelayWorkDays)
-                            </span>
+                            @if (!PeriodSpecified)
+                            {
+                                <span class="task-tree-delay @(row.DelayWorkDays switch { > 0 => "value-positive", < 0 => "value-negative", _ => "" })">
+                                    @FormatDelay(row.DelayWorkDays)
+                                </span>
+                            }
                         </div>
                     }
                 </div>
@@ -65,11 +105,17 @@
         {
             <div class="dashboard-row dashboard-total-row">
                 <div class="col col-assignee">合計</div>
-                <div class="col col-planned">@FormatWorkDays(_total.PlannedWorkDays)</div>
+                @if (!PeriodSpecified)
+                {
+                    <div class="col col-planned">@FormatWorkDays(_total.PlannedWorkDays)</div>
+                }
                 <div class="col col-actual">@FormatWorkDays(_total.ActualPersonDays)</div>
-                <div class="col col-delay @(_total.DelayWorkDays switch { > 0 => "value-positive", < 0 => "value-negative", _ => "" })">
-                    @FormatDelay(_total.DelayWorkDays)
-                </div>
+                @if (!PeriodSpecified)
+                {
+                    <div class="col col-delay @(_total.DelayWorkDays switch { > 0 => "value-positive", < 0 => "value-negative", _ => "" })">
+                        @FormatDelay(_total.DelayWorkDays)
+                    </div>
+                }
             </div>
         }
         else

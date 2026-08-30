@@ -49,6 +49,57 @@
     white-space: nowrap;
 }
 
+/* ===== 集計期間ツールバー ===== */
+
+.dashboard-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0;
+    font-size: 13px;
+    color: #374151;
+}
+
+.toolbar-label {
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.toolbar-sep {
+    color: #9ca3af;
+}
+
+.toolbar-hint {
+    color: #9ca3af;
+    font-size: 12px;
+}
+
+.period-clear-btn {
+    background: none;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    color: #374151;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 3px 8px;
+}
+
+.period-clear-btn:hover {
+    background: #f3f4f6;
+}
+
+.period-note {
+    padding: 6px 16px;
+    background: #eff6ff;
+    border-bottom: 1px solid #dbeafe;
+    color: #1d4ed8;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
 /* ===== Table ===== */
 
 .dashboard-table {
