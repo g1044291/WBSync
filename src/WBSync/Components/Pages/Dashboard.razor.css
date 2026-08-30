@@ -104,7 +104,13 @@
 
 .dashboard-table {
     flex: 1;
-    overflow-y: auto;
+    overflow: auto;
+}
+
+.dashboard-row,
+.task-tree-panel,
+.task-tree-row {
+    min-width: max-content;
 }
 
 .dashboard-row {
@@ -144,9 +150,13 @@
     gap: 4px;
 }
 
-.col-planned { width: 100px; text-align: right; }
-.col-actual { width: 100px; text-align: right; }
-.col-delay { width: 160px; text-align: right; }
+.col-period { width: 100px; text-align: center; }
+.col-status { width: 84px; text-align: center; }
+.col-estimate { width: 88px; text-align: right; }
+.col-planned { width: 88px; text-align: right; }
+.col-actual { width: 88px; text-align: right; }
+.col-remaining { width: 88px; text-align: right; }
+.col-delay { width: 150px; text-align: right; }
 
 .row-expand-btn {
     background: none;
@@ -220,15 +230,29 @@
     padding: 1px 5px;
 }
 
-.task-tree-planned,
-.task-tree-actual {
+.task-tree-period {
     width: 100px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.task-tree-status {
+    width: 84px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.task-tree-estimate,
+.task-tree-planned,
+.task-tree-actual,
+.task-tree-remaining {
+    width: 88px;
     text-align: right;
     flex-shrink: 0;
 }
 
 .task-tree-delay {
-    width: 160px;
+    width: 150px;
     text-align: right;
     flex-shrink: 0;
 }

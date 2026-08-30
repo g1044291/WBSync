@@ -16,7 +16,7 @@ public partial class Dashboard
     private List<Assignee> _allAssignees = [];
     private List<WorkLog> _effectiveWorkLogs = [];
     private List<AssigneeSummary> _summaries = [];
-    private AssigneeSummaryTotal _total = new(0, 0, 0);
+    private AssigneeSummaryTotal _total = new(null, null, null, null, 0, null, null);
     private readonly Dictionary<int, List<AssigneeTaskRow>> _taskRowsByAssigneeId = [];
     private readonly HashSet<int> _expandedAssigneeIds = [];
 
@@ -106,6 +106,24 @@ public partial class Dashboard
 
         _taskRowsByAssigneeId[summary.AssigneeId] = AssigneeSummaryHelper.BuildAssigneeTaskRows(
             _allTasks, _effectiveWorkLogs, summary.AssigneeId, !PeriodSpecified);
+    }
+
+    /// <summary>開始日・終了日を「M/d〜M/d」形式の期間文字列にフォーマットする。</summary>
+    /// <param name="start">開始日（yyyy-MM-dd 形式）。未設定の場合は <see langword="null"/>。</param>
+    /// <param name="end">終了日（yyyy-MM-dd 形式）。未設定の場合は <see langword="null"/>。</param>
+    /// <returns>「M/d〜M/d」形式の文字列。両端とも未設定の場合は "-"。</returns>
+    private static string FormatPeriod(string? start, string? end)
+        => string.IsNullOrEmpty(start) && string.IsNullOrEmpty(end)
+            ? "-"
+            : $"{FormatDate(start)}〜{FormatDate(end)}";
+
+    /// <summary>日付文字列を表示用にフォーマットする。</summary>
+    /// <param name="date">yyyy-MM-dd 形式の日付文字列。</param>
+    /// <returns>M/d 形式の文字列。空の場合は "-"。</returns>
+    private static string FormatDate(string? date)
+    {
+        if (string.IsNullOrEmpty(date)) return "-";
+        return DateOnly.TryParse(date, out var d) ? d.ToString("M/d") : date;
     }
 
     /// <summary>工数（人日）を表示用にフォーマットする。単位「人日」を付与する。</summary>

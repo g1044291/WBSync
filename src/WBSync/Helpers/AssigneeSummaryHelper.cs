@@ -37,13 +37,15 @@ internal static class AssigneeSummaryHelper
     /// 実績・担当タスクがない担当者も、予定工数0・実績0・前倒し/遅れ0として一覧に含める。
     /// 前倒し/遅れは予定工数合計 − 実績合計で求めるが、前倒し（プラス）はこの担当者の現在の担当リーフタスクが
     /// すべて「完了」の場合のみ算出し、未完了タスクがあれば 0 とする（遅れ＝マイナスは常に算出する）。
-    /// <paramref name="includePlanned"/> が <see langword="false"/> の場合（集計期間指定時）は予定工数・前倒し/遅れを算出せず
+    /// 見積工数は現在の担当リーフタスクの <see cref="WbsTask.WorkDays"/> の合計、残工数は予定工数合計 − 実績合計。
+    /// 期間（開始日・終了日）は現在の担当リーフタスクの開始日の最小値・終了日の最大値（<paramref name="includePlanned"/> に関わらず算出する）。
+    /// <paramref name="includePlanned"/> が <see langword="false"/> の場合（集計期間指定時）は見積工数・予定工数・残工数・前倒し/遅れを算出せず
     /// <see langword="null"/> とし、期間で絞り込み済みの <paramref name="allWorkLogs"/> による実績のみを集計する。
     /// </summary>
     /// <param name="allTasks">プロジェクト内の全タスク。</param>
     /// <param name="allWorkLogs">集計対象の実績ログ（集計期間指定時は<see cref="FilterByPeriod"/>で絞り込み済みを渡す）。</param>
     /// <param name="allAssignees">プロジェクト内の全担当者。</param>
-    /// <param name="includePlanned">予定工数・前倒し/遅れを算出する場合は <see langword="true"/>（既定）。集計期間指定時は <see langword="false"/>。</param>
+    /// <param name="includePlanned">見積工数・予定工数・残工数・前倒し/遅れを算出する場合は <see langword="true"/>（既定）。集計期間指定時は <see langword="false"/>（期間・実績のみ算出）。</param>
     /// <returns>担当者名の五十音順に並んだ集計結果の一覧。</returns>
     internal static List<AssigneeSummary> BuildSummaries(
         List<WbsTask> allTasks,
@@ -66,13 +68,17 @@ internal static class AssigneeSummaryHelper
             .Select(a =>
             {
                 var actual = actualByAssigneeId.GetValueOrDefault(a.Id);
-                if (!includePlanned)
-                    return new AssigneeSummary(a.Id, a.Name, null, actual, null);
-
                 var ownedLeafTasks = ownedLeafTasksByAssigneeId.GetValueOrDefault(a.Id) ?? [];
+                var start = ownedLeafTasks.Select(t => t.StartDate).Where(d => !string.IsNullOrEmpty(d)).Min();
+                var end = ownedLeafTasks.Select(t => t.EndDate).Where(d => !string.IsNullOrEmpty(d)).Max();
+
+                if (!includePlanned)
+                    return new AssigneeSummary(a.Id, a.Name, start, end, null, null, actual, null, null);
+
+                var estimate = ownedLeafTasks.Sum(t => t.WorkDays ?? 0);
                 var planned = ownedLeafTasks.Sum(t => t.PlannedWorkDays ?? 0);
                 var allOwnedCompleted = ownedLeafTasks.Count > 0 && ownedLeafTasks.All(t => t.Status == "完了");
-                return new AssigneeSummary(a.Id, a.Name, planned, actual, GateDelayWorkDays(planned - actual, allOwnedCompleted));
+                return new AssigneeSummary(a.Id, a.Name, start, end, estimate, planned, actual, planned - actual, GateDelayWorkDays(planned - actual, allOwnedCompleted));
             })
             .OrderBy(s => s.AssigneeName, StringComparer.Ordinal)
             .ToList();
@@ -83,15 +89,19 @@ internal static class AssigneeSummaryHelper
     /// 予定工数合計 − 実績合計とは一致しない場合がある（前倒しゲートで 0 に落ちた担当者があるため）。
     /// </summary>
     /// <param name="summaries">担当者別集計結果の一覧。</param>
-    /// <param name="includePlanned">予定工数・前倒し/遅れを合算する場合は <see langword="true"/>（既定）。集計期間指定時は <see langword="false"/>（予定工数・前倒し/遅れは <see langword="null"/>）。</param>
-    /// <returns>全担当者の予定工数・実績・前倒し/遅れの合計。</returns>
+    /// <param name="includePlanned">見積工数・予定工数・残工数・前倒し/遅れを合算する場合は <see langword="true"/>（既定）。集計期間指定時は <see langword="false"/>（これらは <see langword="null"/>）。</param>
+    /// <returns>全担当者の期間・見積工数・予定工数・実績・残工数・前倒し/遅れの合計。</returns>
     internal static AssigneeSummaryTotal BuildTotal(List<AssigneeSummary> summaries, bool includePlanned = true)
     {
         var actual = summaries.Sum(s => s.ActualPersonDays);
-        if (!includePlanned) return new AssigneeSummaryTotal(null, actual, null);
+        var start = summaries.Select(s => s.StartDate).Where(d => !string.IsNullOrEmpty(d)).Min();
+        var end = summaries.Select(s => s.EndDate).Where(d => !string.IsNullOrEmpty(d)).Max();
+        if (!includePlanned) return new AssigneeSummaryTotal(start, end, null, null, actual, null, null);
+        var estimate = summaries.Sum(s => s.EstimateWorkDays ?? 0);
         var planned = summaries.Sum(s => s.PlannedWorkDays ?? 0);
+        var remaining = summaries.Sum(s => s.RemainingWorkDays ?? 0);
         var delay = summaries.Sum(s => s.DelayWorkDays ?? 0);
-        return new AssigneeSummaryTotal(planned, actual, delay);
+        return new AssigneeSummaryTotal(start, end, estimate, planned, actual, remaining, delay);
     }
 
     /// <summary>
@@ -112,11 +122,13 @@ internal static class AssigneeSummaryHelper
     /// (1) 現在この担当者が割り当てられている（<see cref="BuildSummaries"/> の予定工数集計対象と同じ）、
     /// (2) 現在の担当者に関わらず、この担当者自身の実績ログ（<see cref="WorkLog.AssigneeId"/>）が記録されている。
     /// 対象リーフタスクの祖先タスクも、ツリー構造を保つために含める。
+    /// 各行には期間（開始日〜終了日）とステータスも持たせる（子タスクを持つ行の期間は子孫からの動的計算値、ステータスは <see langword="null"/>）。
+    /// 見積工数・残工数は現在の担当タスク行（<see cref="AssigneeTaskRow.IsOwned"/>）のみ算出し、集計期間指定時は <see langword="null"/> とする。
     /// </summary>
     /// <param name="allTasks">プロジェクト内の全タスク。</param>
     /// <param name="allWorkLogs">集計対象の実績ログ（集計期間指定時は<see cref="FilterByPeriod"/>で絞り込み済みを渡す）。</param>
     /// <param name="assigneeId">対象担当者ID。</param>
-    /// <param name="includePlanned">現在の担当タスク行に予定工数・前倒し/遅れを表示する場合は <see langword="true"/>（既定）。集計期間指定時は <see langword="false"/> とし、全行で実績のみを表示する。</param>
+    /// <param name="includePlanned">現在の担当タスク行に見積工数・予定工数・残工数・前倒し/遅れを表示する場合は <see langword="true"/>（既定）。集計期間指定時は <see langword="false"/> とし、全行で期間・ステータス・実績のみを表示する。</param>
     /// <returns>WBS表示順に並んだタスクツリーの行一覧。関わったタスクが1件もない場合は空リスト。</returns>
     internal static List<AssigneeTaskRow> BuildAssigneeTaskRows(
         List<WbsTask> allTasks,
@@ -164,7 +176,8 @@ internal static class AssigneeSummaryHelper
 
             if (node.HasChildren)
             {
-                rows.Add(new AssigneeTaskRow(node.Task.Id, node.Task.Name, node.Level, true, false, null, null, null));
+                rows.Add(new AssigneeTaskRow(node.Task.Id, node.Task.Name, node.Level, true, false,
+                    node.DisplayStartDate, node.DisplayEndDate, null, null, null, null, null, null));
                 continue;
             }
 
@@ -173,19 +186,24 @@ internal static class AssigneeSummaryHelper
                 var actual = actualTotalByTaskId.GetValueOrDefault(node.Task.Id);
                 if (includePlanned)
                 {
+                    var estimate = node.Task.WorkDays ?? 0;
                     var planned = node.Task.PlannedWorkDays ?? 0;
+                    var remaining = node.Task.PlannedWorkDays.HasValue ? planned - actual : (double?)null;
                     var delay = GateDelayWorkDays(planned - actual, node.Task.Status == "完了");
-                    rows.Add(new AssigneeTaskRow(node.Task.Id, node.Task.Name, node.Level, false, true, planned, actual, delay));
+                    rows.Add(new AssigneeTaskRow(node.Task.Id, node.Task.Name, node.Level, false, true,
+                        node.Task.StartDate, node.Task.EndDate, node.Task.Status, estimate, planned, actual, remaining, delay));
                 }
                 else
                 {
-                    rows.Add(new AssigneeTaskRow(node.Task.Id, node.Task.Name, node.Level, false, true, null, actual, null));
+                    rows.Add(new AssigneeTaskRow(node.Task.Id, node.Task.Name, node.Level, false, true,
+                        node.Task.StartDate, node.Task.EndDate, node.Task.Status, null, null, actual, null, null));
                 }
             }
             else
             {
                 var actual = actualByAssigneeByTaskId.GetValueOrDefault(node.Task.Id);
-                rows.Add(new AssigneeTaskRow(node.Task.Id, node.Task.Name, node.Level, false, false, null, actual, null));
+                rows.Add(new AssigneeTaskRow(node.Task.Id, node.Task.Name, node.Level, false, false,
+                    node.Task.StartDate, node.Task.EndDate, node.Task.Status, null, null, actual, null, null));
             }
         }
 
