@@ -14,6 +14,8 @@
 - `<description>` は英語のスネークケース（例: `feature/add_coefficient`）
 - 作業はissueに対応するブランチを切り、PRで `main` にマージする
 - **ブランチは原則リモートの最新 `main` から切る**（`git fetch` してから `origin/main` を基点にする）。取得し忘れによる不要なコンフリクトを避けるため。既存ブランチで続ける指示がある場合を除く
+- **作業ブランチの upstream を `origin/main` にしない**。`git switch -c feature/xxx origin/main --no-track` で切る。upstream が `main` だと `git pull` が誤って `main` をマージしてしまうため
+- **`main` へ直接 push しない**。push は必ず作業ブランチへ（`git push -u origin feature/xxx`）。`main` への反映はPRマージのみ
 
 ## コミット・PRルール
 
@@ -38,6 +40,14 @@ chore: 不要なusingを削除
 ```
 
 プレフィックス一覧：`feat` / `fix` / `chore` / `docs` / `refactor` / `test`
+
+### 追加修正は新しいコミットで積む
+
+作業ブランチで最初のコミットをした後の変更（レビュー指摘対応・不具合修正・仕上げなど）は、必ず**新しい `git commit`** で積む。`git commit --amend` や `git rebase` で既存コミットを書き換えない。
+
+- 例外：直前コミットの**メッセージのみ**の修正で、かつ未pushが確実な場合のみ `--amend` 可
+- 一度でも push した（またはした可能性がある）コミットは書き換えない
+- レビュー往復で「実装」「指摘対応」とコミットが増えるのは正常。1つにまとめたい場合はPRのSquashマージで対応する
 
 ### PRルール
 

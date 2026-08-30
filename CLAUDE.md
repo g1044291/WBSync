@@ -79,8 +79,12 @@ C#コーディング規約は `.claude/rules/csharp-style.md` を参照。
 ブランチ作成・コミット・PR作成時は [CONTRIBUTING.md](CONTRIBUTING.md) を参照。
 
 **チケット（Issue）対応を始めるときは、原則リモートの最新 `main` からブランチを切る。**
-`git fetch` してから `origin/main` を基点に作業ブランチを作成すること（例: `git fetch origin` → `git switch -c feature/xxx origin/main`）。
+`git fetch` してから `origin/main` を基点に作業ブランチを作成すること（例: `git fetch origin` → `git switch -c feature/xxx origin/main --no-track`）。
+`--no-track` を付け、作業ブランチの upstream を `origin/main` にしない（`git pull` が `main` を誤ってマージするのを防ぐ）。
 ただし「同じブランチで作業して」など明示的な指示がある場合はそれに従う。
+
+**既存コミットを書き換えない。** 最初のコミット後の追加修正は必ず新しい `git commit` で積む（`git commit --amend` / `rebase` で履歴を書き換えない。例外は直前の未pushコミットの**メッセージのみ**修正）。
+**`main` へ直接 push しない。** push は作業ブランチへ、`main` への反映はPRマージのみ。
 
 ## 設計ドキュメント
 
