@@ -5,7 +5,6 @@
 @inject IWorkLogRepository WorkLogRepo
 @inject IGlobalHolidayRepository GlobalHolidayRepo
 @inject IAssigneeHolidayRepository AssigneeHolidayRepo
-@inject IScheduleService ScheduleService
 @inject NavigationManager Nav
 
 @{
@@ -88,9 +87,9 @@
                             <span class="expand-spacer"></span>
                         }
                         <span class="task-name-text" @onclick="() => OpenEditModal(node.Task)">@node.Task.Name</span>
-                        @if (agg?.DelayDays is > 0)
+                        @if (agg?.DelayWorkDays is > 0)
                         {
-                            <span class="warn-icon" title="スケジュールが遅れています">⚠</span>
+                            <span class="warn-icon" title="実績が予定工数を超過しています">⚠</span>
                         }
                     </div>
                 </div>
@@ -103,8 +102,8 @@
                 <div class="col col-remaining @(agg?.RemainingWorkDays is < 0 ? "value-negative" : "")">
                     @FormatWorkDays(agg?.RemainingWorkDays)
                 </div>
-                <div class="col col-delay @(agg?.DelayDays is > 0 ? "value-negative" : "")">
-                    @FormatDelayDays(agg?.DelayDays)
+                <div class="col col-delay @(agg?.DelayWorkDays is > 0 ? "value-negative" : "")">
+                    @FormatDelayWorkDays(agg?.DelayWorkDays)
                 </div>
             </div>
 
