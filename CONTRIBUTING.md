@@ -14,6 +14,7 @@
 - `<description>` は英語のスネークケース（例: `feature/add_coefficient`）
 - 作業はissueに対応するブランチを切り、PRで `main` にマージする
 - **ブランチは原則リモートの最新 `main` から切る**（`git fetch` してから `origin/main` を基点にする）。取得し忘れによる不要なコンフリクトを避けるため。既存ブランチで続ける指示がある場合を除く
+- Claude Desktop の worktree で開始した場合はブランチ作成済みのため、`git branch -m feature/xxx` で命名規則に合わせてリネームして使う
 - **作業ブランチの upstream を `origin/main` にしない**。`git switch -c feature/xxx origin/main --no-track` で切る。upstream が `main` だと `git pull` が誤って `main` をマージしてしまうため
 - **`main` へ直接 push しない**。push は必ず作業ブランチへ（`git push -u origin feature/xxx`）。`main` への反映はPRマージのみ
 
@@ -53,7 +54,21 @@ chore: 不要なusingを削除
 
 - タイトル：日本語の説明のみ（PR番号はGitHubが自動採番するため不要）
 - 本文：変更概要・動作確認内容を日本語で記載
-- マージ前にCIが通っていること
+- 本文に `Closes #N` を記載し、マージ時にIssueを自動クローズする
+- 本文にIssueの受け入れ条件をチェックリストとして転記し、人間が動作確認してチェックを付けてからマージする
+
+```markdown
+Closes #42
+
+## 変更概要
+- タスク編集モーダルに予定工数欄を追加
+
+## ドキュメント更新
+- doc/screens/task-edit-modal.md
+
+## 受け入れ条件
+- [ ] タスク編集で予定工数を入力・保存できる
+```
 
 **依存関係がある場合：** 依存元のissue番号を依存先のPRタイトルまたは本文に記載する。
 

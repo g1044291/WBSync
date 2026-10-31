@@ -7,29 +7,42 @@
       "PowerShell(dotnet build *)",
       "PowerShell(dotnet ef *)",
       "PowerShell(git *)",
-      "Bash(git checkout *)",
-      "Bash(git add *)",
-      "Bash(gh issue view *)",
-      "Bash(gh issue list *)",
+      "Bash(gh issue *)",
       "Bash(gh pr create *)",
       "Bash(gh pr view *)",
       "Bash(gh pr list *)",
-      "PowerShell(gh issue view *)",
-      "PowerShell(gh issue list *)",
+      "PowerShell(gh issue *)",
       "PowerShell(gh pr create *)",
       "PowerShell(gh pr view *)",
-      "PowerShell(gh pr list *)",
-      "Bash(gh issue *)"
+      "PowerShell(gh pr list *)"
+    ],
+    "deny": [
+      "Bash(git push * main)",
+      "Bash(git push * main *)",
+      "Bash(git push *:main)",
+      "Bash(git push *:main *)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push * --force*)",
+      "Bash(git push * -f*)",
+      "PowerShell(git push * main)",
+      "PowerShell(git push * main *)",
+      "PowerShell(git push *:main)",
+      "PowerShell(git push *:main *)",
+      "PowerShell(git push --force*)",
+      "PowerShell(git push -f*)",
+      "PowerShell(git push * --force*)",
+      "PowerShell(git push * -f*)"
     ]
   },
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Bash",
+        "matcher": "Bash|PowerShell",
         "hooks": [
           {
             "type": "command",
-            "command": "$cmd = ([Console]::In.ReadToEnd() | ConvertFrom-Json).tool_input.command; if ($cmd -match '&&|\\|\\||;') { Write-Error 'Do not chain commands with &&/||/;'; exit 2 }",
+            "command": "$cmd = ([Console]::In.ReadToEnd() | ConvertFrom-Json).tool_input.command; $unquoted = $cmd -replace '\"[^\"]*\"', '' -replace \"'[^']*'\", ''; if ($unquoted -match '&&|\\|\\||;') { Write-Error 'Do not chain commands with &&/||/;'; exit 2 }",
             "shell": "powershell"
           }
         ]

@@ -74,6 +74,23 @@ C#コーディング規約は `.claude/rules/csharp-style.md` を参照。
 
 タスク・バックログは **GitHub Issues** で管理する。
 
+Issue を作成するときは `/create-issue` スキル（`.claude/skills/create-issue/`）に従う。
+
+## 完了の定義
+
+作業完了（コミット・PR作成）の前に、以下をすべて満たしていることを確認し、結果を報告する。
+
+1. **ビルドが通る**: `dotnet build src/WBSync/WBSync.csproj -f net10.0-windows10.0.19041.0` がエラーなしで完了する。今回の変更で増えた重大な警告（null参照・未使用の非同期呼び出し等）が残っていない。
+2. **ドキュメント更新漏れがない**: `git diff --name-only origin/main...HEAD`（未コミット分は `git status`）で変更ファイルを洗い出し、以下に該当する場合は対応する doc を更新済みであること。更新不要と判断した場合はその理由を報告する。
+   | 変更内容 | 更新対象 |
+   |---------|---------|
+   | 画面（`Components/`）のレイアウト・操作・表示項目 | `doc/screens/` |
+   | 仕様・計算ロジック（`Services/`, `Helpers/` 等） | `doc/requirements/` |
+   | エンティティ・マイグレーション（`Models/`, `Migrations/`） | `doc/tables/` |
+3. **PR本文に `Closes #N`** を記載する（マージ時にIssueを自動クローズするため）。
+
+画面の動作確認（受け入れ条件の確認）は人間が行う。PR本文にIssueの受け入れ条件をチェックリストとして転記する。
+
 ## ブランチ・コミット・PR
 
 ブランチ作成・コミット・PR作成時は [CONTRIBUTING.md](CONTRIBUTING.md) を参照。
@@ -82,6 +99,7 @@ C#コーディング規約は `.claude/rules/csharp-style.md` を参照。
 `git fetch` してから `origin/main` を基点に作業ブランチを作成すること（例: `git fetch origin` → `git switch -c feature/xxx origin/main --no-track`）。
 `--no-track` を付け、作業ブランチの upstream を `origin/main` にしない（`git pull` が `main` を誤ってマージするのを防ぐ）。
 ただし「同じブランチで作業して」など明示的な指示がある場合はそれに従う。
+**worktree（Claude Desktop のセッション用作業フォルダ）で開始した場合は、すでに作業ブランチが作成されているため新たに切らない。** 代わりに `git branch -m feature/xxx` でブランチ名を [CONTRIBUTING.md](CONTRIBUTING.md) の命名規則に合わせてから作業する。
 
 **既存コミットを書き換えない。** 最初のコミット後の追加修正は必ず新しい `git commit` で積む（`git commit --amend` / `rebase` で履歴を書き換えない。例外は直前の未pushコミットの**メッセージのみ**修正）。
 **`main` へ直接 push しない。** push は作業ブランチへ、`main` への反映はPRマージのみ。
