@@ -418,5 +418,8 @@ public partial class EffortManagement
     /// <summary>担当者別稼働時間カレンダー画面に遷移する。</summary>
     private void GoToWorkloadCalendar() => Nav.NavigateTo($"/workload-calendar/{ProjectId}");
 
+    /// <summary>ダッシュボード画面に遷移する。</summary>
+    private void GoToDashboard() => Nav.NavigateTo($"/dashboard/{ProjectId}");
+
     #endregion
 }
