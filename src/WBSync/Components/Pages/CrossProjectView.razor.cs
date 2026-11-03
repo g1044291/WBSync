@@ -26,6 +26,9 @@ public partial class CrossProjectView
     private DateOnly _chartEnd;
     private List<ChartColumn> _chartColumns = [];
 
+    /// <summary>次回描画後にチャートを今日の位置へ中央スクロールし直す必要があるか。</summary>
+    private bool _needsRecenter;
+
     #region Lifecycle
 
     /// <inheritdoc/>
@@ -49,16 +52,29 @@ public partial class CrossProjectView
     /// <inheritdoc/>
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender) return;
-        await JS.InvokeVoidAsync("initSplitter", "gantt-splitter", "task-pane", 320, 800);
-        await JS.InvokeVoidAsync("initScrollSync", "task-pane-rows", "chart-pane");
-        await JS.InvokeVoidAsync("initColNameResize", "col-name-resize", "task-pane", 120);
-
-        if (_chartColumns.Count > 0)
+        if (firstRender)
         {
-            var todayOffset = GanttChartLayoutHelper.GetPixelOffset(_scale, _chartStart, _today) + GetColumnWidth() / 2;
-            await JS.InvokeVoidAsync("centerHorizontalScroll", "chart-pane", todayOffset);
+            await JS.InvokeVoidAsync("initSplitter", "gantt-splitter", "task-pane", 320, 800);
+            await JS.InvokeVoidAsync("initScrollSync", "task-pane-rows", "chart-pane");
+            await JS.InvokeVoidAsync("initColNameResize", "col-name-resize", "task-pane", 120);
+            _needsRecenter = true;
         }
+
+        if (!_needsRecenter) return;
+        _needsRecenter = false;
+        await CenterTodayAsync();
+    }
+
+    #endregion
+
+    #region スクロール
+
+    /// <summary>チャートの横スクロール位置を、今日の列が中央に来るように調整する。チャート列がない場合は何もしない。</summary>
+    private async Task CenterTodayAsync()
+    {
+        if (_chartColumns.Count == 0) return;
+        var todayOffset = GanttChartLayoutHelper.GetPixelOffset(_scale, _chartStart, _today) + GetColumnWidth() / 2;
+        await JS.InvokeVoidAsync("centerHorizontalScroll", "chart-pane", todayOffset);
     }
 
     #endregion
@@ -195,7 +211,7 @@ public partial class CrossProjectView
 
     #region 操作
 
-    /// <summary>プロジェクトの選択状態を切り替え、選択内容を保存してから再読み込みする。</summary>
+    /// <summary>プロジェクトの選択状態を切り替え、選択内容を保存してから再読み込みする。再描画後に今日の位置へ中央スクロールし直す。</summary>
     /// <param name="projectId">対象プロジェクトID。</param>
     private async Task ToggleProject(int projectId)
     {
@@ -204,6 +220,7 @@ public partial class CrossProjectView
 
         SaveSelectedProjectIds();
         await ReloadAsync();
+        _needsRecenter = true;
     }
 
     /// <summary>チャートのスケールを切り替える。</summary>
