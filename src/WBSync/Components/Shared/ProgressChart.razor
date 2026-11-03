@@ -1,0 +1,110 @@
+<div class="progress-chart">
+    @if (Points.Count == 0)
+    {
+        <p class="chart-empty">表示できるデータがありません（期間が設定されたタスク・実績がありません）</p>
+    }
+    else
+    {
+        <div class="chart-legend">
+            <span class="legend-item"><span class="legend-swatch swatch-bar"></span>日別実績</span>
+            @if (HasPlanned)
+            {
+                <span class="legend-item"><span class="legend-swatch swatch-planned"></span>累積予定</span>
+            }
+            @if (HasActual)
+            {
+                <span class="legend-item"><span class="legend-swatch swatch-actual"></span>累積実績</span>
+            }
+            @if (HasForecast)
+            {
+                <span class="legend-item"><span class="legend-swatch swatch-forecast"></span>完了予測</span>
+            }
+        </div>
+
+        <div class="chart-area" @onmouseleave="ClearHover">
+            <svg class="chart-svg" viewBox="0 0 @ViewWidth @ViewHeight" xmlns="http://www.w3.org/2000/svg">
+                @foreach (var tick in _yTicks)
+                {
+                    <g>
+                        <line class="grid-line" x1="@F(PlotLeft)" y1="@F(Y(tick))" x2="@F(PlotRight)" y2="@F(Y(tick))" />
+                        <text class="axis-label" x="@F(PlotLeft - 6)" y="@F(Y(tick) + 4)" text-anchor="end">@PersonDayHelper.FormatWorkDays(tick)</text>
+                    </g>
+                }
+                <text class="axis-label" x="@F(PlotLeft - 6)" y="@F(PlotTop - 6)" text-anchor="end">人日</text>
+
+                @for (var i = 0; i < Points.Count; i++)
+                {
+                    if (i % _xLabelStep == 0)
+                    {
+                        <g>
+                            <line class="axis-tick" x1="@F(X(i))" y1="@F(PlotBottom)" x2="@F(X(i))" y2="@F(PlotBottom + 4)" />
+                            <text class="axis-label" x="@F(X(i))" y="@F(PlotBottom + 18)" text-anchor="middle">@Points[i].Date.ToString("M/d")</text>
+                        </g>
+                    }
+                    var daily = Points[i].DailyActual;
+                    if (daily > 0)
+                    {
+                        <rect class="bar-daily" x="@F(X(i) - BarWidth / 2)" y="@F(Y(daily))" width="@F(BarWidth)" height="@F(PlotBottom - Y(daily))" />
+                    }
+                }
+
+                <line class="axis-line" x1="@F(PlotLeft)" y1="@F(PlotBottom)" x2="@F(PlotRight)" y2="@F(PlotBottom)" />
+
+                @if (_todayIndex is { } todayIndex)
+                {
+                    <g>
+                        <line class="today-line" x1="@F(X(todayIndex))" y1="@F(PlotTop)" x2="@F(X(todayIndex))" y2="@F(PlotBottom)" />
+                        <text class="today-label" x="@F(X(todayIndex))" y="@F(PlotTop - 4)" text-anchor="middle">今日</text>
+                    </g>
+                }
+
+                @if (HasPlanned)
+                {
+                    <polyline class="line-planned" points="@BuildPolyline(p => p.CumulativePlanned)" />
+                }
+                @if (HasActual)
+                {
+                    <polyline class="line-actual" points="@BuildPolyline(p => p.CumulativeActual)" />
+                }
+                @if (HasForecast)
+                {
+                    <polyline class="line-forecast" points="@BuildPolyline(p => p.Forecast)" />
+                }
+
+                @if (_hoverIndex is { } hoverIndex)
+                {
+                    <line class="hover-line" x1="@F(X(hoverIndex))" y1="@F(PlotTop)" x2="@F(X(hoverIndex))" y2="@F(PlotBottom)" />
+                }
+
+                @for (var i = 0; i < Points.Count; i++)
+                {
+                    var index = i;
+                    <rect class="hover-target" x="@F(PlotLeft + index * SlotWidth)" y="@F(PlotTop)" width="@F(SlotWidth)" height="@F(PlotBottom - PlotTop)"
+                          @onmouseenter="() => _hoverIndex = index" />
+                }
+            </svg>
+
+            @if (_hoverIndex is { } tipIndex)
+            {
+                var point = Points[tipIndex];
+                var leftPercent = X(tipIndex) / ViewWidth * 100;
+                <div class="chart-tooltip @(leftPercent > 50 ? "tooltip-left" : "tooltip-right")" style="left: @F(leftPercent)%">
+                    <div class="tooltip-date">@point.Date.ToString("yyyy/MM/dd (ddd)")</div>
+                    <div class="tooltip-row"><span class="legend-swatch swatch-bar"></span>日別実績<span class="tooltip-value">@FormatValue(point.DailyActual)</span></div>
+                    @if (point.CumulativePlanned is { } planned)
+                    {
+                        <div class="tooltip-row"><span class="legend-swatch swatch-planned"></span>累積予定<span class="tooltip-value">@FormatValue(planned)</span></div>
+                    }
+                    @if (point.CumulativeActual is { } actual)
+                    {
+                        <div class="tooltip-row"><span class="legend-swatch swatch-actual"></span>累積実績<span class="tooltip-value">@FormatValue(actual)</span></div>
+                    }
+                    @if (point.Forecast is { } forecast)
+                    {
+                        <div class="tooltip-row"><span class="legend-swatch swatch-forecast"></span>完了予測<span class="tooltip-value">@FormatValue(forecast)</span></div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>

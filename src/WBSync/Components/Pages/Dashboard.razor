@@ -3,6 +3,8 @@
 @inject ITaskRepository TaskRepo
 @inject IAssigneeRepository AssigneeRepo
 @inject IWorkLogRepository WorkLogRepo
+@inject IGlobalHolidayRepository GlobalHolidayRepo
+@inject IAssigneeHolidayRepository AssigneeHolidayRepo
 @inject NavigationManager Nav
 
 <div class="dashboard-page">
@@ -12,6 +14,11 @@
             <span class="project-name">@_projectName - ダッシュボード</span>
         </div>
     </header>
+
+    <section class="dashboard-chart">
+        <div class="chart-title">予実推移<span class="chart-title-note">（全期間。集計期間の指定は反映しません）</span></div>
+        <ProgressChart Points="_chartPoints" Today="_today" />
+    </section>
 
     <div class="dashboard-toolbar">
         <span class="toolbar-label">集計期間</span>
