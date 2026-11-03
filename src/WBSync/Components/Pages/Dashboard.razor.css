@@ -49,6 +49,27 @@
     white-space: nowrap;
 }
 
+/* ===== 予実推移グラフ ===== */
+
+.dashboard-chart {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0;
+}
+
+.chart-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.chart-title-note {
+    font-weight: normal;
+    font-size: 12px;
+    color: #9ca3af;
+}
+
 /* ===== 集計期間ツールバー ===== */
 
 .dashboard-toolbar {
