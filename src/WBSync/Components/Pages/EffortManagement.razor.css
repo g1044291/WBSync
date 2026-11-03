@@ -147,13 +147,19 @@
 }
 
 .col-assignee { width: 90px; }
-.col-start { width: 150px; }
-.col-end { width: 150px; }
-.col-estimate { width: 80px; text-align: right; }
-.col-planned { width: 80px; text-align: right; }
-.col-actual { width: 80px; text-align: right; }
-.col-remaining { width: 80px; text-align: right; }
-.col-delay { width: 90px; text-align: right; }
+.col-start { width: 70px; }
+.col-end { width: 70px; }
+
+/* 工数系の列は「±000.0000人日」（小数第4位まで）を省略・折り返しなく表示できる幅を確保する */
+.col-estimate,
+.col-planned,
+.col-actual,
+.col-remaining,
+.col-delay {
+    width: 120px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
 
 .value-negative {
     color: #dc2626;
