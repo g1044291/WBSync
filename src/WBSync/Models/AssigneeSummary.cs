@@ -10,9 +10,8 @@ namespace WBSync.Models;
 /// <param name="ActualPersonDays">対象タスクの実績合計（人日）。集計期間指定時は期間内に記録された実績のみの合計。</param>
 /// <param name="RemainingWorkDays">残工数（予定工数合計 − 実績合計）。集計期間指定時は <see langword="null"/>。</param>
 /// <param name="DelayWorkDays">
-/// 前倒し/遅れ（予定工数合計 − 実績合計）。マイナス（実績が予定を超過）は遅れとして常に算出する。
-/// プラス（前倒し）はこの担当者の現在の担当リーフタスクがすべて「完了」の場合のみ算出し、それ以外は 0。
-/// 集計期間指定時は <see langword="null"/>。
+/// 前倒し/遅れ。現在の担当リーフタスクのうち予定工数が設定されたタスクごとの前倒し/遅れ（<see cref="AssigneeTaskRow.DelayWorkDays"/>）の合計。
+/// 予定工数未設定のタスクは集計対象外。集計期間指定時は <see langword="null"/>。
 /// </param>
 internal sealed record AssigneeSummary(
     int AssigneeId,

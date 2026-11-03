@@ -16,7 +16,7 @@ namespace WBSync.Models;
 /// <param name="DelayWorkDays">
 /// 前倒し/遅れ（予定工数 − 実績）。マイナス（実績が予定を超過）は遅れとして常に算出する。
 /// プラス（前倒し）はタスクのステータスが「完了」の場合のみ算出し、それ以外は 0。
-/// <see cref="IsOwned"/> が <see langword="false"/>、<see cref="HasChildren"/> が <see langword="true"/>、または集計期間指定時は <see langword="null"/>。
+/// 予定工数が未設定、<see cref="IsOwned"/> が <see langword="false"/>、<see cref="HasChildren"/> が <see langword="true"/>、または集計期間指定時は <see langword="null"/>。
 /// </param>
 internal sealed record AssigneeTaskRow(
     int TaskId,
