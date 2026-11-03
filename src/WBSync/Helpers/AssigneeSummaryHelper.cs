@@ -35,8 +35,9 @@ internal static class AssigneeSummaryHelper
     /// この結果、あるタスクの現在の担当者と実績記録者が異なる場合、両者がそれぞれ一覧に表示されうる
     /// （記録者側は予定工数0・実績のみの合計になる）。
     /// 実績・担当タスクがない担当者も、予定工数0・実績0・前倒し/遅れ0として一覧に含める。
-    /// 前倒し/遅れは予定工数合計 − 実績合計で求めるが、前倒し（プラス）はこの担当者の現在の担当リーフタスクが
-    /// すべて「完了」の場合のみ算出し、未完了タスクがあれば 0 とする（遅れ＝マイナスは常に算出する）。
+    /// 前倒し/遅れは、現在の担当リーフタスクのうち予定工数が設定されたタスクごとの前倒し/遅れ（判定条件適用後、
+    /// <see cref="BuildAssigneeTaskRows"/> の担当タスク行と同じ値）の合計とする。予定工数未設定のタスクは集計対象外。
+    /// これにより、展開したタスク行の前倒し/遅れの合計と担当者行の値が一致する。
     /// 見積工数は現在の担当リーフタスクの <see cref="WbsTask.WorkDays"/> の合計、残工数は予定工数合計 − 実績合計。
     /// 期間（開始日・終了日）は現在の担当リーフタスクの開始日の最小値・終了日の最大値（<paramref name="includePlanned"/> に関わらず算出する）。
     /// <paramref name="includePlanned"/> が <see langword="false"/> の場合（集計期間指定時）は見積工数・予定工数・残工数・前倒し/遅れを算出せず
@@ -63,6 +64,9 @@ internal static class AssigneeSummaryHelper
             .Where(w => w.AssigneeId.HasValue)
             .GroupBy(w => w.AssigneeId!.Value)
             .ToDictionary(g => g.Key, g => PersonDayHelper.ToPersonDays(g.Sum(w => w.Minutes)));
+        var actualTotalByTaskId = allWorkLogs
+            .GroupBy(w => w.TaskId)
+            .ToDictionary(g => g.Key, g => PersonDayHelper.ToPersonDays(g.Sum(w => w.Minutes)));
 
         return allAssignees
             .Select(a =>
@@ -77,16 +81,16 @@ internal static class AssigneeSummaryHelper
 
                 var estimate = ownedLeafTasks.Sum(t => t.WorkDays ?? 0);
                 var planned = ownedLeafTasks.Sum(t => t.PlannedWorkDays ?? 0);
-                var allOwnedCompleted = ownedLeafTasks.Count > 0 && ownedLeafTasks.All(t => t.Status == "完了");
-                return new AssigneeSummary(a.Id, a.Name, start, end, estimate, planned, actual, planned - actual, GateDelayWorkDays(planned - actual, allOwnedCompleted));
+                var delay = ownedLeafTasks.Sum(t => CalcTaskDelayWorkDays(t, actualTotalByTaskId.GetValueOrDefault(t.Id)) ?? 0);
+                return new AssigneeSummary(a.Id, a.Name, start, end, estimate, planned, actual, planned - actual, delay);
             })
             .OrderBy(s => s.AssigneeName, StringComparer.Ordinal)
             .ToList();
     }
 
     /// <summary>
-    /// 担当者別集計一覧の合計行を算出する。前倒し/遅れは各担当者の（ゲート済み）値の単純合計とし、
-    /// 予定工数合計 − 実績合計とは一致しない場合がある（前倒しゲートで 0 に落ちた担当者があるため）。
+    /// 担当者別集計一覧の合計行を算出する。前倒し/遅れは各担当者の（判定条件適用済み）値の単純合計とし、
+    /// 予定工数合計 − 実績合計とは一致しない場合がある（前倒しゲートで 0 に落ちたタスク、予定工数未設定のタスクがあるため）。
     /// </summary>
     /// <param name="summaries">担当者別集計結果の一覧。</param>
     /// <param name="includePlanned">見積工数・予定工数・残工数・前倒し/遅れを合算する場合は <see langword="true"/>（既定）。集計期間指定時は <see langword="false"/>（これらは <see langword="null"/>）。</param>
@@ -105,17 +109,20 @@ internal static class AssigneeSummaryHelper
     }
 
     /// <summary>
-    /// 前倒し/遅れ工数（予定工数 − 実績）にダッシュボードの判定条件を適用する。
-    /// マイナス（実績が予定を超過＝遅れ）はそのまま、プラス（前倒し）は <paramref name="aheadAllowed"/> が
-    /// <see langword="true"/> の場合のみそのまま、それ以外は 0 とする。
+    /// リーフタスク1件の前倒し/遅れ工数（予定工数 − 実績）に判定条件を適用して算出する。
+    /// マイナス（実績が予定を超過＝遅れ）はそのまま、プラス（前倒し）はステータスが「完了」の場合のみそのまま、それ以外は 0 とする。
     /// </summary>
-    /// <param name="delayWorkDays">予定工数 − 実績（人日）。</param>
-    /// <param name="aheadAllowed">前倒し（プラス）を算出してよい場合は <see langword="true"/>。</param>
-    /// <returns>判定条件適用後の前倒し/遅れ工数（人日）。</returns>
-    private static double GateDelayWorkDays(double delayWorkDays, bool aheadAllowed)
-        => delayWorkDays < 0 ? delayWorkDays
-         : delayWorkDays > 0 && aheadAllowed ? delayWorkDays
-         : 0;
+    /// <param name="task">対象のリーフタスク。</param>
+    /// <param name="actualPersonDays">タスクの実績合計（人日）。</param>
+    /// <returns>判定条件適用後の前倒し/遅れ工数（人日）。予定工数が未設定の場合は <see langword="null"/>（集計対象外）。</returns>
+    private static double? CalcTaskDelayWorkDays(WbsTask task, double actualPersonDays)
+    {
+        if (!task.PlannedWorkDays.HasValue) return null;
+        var delayWorkDays = task.PlannedWorkDays.Value - actualPersonDays;
+        return delayWorkDays < 0 ? delayWorkDays
+             : delayWorkDays > 0 && task.Status == "完了" ? delayWorkDays
+             : 0;
+    }
 
     /// <summary>
     /// 指定担当者が関わったタスクのツリーを構築する。「関わった」は次のいずれかを満たすリーフタスクを指す。
@@ -189,7 +196,7 @@ internal static class AssigneeSummaryHelper
                     var estimate = node.Task.WorkDays ?? 0;
                     var planned = node.Task.PlannedWorkDays ?? 0;
                     var remaining = node.Task.PlannedWorkDays.HasValue ? planned - actual : (double?)null;
-                    var delay = GateDelayWorkDays(planned - actual, node.Task.Status == "完了");
+                    var delay = CalcTaskDelayWorkDays(node.Task, actual);
                     rows.Add(new AssigneeTaskRow(node.Task.Id, node.Task.Name, node.Level, false, true,
                         node.Task.StartDate, node.Task.EndDate, node.Task.Status, estimate, planned, actual, remaining, delay));
                 }
