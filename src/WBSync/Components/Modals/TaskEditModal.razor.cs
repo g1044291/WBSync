@@ -110,7 +110,7 @@ public partial class TaskEditModal
             _parent = _parentCandidates.FirstOrDefault(t => t.Id == Task.ParentId);
             _assignee = Assignees.FirstOrDefault(a => a.Id == Task.AssigneeId);
             _workDaysStr = Task.WorkDays?.ToString() ?? string.Empty;
-            _plannedWorkDaysStr = Task.PlannedWorkDays?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty;
+            _plannedWorkDaysStr = Task.PlannedWorkDays.HasValue ? FormatPlannedWorkDays(Task.PlannedWorkDays.Value) : string.Empty;
             _startDate = DateOnly.TryParse(Task.StartDate, out var s) ? s : null;
             _endDate = DateOnly.TryParse(Task.EndDate, out var e) ? e : null;
             _predecessor = _predecessorCandidates.FirstOrDefault(t => t.Id == Task.PredecessorId);
@@ -225,12 +225,7 @@ public partial class TaskEditModal
 
         var workDays = ParseWorkDays();
         if (workDays.HasValue)
-        {
-            var coeff = _assignee?.ProductivityCoefficient ?? 1.0m;
-            var planned = coeff > 0 ? workDays.Value / (double)coeff : workDays.Value;
-            _plannedWorkDaysStr = Math.Round(planned, 1)
-                .ToString(System.Globalization.CultureInfo.InvariantCulture);
-        }
+            _plannedWorkDaysStr = CalcPlannedWorkDaysStr(workDays.Value);
 
         var plannedWorkDays = ParsePlannedWorkDays();
         if (_startDate.HasValue && plannedWorkDays.HasValue)
@@ -249,10 +244,7 @@ public partial class TaskEditModal
         var workDays = ParseWorkDays();
         if (workDays.HasValue)
         {
-            var coeff = _assignee?.ProductivityCoefficient ?? 1.0m;
-            var planned = coeff > 0 ? workDays.Value / (double)coeff : workDays.Value;
-            _plannedWorkDaysStr = Math.Round(planned, 1)
-                .ToString(System.Globalization.CultureInfo.InvariantCulture);
+            _plannedWorkDaysStr = CalcPlannedWorkDaysStr(workDays.Value);
         }
         else
         {
@@ -333,6 +325,22 @@ public partial class TaskEditModal
             System.Globalization.CultureInfo.InvariantCulture,
             out var wd) ? wd : null;
     }
+
+    /// <summary>見積工数と選択中担当者の生産性係数から予定工数を算出し、入力欄用の文字列にする。</summary>
+    /// <param name="workDays">見積工数（人日）。</param>
+    /// <returns>見積工数 ÷ 生産性係数 を小数第4位で丸めた文字列。係数が 0 以下の場合は見積工数をそのまま使う。</returns>
+    private string CalcPlannedWorkDaysStr(double workDays)
+    {
+        var coeff = _assignee?.ProductivityCoefficient ?? 1.0m;
+        var planned = coeff > 0 ? workDays / (double)coeff : workDays;
+        return FormatPlannedWorkDays(planned);
+    }
+
+    /// <summary>予定工数を入力欄用の文字列にフォーマットする。</summary>
+    /// <param name="plannedWorkDays">予定工数（人日）。</param>
+    /// <returns>小数第4位で丸め、末尾の 0 を省いた文字列（例: 0.25、0.6667）。</returns>
+    private static string FormatPlannedWorkDays(double plannedWorkDays)
+        => Math.Round(plannedWorkDays, 4).ToString("0.####", System.Globalization.CultureInfo.InvariantCulture);
 
     /// <summary>予定工数入力フィールドの文字列を数値にパースする。</summary>
     /// <returns>パース成功時は予定工数値、入力なし・パース失敗時は <see langword="null"/>。</returns>
