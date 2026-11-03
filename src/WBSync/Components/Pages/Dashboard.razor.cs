@@ -19,6 +19,8 @@ public partial class Dashboard
     private AssigneeSummaryTotal _total = new(null, null, null, null, 0, null, null);
     private readonly Dictionary<int, List<AssigneeTaskRow>> _taskRowsByAssigneeId = [];
     private readonly HashSet<int> _expandedAssigneeIds = [];
+    private List<ProgressChartPoint> _chartPoints = [];
+    private DateOnly _today = DateOnly.FromDateTime(DateTime.Today);
 
     /// <summary>集計期間の開始日。<see langword="null"/> の場合は下限なし。</summary>
     private DateOnly? _periodStart;
@@ -51,7 +53,35 @@ public partial class Dashboard
         _allWorkLogs = await WorkLogRepo.GetByProjectAsync(ProjectId);
         _allAssignees = await AssigneeRepo.GetByProjectAsync(ProjectId);
 
+        await BuildChartAsync();
         Recalculate();
+    }
+
+    /// <summary>
+    /// 全体休日・全担当者の個人休日を読み込み、予実推移グラフのデータ点を算出する。
+    /// グラフは集計期間の指定に関わらず全期間の実績を対象とするため、初期表示時に1回だけ算出する。
+    /// </summary>
+    private async Task BuildChartAsync()
+    {
+        var globalHolidays = (await GlobalHolidayRepo.GetAllAsync())
+            .Select(h => DateOnly.TryParse(h.Date, out var d) ? d : (DateOnly?)null)
+            .Where(d => d.HasValue)
+            .Select(d => d!.Value)
+            .ToHashSet();
+
+        var assigneeHolidays = new Dictionary<int, IReadOnlySet<DateOnly>>();
+        foreach (var assignee in _allAssignees)
+        {
+            var ah = await AssigneeHolidayRepo.GetByAssigneeAsync(assignee.Id);
+            assigneeHolidays[assignee.Id] = ah
+                .Select(h => DateOnly.TryParse(h.Date, out var d) ? d : (DateOnly?)null)
+                .Where(d => d.HasValue)
+                .Select(d => d!.Value)
+                .ToHashSet();
+        }
+
+        _today = DateOnly.FromDateTime(DateTime.Today);
+        _chartPoints = ProgressChartHelper.BuildPoints(_allTasks, _allWorkLogs, globalHolidays, assigneeHolidays, _today);
     }
 
     /// <summary>現在の集計期間設定で担当者別集計・合計・展開済みタスクツリーを再計算する。</summary>
